@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AmbientVideo from '../components/AmbientVideo'
+import DeferredImage from '../components/DeferredImage'
 import {
   Arrow,
   Footer,
@@ -8,11 +9,13 @@ import {
   HomeNavigation,
   Logo,
   PageMeta,
-  ProjectStrip,
+  ProjectIndex,
   Reveal,
 } from '../components/Site'
 import { heroMedia, projects } from '../data/projects'
 import { useLanguage } from '../i18n'
+
+const featuredProjects = projects.filter((project) => project.featured)
 
 function useNarrowScreen() {
   const query = '(max-width: 800px)'
@@ -34,6 +37,8 @@ function useNarrowScreen() {
 export default function HomePage() {
   const { t } = useLanguage()
   const narrow = useNarrowScreen()
+  const heroVideoRef = useRef(null)
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false)
   const hero = narrow
     ? { poster: heroMedia.posterMobile, video: heroMedia.videoMobile }
     : heroMedia
@@ -44,15 +49,19 @@ export default function HomePage() {
       <Header home />
       <main id="conteudo">
         <section className="home-hero" aria-label="DUUK">
+          <DeferredImage className="home-hero__poster" src={hero.poster} alt="" eager />
           <AmbientVideo
             key={hero.video}
             className="home-hero__video"
             poster={hero.poster}
             src={hero.video}
+            videoRef={heroVideoRef}
+            priority
+            onAutoplayBlocked={setAutoplayBlocked}
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="auto"
             aria-hidden="true"
           />
           <span className="home-hero__overlay" aria-hidden="true" />
@@ -60,19 +69,18 @@ export default function HomePage() {
             <Logo className="home-hero__logo" priority />
             <HomeNavigation />
           </div>
+          {autoplayBlocked && (
+            <button
+              type="button"
+              className="home-hero__play"
+              onClick={() => heroVideoRef.current?.play().catch(() => setAutoplayBlocked(true))}
+            >
+              {t.playFilm}
+            </button>
+          )}
         </section>
 
-        <section className="project-index" aria-label={t.nav.portfolio}>
-          {projects
-            .filter((project) => project.featured)
-            .map((project, index) => (
-              <ProjectStrip
-                key={project.slug}
-                project={project}
-                index={index}
-              />
-            ))}
-        </section>
+        <ProjectIndex projects={featuredProjects} label={t.nav.portfolio} eagerFirst />
 
         <section className="home-close">
           <Reveal>

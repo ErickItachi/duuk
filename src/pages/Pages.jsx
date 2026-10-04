@@ -9,7 +9,7 @@ import {
   Logo,
   PageBanner,
   PageMeta,
-  ProjectStrip,
+  ProjectIndex,
   Reveal,
 } from '../components/Site'
 import {
@@ -42,16 +42,7 @@ export function PortfolioPage() {
           objectPosition="center 38%"
           tint
         />
-        <section className="project-index" aria-label={t.nav.portfolio}>
-          {projects.map((project, index) => (
-            <ProjectStrip
-              key={project.slug}
-              project={project}
-              index={index}
-              eager={index === 0}
-            />
-          ))}
-        </section>
+        <ProjectIndex projects={projects} label={t.nav.portfolio} eagerFirst />
       </main>
       <Footer />
     </>

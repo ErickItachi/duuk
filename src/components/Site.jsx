@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { createPortal, flushSync } from 'react-dom'
 import { Link, NavLink } from 'react-router-dom'
 import AmbientVideo from './AmbientVideo'
 import DeferredImage from './DeferredImage'
 import { directors } from '../data/directors'
 import { localize, useLanguage } from '../i18n'
 import { studio } from '../data/projects'
+import { getImageSources, getVideoSource, preferMobileVideo } from '../media'
 
 const routes = [
   ['home', '/'],
@@ -301,19 +302,72 @@ export function Arrow({ direction = 'right' }) {
   )
 }
 
-export function ProjectStrip({ project, index = 0, eager = false }) {
+export function ProjectIndex({ projects, label, eagerFirst = false }) {
+  const indexRef = useRef(null)
+  const [activeProject, setActiveProject] = useState(null)
+
+  useEffect(() => {
+    const touch = window.matchMedia('(hover: none), (pointer: coarse)')
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let observer
+
+    const configure = () => {
+      observer?.disconnect()
+      setActiveProject(null)
+      if (!touch.matches || motion.matches || navigator.connection?.saveData) return
+
+      const visibility = new Map()
+      observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          visibility.set(entry.target.dataset.projectSlug, entry.isIntersecting ? entry.intersectionRatio : 0)
+        }
+        let selected = null
+        let largest = 0.55
+        for (const [slug, ratio] of visibility) {
+          if (ratio > largest) {
+            selected = slug
+            largest = ratio
+          }
+        }
+        setActiveProject(selected)
+      }, { threshold: [0, 0.25, 0.55, 0.75, 1] })
+
+      indexRef.current.querySelectorAll('[data-project-slug]').forEach((element) => observer.observe(element))
+    }
+
+    configure()
+    touch.addEventListener('change', configure)
+    motion.addEventListener('change', configure)
+    return () => {
+      observer?.disconnect()
+      touch.removeEventListener('change', configure)
+      motion.removeEventListener('change', configure)
+    }
+  }, [projects])
+
+  return (
+    <section ref={indexRef} className="project-index" aria-label={label}>
+      {projects.map((project, index) => (
+        <ProjectStrip key={project.slug} project={project} index={index} eager={eagerFirst && index === 0} mobilePreview={activeProject === project.slug} />
+      ))}
+    </section>
+  )
+}
+
+export function ProjectStrip({ project, index = 0, eager = false, mobilePreview = false }) {
   const { language, t } = useLanguage()
   const [previewing, setPreviewing] = useState(false)
+  const playing = previewing || mobilePreview
   const canPreview = () =>
     window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
     !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const startPreview = () => {
-    if (canPreview()) setPreviewing(true)
+    if (canPreview() && !navigator.connection?.saveData) setPreviewing(true)
   }
 
   return (
-    <article className="project-strip">
+    <article className="project-strip" data-project-slug={project.slug}>
       <Link
         className={`project-strip__link ${
           index % 2 === 0 ? 'is-left' : 'is-right'
@@ -338,15 +392,15 @@ export function ProjectStrip({ project, index = 0, eager = false }) {
           height="1080"
         />
 
-        {previewing && (
+        {project.provider === 'mp4' && project.video && (
           <AmbientVideo
             className="project-strip__video"
-            src={project.video}
-            poster={project.poster}
+            src={getVideoSource(project.video, 'preview')}
+            active={playing}
             muted
             loop
             playsInline
-            preload="none"
+            preload="metadata"
             aria-hidden="true"
             style={{ objectPosition: project.videoPosition || project.objectPosition }}
           />
@@ -375,17 +429,19 @@ function getEmbedUrl(film) {
   return null
 }
 
-function VideoModal({ film, title, onClose }) {
+function VideoModal({ film, title, onClose, videoRef }) {
   const closeRef = useRef(null)
-  const videoRef = useRef(null)
   const embedUrl = getEmbedUrl(film)
+  const videoSrc = getVideoSource(film.video, preferMobileVideo() ? 'mobile' : 'desktop')
   const { t } = useLanguage()
 
   useEffect(() => {
     const video = videoRef.current
-    if (video && video.getAttribute('src') !== film.video) video.src = film.video
+    if (video && video.getAttribute('src') !== videoSrc) video.src = videoSrc
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    document.body.classList.add('film-is-open')
+    document.dispatchEvent(new CustomEvent('duuk:player', { detail: { open: true } }))
     closeRef.current?.focus()
 
     const closeOnEscape = (event) => {
@@ -395,6 +451,8 @@ function VideoModal({ film, title, onClose }) {
     window.addEventListener('keydown', closeOnEscape)
     return () => {
       document.body.style.overflow = previousOverflow
+      document.body.classList.remove('film-is-open')
+      document.dispatchEvent(new CustomEvent('duuk:player', { detail: { open: false } }))
       window.removeEventListener('keydown', closeOnEscape)
       if (video) {
         video.pause()
@@ -402,7 +460,7 @@ function VideoModal({ film, title, onClose }) {
         video.load()
       }
     }
-  }, [film.video, onClose])
+  }, [videoSrc, onClose, videoRef])
 
   return createPortal(
     <div
@@ -424,7 +482,7 @@ function VideoModal({ film, title, onClose }) {
         <span />
         <span />
       </button>
-      <div className="video-modal__frame">
+      <div className={`video-modal__frame${embedUrl ? '' : ' video-modal__frame--native'}`}>
         {embedUrl ? (
           <iframe
             src={embedUrl}
@@ -435,8 +493,8 @@ function VideoModal({ film, title, onClose }) {
         ) : (
           <video
             ref={videoRef}
-            src={film.video}
-            poster={film.poster}
+            src={videoSrc}
+            poster={getImageSources(film.poster).src}
             controls
             autoPlay
             playsInline
@@ -461,7 +519,13 @@ function VideoModal({ film, title, onClose }) {
 export function FilmPlayer({ film, title }) {
   const { t } = useLanguage()
   const [open, setOpen] = useState(false)
+  const videoRef = useRef(null)
   const closePlayer = useCallback(() => setOpen(false), [])
+  const openPlayer = () => {
+    // Keep play() in the tap handler so Safari grants audio playback.
+    flushSync(() => setOpen(true))
+    videoRef.current?.play().catch(() => {})
+  }
 
   return (
     <>
@@ -469,9 +533,9 @@ export function FilmPlayer({ film, title }) {
         type="button"
         className="film-player"
         aria-label={`${t.playFilm} ${title}`}
-        onClick={() => setOpen(true)}
+        onClick={openPlayer}
       >
-        <img
+        <DeferredImage
           src={film.poster}
           alt=""
           width="1920"
@@ -484,7 +548,7 @@ export function FilmPlayer({ film, title }) {
         <span className="film-player__play" aria-hidden="true" />
       </button>
       {open && (
-        <VideoModal film={film} title={title} onClose={closePlayer} />
+        <VideoModal film={film} title={title} onClose={closePlayer} videoRef={videoRef} />
       )}
     </>
   )
@@ -504,12 +568,13 @@ export function PageBanner({
       className={`page-banner${compact ? ' page-banner--compact' : ''}${tint ? ' page-banner--tint' : ''}`}
     >
       {poster && (
-        <img
+        <DeferredImage
           src={poster}
           alt={alt}
           width="1920"
           height="1080"
           fetchPriority="high"
+          eager
           style={{ objectPosition }}
         />
       )}

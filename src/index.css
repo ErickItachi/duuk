@@ -134,7 +134,7 @@ ul {
 }
 
 .route-view {
-  animation: route-enter 480ms var(--ease) both;
+  animation: route-enter 180ms ease-out both;
 }
 
 @keyframes route-enter {
@@ -628,13 +628,26 @@ ul {
   background: #0c0c0c;
 }
 
+.home-hero__poster,
 .home-hero__video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  background: url('/media/poster-hero-desktop.jpg?v=09251') center / cover no-repeat;
+}
+
+.home-hero__play {
+  position: absolute;
+  z-index: 3;
+  right: var(--gutter);
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  padding: 12px 18px;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 55%);
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .home-hero__overlay {
@@ -692,7 +705,7 @@ ul {
 
 .project-strip {
   position: relative;
-  content-visibility: auto;
+  contain: layout paint;
   width: 100%;
   height: clamp(46vh, 54svh, 620px);
   overflow: hidden;
@@ -713,30 +726,31 @@ ul {
   width: calc(100% + 2px);
   height: calc(100% + 2px);
   object-fit: cover;
-  filter: brightness(0.78);
   transform: scale(1);
   transition:
     transform 700ms var(--ease),
-    filter 420ms ease,
-    opacity 320ms ease;
+    opacity 180ms ease;
 }
 
 .project-strip__video {
   z-index: 1;
   opacity: 0;
-  animation: media-fade 360ms ease forwards;
+  pointer-events: none;
 }
 
-@keyframes media-fade {
-  to {
-    opacity: 1;
+.project-strip__video[data-ready='true'][data-active='true'] {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .project-strip__link:hover .project-strip__poster,
+  .project-strip__link:hover .project-strip__video {
+    transform: scale(1.02);
   }
-}
 
-.project-strip__link:hover .project-strip__poster,
-.project-strip__link:hover .project-strip__video {
-  filter: brightness(0.94);
-  transform: scale(1.02);
+  .project-strip__link:hover .project-strip__shade::before {
+    opacity: 0.06;
+  }
 }
 
 .project-strip__shade {
@@ -749,6 +763,15 @@ ul {
     transparent 38%,
     rgb(0 0 0 / 48%) 100%
   );
+}
+
+.project-strip__shade::before {
+  position: absolute;
+  content: '';
+  inset: 0;
+  background: #000;
+  opacity: 0.22;
+  transition: opacity 180ms ease;
 }
 
 .project-strip h2 span {
@@ -1046,6 +1069,12 @@ a:hover .arrow--left {
   width: min(100%, 1520px);
   aspect-ratio: 16 / 9;
   background: #000;
+}
+
+.video-modal__frame--native {
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
 }
 
 .video-modal__frame video,
@@ -1621,10 +1650,6 @@ a:hover .arrow--left {
 
   .menu-button {
     display: block;
-  }
-
-  .home-hero__video {
-    background-image: url('/media/poster-hero-mobile.jpg');
   }
 
   .home-hero {

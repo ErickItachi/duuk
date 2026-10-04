@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "media:optimize": "node scripts/optimize-media.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },

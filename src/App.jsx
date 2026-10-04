@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import { Logo } from './components/Site'
 import { LanguageProvider } from './i18n'
@@ -62,24 +62,10 @@ function IntroLoader({ visible, animate = true }) {
 }
 
 function AppRoutes() {
-  const [loading, setLoading] = useState(true)
   const location = useLocation()
-
-  useEffect(() => {
-    const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
-    const timeout = window.setTimeout(
-      () => setLoading(false),
-      reducedMotion ? 80 : 900,
-    )
-
-    return () => window.clearTimeout(timeout)
-  }, [])
 
   return (
     <>
-      <IntroLoader visible={loading} />
       <Suspense fallback={<IntroLoader visible animate={false} />}>
         <div
           className="route-view"

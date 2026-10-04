@@ -1,0 +1,131 @@
+{
+  "images": {
+    "/media/douglas-felix.jpg": {
+      "src": "/media/images/douglas-felix-1080.3b8ef9f213aa.webp",
+      "srcSet": "/media/images/douglas-felix-640.9a313acd01d9.webp 640w, /media/images/douglas-felix-1080.3b8ef9f213aa.webp 1080w",
+      "width": 1080,
+      "height": 1920
+    },
+    "/media/erick-borborema.jpg": {
+      "src": "/media/images/erick-borborema-576.0239871c4b00.webp",
+      "srcSet": "/media/images/erick-borborema-576.0239871c4b00.webp 576w",
+      "width": 576,
+      "height": 1024
+    },
+    "/media/poster-alphaville-meeting.jpg": {
+      "src": "/media/images/poster-alphaville-meeting-1179.c2d6da4339b9.webp",
+      "srcSet": "/media/images/poster-alphaville-meeting-640.e17297342347.webp 640w, /media/images/poster-alphaville-meeting-1179.c2d6da4339b9.webp 1179w",
+      "width": 1179,
+      "height": 658
+    },
+    "/media/poster-apollo-grill.jpg": {
+      "src": "/media/images/poster-apollo-grill-1280.6afbf1c6e596.webp",
+      "srcSet": "/media/images/poster-apollo-grill-640.af7dd50063cf.webp 640w, /media/images/poster-apollo-grill-1280.6afbf1c6e596.webp 1280w, /media/images/poster-apollo-grill-1920.2a4bb11099fc.webp 1920w",
+      "width": 3840,
+      "height": 2160
+    },
+    "/media/poster-arena-xp.jpg": {
+      "src": "/media/images/poster-arena-xp-1280.4e3cd50153c4.webp",
+      "srcSet": "/media/images/poster-arena-xp-640.dfefa797e02a.webp 640w, /media/images/poster-arena-xp-1280.4e3cd50153c4.webp 1280w, /media/images/poster-arena-xp-1920.e73979a46c9d.webp 1920w",
+      "width": 3840,
+      "height": 2160
+    },
+    "/media/poster-aunde.jpg": {
+      "src": "/media/images/poster-aunde-1280.c5402398e687.webp",
+      "srcSet": "/media/images/poster-aunde-640.0d9bdab7a792.webp 640w, /media/images/poster-aunde-1280.c5402398e687.webp 1280w, /media/images/poster-aunde-1920.4a6fee3aa8f1.webp 1920w",
+      "width": 3376,
+      "height": 6000
+    },
+    "/media/poster-batismo.jpg": {
+      "src": "/media/images/poster-batismo-1280.bfc0da41f0cb.webp",
+      "srcSet": "/media/images/poster-batismo-640.ae66b38345f4.webp 640w, /media/images/poster-batismo-1280.bfc0da41f0cb.webp 1280w, /media/images/poster-batismo-1920.52cbf17eac65.webp 1920w",
+      "width": 3840,
+      "height": 2160
+    },
+    "/media/poster-hero-desktop.jpg": {
+      "src": "/media/images/poster-hero-desktop-1280.7ab806f32628.webp",
+      "srcSet": "/media/images/poster-hero-desktop-640.063e82b34ed2.webp 640w, /media/images/poster-hero-desktop-1280.7ab806f32628.webp 1280w, /media/images/poster-hero-desktop-1920.37659f58acf0.webp 1920w",
+      "width": 3840,
+      "height": 2160
+    },
+    "/media/poster-hero-mobile.jpg": {
+      "src": "/media/images/poster-hero-mobile-1280.d18c920210af.webp",
+      "srcSet": "/media/images/poster-hero-mobile-640.c975a1349152.webp 640w, /media/images/poster-hero-mobile-1280.d18c920210af.webp 1280w, /media/images/poster-hero-mobile-1920.d2b11d6e179c.webp 1920w",
+      "width": 2160,
+      "height": 3840
+    },
+    "/media/poster-larissa-roger.jpg": {
+      "src": "/media/images/poster-larissa-roger-1024.021731cd3945.webp",
+      "srcSet": "/media/images/poster-larissa-roger-640.8d4cd3c3dfd2.webp 640w, /media/images/poster-larissa-roger-1024.021731cd3945.webp 1024w",
+      "width": 1024,
+      "height": 575
+    },
+    "/media/poster-portfolio.jpg": {
+      "src": "/media/images/poster-portfolio-682.b3883b9ee0e6.webp",
+      "srcSet": "/media/images/poster-portfolio-640.ed49c1b0f43a.webp 640w, /media/images/poster-portfolio-682.b3883b9ee0e6.webp 682w",
+      "width": 682,
+      "height": 1024
+    },
+    "/media/poster-showreel.webp": {
+      "src": "/media/images/poster-showreel-1280.749850ea059b.webp",
+      "srcSet": "/media/images/poster-showreel-640.7a66386b26fd.webp 640w, /media/images/poster-showreel-1280.749850ea059b.webp 1280w, /media/images/poster-showreel-1920.8bdf865153b3.webp 1920w",
+      "width": 1920,
+      "height": 1080
+    },
+    "/media/poster-uniao-fv.jpg": {
+      "src": "/media/images/poster-uniao-fv-1280.c9814f0eaf1d.webp",
+      "srcSet": "/media/images/poster-uniao-fv-640.56ecbf4569a0.webp 640w, /media/images/poster-uniao-fv-1280.c9814f0eaf1d.webp 1280w, /media/images/poster-uniao-fv-1920.93ecd7180f2c.webp 1920w",
+      "width": 3840,
+      "height": 2160
+    },
+    "/media/sobre-set.jpg": {
+      "src": "/media/images/sobre-set-682.b3883b9ee0e6.webp",
+      "srcSet": "/media/images/sobre-set-640.ed49c1b0f43a.webp 640w, /media/images/sobre-set-682.b3883b9ee0e6.webp 682w",
+      "width": 682,
+      "height": 1024
+    }
+  },
+  "videos": {
+    "/media/alphaville-meeting.mp4": {
+      "preview": "/media/video/alphaville-meeting-preview.c9e2a0c72e35.mp4",
+      "mobile": "/media/video/alphaville-meeting-mobile.4bb61e63d2cc.mp4",
+      "desktop": "/media/video/alphaville-meeting-desktop.614a9e1f91eb.mp4"
+    },
+    "/media/apollo-grill.mp4": {
+      "preview": "/media/video/apollo-grill-preview.810e17b1f040.mp4",
+      "mobile": "/media/video/apollo-grill-mobile.10ef60e2caea.mp4",
+      "desktop": "/media/video/apollo-grill-desktop.6344ad490eac.mp4"
+    },
+    "/media/arena-xp.mp4": {
+      "preview": "/media/video/arena-xp-preview.860f0d83c0ce.mp4",
+      "mobile": "/media/video/arena-xp-mobile.e8ded926b324.mp4",
+      "desktop": "/media/video/arena-xp-desktop.7b27c4e888d0.mp4"
+    },
+    "/media/aunde-brasil.mp4": {
+      "preview": "/media/video/aunde-brasil-preview.2fc3f54162a5.mp4",
+      "mobile": "/media/video/aunde-brasil-mobile.fc558c217139.mp4",
+      "desktop": "/media/video/aunde-brasil-desktop.fec50b1ab299.mp4"
+    },
+    "/media/batismo.mp4": {
+      "preview": "/media/video/batismo-preview.b06869bac428.mp4",
+      "mobile": "/media/video/batismo-mobile.ed44df472c75.mp4",
+      "desktop": "/media/video/batismo-desktop.6f485506eeab.mp4"
+    },
+    "/media/hero-desktop.mp4": {
+      "ambient": "/media/video/hero-desktop-ambient.b079e024d63b.mp4"
+    },
+    "/media/hero-mobile.mp4": {
+      "ambient": "/media/video/hero-mobile-ambient.5c9556fa6f57.mp4"
+    },
+    "/media/larissa-roger.mp4": {
+      "preview": "/media/video/larissa-roger-preview.04c9c4dde877.mp4",
+      "mobile": "/media/video/larissa-roger-mobile.85b6a5412002.mp4",
+      "desktop": "/media/video/larissa-roger-desktop.6d9183ef7506.mp4"
+    },
+    "/media/uniao-fv.mp4": {
+      "preview": "/media/video/uniao-fv-preview.54ccdbfa2f2d.mp4",
+      "mobile": "/media/video/uniao-fv-mobile.dbc010f80bf6.mp4",
+      "desktop": "/media/video/uniao-fv-desktop.bbde86af29ae.mp4"
+    }
+  }
+}
