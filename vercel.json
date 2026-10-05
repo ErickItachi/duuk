@@ -1,6 +1,14 @@
 {
   "headers": [
     {
+      "source": "/media/video/(.*).m3u8",
+      "headers": [{ "key": "Content-Type", "value": "application/vnd.apple.mpegurl" }]
+    },
+    {
+      "source": "/media/video/(.*).m4s",
+      "headers": [{ "key": "Content-Type", "value": "video/iso.segment" }]
+    },
+    {
       "source": "/media/video/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },

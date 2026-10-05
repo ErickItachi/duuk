@@ -112,10 +112,14 @@
       "desktop": "/media/video/batismo-desktop.6f485506eeab.mp4"
     },
     "/media/hero-desktop.mp4": {
-      "ambient": "/media/video/hero-desktop-ambient.b079e024d63b.mp4"
+      "ambient": "/media/video/hero-desktop-ambient.df85f59cb624.mp4",
+      "lightweight": "/media/video/hero-desktop-lightweight.229359a72436.mp4",
+      "adaptive": "/media/video/hero-desktop-hls.fdf871e736b6/index.m3u8"
     },
     "/media/hero-mobile.mp4": {
-      "ambient": "/media/video/hero-mobile-ambient.5c9556fa6f57.mp4"
+      "ambient": "/media/video/hero-mobile-ambient.cc45e7fc2fe2.mp4",
+      "lightweight": "/media/video/hero-mobile-lightweight.94093bd8b736.mp4",
+      "adaptive": "/media/video/hero-mobile-hls.c12c3cacb582/index.m3u8"
     },
     "/media/larissa-roger.mp4": {
       "preview": "/media/video/larissa-roger-preview.04c9c4dde877.mp4",

@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto'
 import { spawn } from 'node:child_process'
 import { createReadStream, existsSync } from 'node:fs'
-import { mkdir, open, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, open, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
+import { generateHero } from './hero-streams.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const mediaDir = path.join(root, 'public/media')
@@ -14,7 +15,10 @@ const imageDir = path.join(mediaDir, 'images')
 const videoDir = path.join(mediaDir, 'video')
 const localFfmpeg = path.join(homedir(), '.local/bin/ffmpeg')
 const ffmpeg = process.env.FFMPEG || (existsSync(localFfmpeg) ? localFfmpeg : 'ffmpeg')
-const manifest = { images: {}, videos: {} }
+const heroesOnly = process.argv.includes('--heroes')
+const manifest = heroesOnly
+  ? JSON.parse(await readFile(path.join(root, 'src/data/media.generated.json'), 'utf8'))
+  : { images: {}, videos: {} }
 
 await Promise.all([mkdir(imageDir, { recursive: true }), mkdir(videoDir, { recursive: true })])
 
@@ -34,7 +38,7 @@ function encode(args) {
   })
 }
 
-for (const name of (await readdir(mediaDir)).filter((name) => /\.(jpg|webp)$/i.test(name)).sort()) {
+for (const name of (await readdir(mediaDir)).filter((name) => !heroesOnly && /\.(jpg|webp)$/i.test(name)).sort()) {
   const original = path.join(mediaDir, name)
   const base = path.parse(name).name
   const { width, height } = await sharp(original).metadata()
@@ -53,7 +57,7 @@ for (const name of (await readdir(mediaDir)).filter((name) => /\.(jpg|webp)$/i.t
 }
 
 const tasks = []
-for (const name of (await readdir(originalsDir)).filter((name) => name.endsWith('.mp4')).sort()) {
+for (const name of (await readdir(originalsDir)).filter((name) => name.endsWith('.mp4') && (!heroesOnly || name.startsWith('hero-'))).sort()) {
   const original = path.join(originalsDir, name)
   const file = await open(original, 'r')
   const sample = Buffer.alloc(48)
@@ -65,13 +69,17 @@ for (const name of (await readdir(originalsDir)).filter((name) => name.endsWith(
   const source = `/media/${name}`
   manifest.videos[source] = {}
   const hero = base.startsWith('hero-')
-  const profiles = hero
-    ? [{ name: 'ambient', edge: 1280, crf: 27, rate: base.endsWith('mobile') ? 1000 : 1600, silent: true }]
-    : [
-        { name: 'preview', edge: 960, crf: 28, rate: 800, silent: true, seconds: 8 },
-        { name: 'mobile', edge: 1280, crf: 25, rate: 1400 },
-        { name: 'desktop', edge: 1920, crf: 23, rate: 3200 },
-      ]
+  if (hero) {
+    tasks.push(async () => {
+      manifest.videos[source] = await generateHero({ original, base, videoDir, encode, hashFile })
+    })
+    continue
+  }
+  const profiles = [
+    { name: 'preview', edge: 960, crf: 28, rate: 800, silent: true, seconds: 8 },
+    { name: 'mobile', edge: 1280, crf: 25, rate: 1400 },
+    { name: 'desktop', edge: 1920, crf: 23, rate: 3200 },
+  ]
   for (const profile of profiles) {
     tasks.push(async () => {
       const temp = path.join(videoDir, `${base}-${profile.name}.tmp.mp4`)
@@ -108,11 +116,11 @@ await Promise.all([worker(), worker()])
 await writeFile(path.join(root, 'src/data/media.generated.json'), `${JSON.stringify(manifest, null, 2)}\n`)
 const used = new Set([
   ...Object.values(manifest.images).flatMap((image) => image.srcSet.split(', ').map((variant) => path.basename(variant.split(' ')[0]))),
-  ...Object.values(manifest.videos).flatMap((video) => Object.values(video).map((src) => path.basename(src))),
+  ...Object.values(manifest.videos).flatMap((video) => Object.values(video).map((src) => src.split('/')[3])),
 ])
 for (const dir of [imageDir, videoDir]) {
   for (const name of await readdir(dir)) {
-    if (!used.has(name)) await rm(path.join(dir, name))
+    if (!used.has(name)) await rm(path.join(dir, name), { recursive: true, force: true })
   }
 }
 console.log('Mídias web e manifesto atualizados. Os originais foram preservados em media/originals.')
