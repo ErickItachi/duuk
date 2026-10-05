@@ -21,7 +21,7 @@ npm run media:optimize
 
 Esse comando gera filmes completos para desktop e mobile, clipes silenciosos de oito segundos para as prévias, capas WebP responsivas e `src/data/media.generated.json`. Os nomes dos arquivos incluem um hash para permitir cache duradouro sem servir uma versão antiga após uma atualização.
 
-As aberturas têm versões HLS em 1080p, 720p e 480p, com segmentos alinhados de dois segundos, e MP4s de reserva. Para atualizar apenas as aberturas, execute `npm run media:optimize -- --heroes`.
+As aberturas têm versões HLS em 4K, 1080p, 720p e 480p, com segmentos alinhados de dois segundos, e MP4s de reserva em 1080p e 720p. Para atualizar apenas as aberturas, execute `npm run media:optimize -- --heroes`. Para adicionar a versão 4K preservando as versões menores já geradas do mesmo original, use `npm run media:optimize -- --heroes-4k`.
 
 ## Rodar localmente
 
@@ -53,6 +53,6 @@ As capas usam WebP com tamanhos de 640, 1280 e 1920 pixels, escolhidos pelo nave
 
 Os vídeos usam H.264 de 8 bits e metadados no início do MP4 para começar antes de baixar o arquivo inteiro. O player escolhe a versão mobile em telas pequenas ou dispositivos de toque e inicia a reprodução diretamente no clique. Vídeos de fundo e prévias pausam fora da tela, com a aba oculta ou enquanto um filme está aberto. Se o navegador bloquear o autoplay da capa, um botão permite iniciar o vídeo.
 
-A abertura mantém uma versão de alta qualidade em 1080p, codificada em CRF 18, nos formatos horizontal e vertical. O HLS escolhe a qualidade conforme a velocidade medida da conexão e busca somente alguns segundos à frente. Safari usa seu suporte nativo; os outros navegadores compatíveis carregam o player HLS sob demanda, com processamento de vídeo em um worker. Na economia de dados ou se HLS não estiver disponível, o site usa MP4 progressivo. Os filmes dos projetos continuam com versões próprias para desktop e mobile.
+A abertura inclui versões 4K em 3840×2160 no desktop e 2160×3840 no mobile, codificadas em CRF 18. Os originais disponíveis são 1080p: as versões 4K usam ampliação Lanczos e não equivalem a uma gravação nativa em 4K. A versão 4K é distribuída apenas em segmentos HLS, mantendo cada arquivo abaixo do limite do GitHub e as reservas MP4 em 1080p. O HLS escolhe a qualidade conforme a velocidade medida da conexão e busca somente alguns segundos à frente. Safari usa seu suporte nativo; os outros navegadores compatíveis carregam o player HLS sob demanda, com processamento de vídeo em um worker. Na economia de dados ou se HLS não estiver disponível, o site usa MP4 progressivo. Os filmes dos projetos continuam com versões próprias para desktop e mobile.
 
 Os arquivos originais, com sua resolução e áudio, continuam preservados no LFS. O build inclui apenas as versões web. A entrada do site não espera por uma animação de carregamento com duração fixa.

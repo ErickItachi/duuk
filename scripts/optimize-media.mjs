@@ -15,7 +15,8 @@ const imageDir = path.join(mediaDir, 'images')
 const videoDir = path.join(mediaDir, 'video')
 const localFfmpeg = path.join(homedir(), '.local/bin/ffmpeg')
 const ffmpeg = process.env.FFMPEG || (existsSync(localFfmpeg) ? localFfmpeg : 'ffmpeg')
-const heroesOnly = process.argv.includes('--heroes')
+const add4k = process.argv.includes('--heroes-4k')
+const heroesOnly = process.argv.includes('--heroes') || add4k
 const manifest = heroesOnly
   ? JSON.parse(await readFile(path.join(root, 'src/data/media.generated.json'), 'utf8'))
   : { images: {}, videos: {} }
@@ -67,11 +68,12 @@ for (const name of (await readdir(originalsDir)).filter((name) => name.endsWith(
   if (header.startsWith('version https://git-lfs.github.com/spec/v1')) throw new Error(`Baixe o original com git lfs pull antes de converter ${name}`)
   const base = path.parse(name).name
   const source = `/media/${name}`
+  const previous = manifest.videos[source]
   manifest.videos[source] = {}
   const hero = base.startsWith('hero-')
   if (hero) {
     tasks.push(async () => {
-      manifest.videos[source] = await generateHero({ original, base, videoDir, encode, hashFile })
+      manifest.videos[source] = await generateHero({ original, base, videoDir, encode, hashFile, previous: add4k ? previous : undefined })
     })
     continue
   }
