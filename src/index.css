@@ -684,6 +684,15 @@ ul {
   height: auto;
 }
 
+@media (min-width: 801px) {
+  .home-hero__logo {
+    width: min(
+      calc(var(--hero-logo-width) * 0.9),
+      calc(var(--hero-logo-height) * 718 / 886 * 0.9)
+    );
+  }
+}
+
 .hero-navigation {
   flex-shrink: 0;
   min-height: var(--hero-nav-height);
