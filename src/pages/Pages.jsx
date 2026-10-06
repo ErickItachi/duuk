@@ -12,18 +12,15 @@ import {
   ProjectIndex,
   Reveal,
 } from '../components/Site'
-import {
-  getAdjacentProjects,
-  getProjectBySlug,
-  projects,
-  studio,
-} from '../data/projects'
+import { studio } from '../data/projects'
+import { useContent } from '../content/useContent'
 import { directors } from '../data/directors'
 import { privacyPolicy } from '../data/privacy'
 import { localize, useLanguage } from '../i18n'
 
 export function PortfolioPage() {
   const { language, t } = useLanguage()
+  const { siteProjects: projects } = useContent()
 
   return (
     <>
@@ -31,7 +28,7 @@ export function PortfolioPage() {
       <Header />
       <main id="conteudo">
         <PageBanner
-          eyebrow={`${t.nav.portfolio} / 01—${String(projects.length).padStart(2, '0')}`}
+          eyebrow={`${t.nav.portfolio} / ${projects.length ? '01—' : ''}${String(projects.length).padStart(2, '0')}`}
           title={t.nav.portfolio}
           poster="/media/poster-portfolio.jpg"
           alt={
@@ -51,14 +48,17 @@ export function PortfolioPage() {
 
 export function ProjectPage() {
   const { slug } = useParams()
-  const project = getProjectBySlug(slug)
+  const { siteProjects: projects } = useContent()
+  const project = projects.find((item) => item.slug === slug)
   const { language, t } = useLanguage()
 
   if (!project) {
     return <Navigate to="/portfolio" replace />
   }
 
-  const { previous, next } = getAdjacentProjects(project.slug)
+  const projectIndex = projects.findIndex((item) => item.slug === slug)
+  const previous = projects[(projectIndex - 1 + projects.length) % projects.length]
+  const next = projects[(projectIndex + 1) % projects.length]
   const films = [project, ...(project.films || [])]
   const category = String(localize(project.category, language))
   const eyebrow =

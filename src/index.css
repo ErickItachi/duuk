@@ -119,6 +119,29 @@ ul {
   min-height: 100svh;
 }
 
+.preview-notice {
+  position: fixed;
+  z-index: 1200;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding: 12px 18px;
+  border: 1px solid #ffffff35;
+  border-radius: 8px;
+  background: #171717ed;
+  color: #fff;
+  font-size: 12px;
+  box-shadow: 0 4px 24px #0004;
+}
+
+.preview-notice span { color: #ffaf85; }
+.preview-notice a { text-decoration: underline; text-underline-offset: 3px; }
+
 .skip-link {
   position: absolute;
   z-index: 1200;

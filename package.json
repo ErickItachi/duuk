@@ -8,6 +8,7 @@
     "build": "vite build",
     "media:optimize": "node scripts/optimize-media.mjs",
     "lint": "oxlint",
+    "test": "node --test tests/*.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,9 +1,14 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Link, Route, Routes, useLocation } from 'react-router-dom'
 import { Logo } from './components/Site'
 import { LanguageProvider } from './i18n'
 import HomePage from './pages/HomePage'
 import { loadSecondaryPages } from './pages/loadPages'
+import { ContentProvider } from './content/ContentProvider'
+import { useContent } from './content/useContent'
+import { previewEnabled } from './content/config'
+
+const AdminPage = previewEnabled ? lazy(() => import('./admin/AdminPage')) : null
 
 const lazyPage = (name) =>
   lazy(() => loadSecondaryPages().then((pages) => ({ default: pages[name] })))
@@ -76,6 +81,7 @@ function AppRoutes() {
         >
           <ScrollManager />
           <Routes location={location}>
+            {previewEnabled && <Route path="/admin/*" element={<AdminPage />} />}
             <Route path="/" element={<HomePage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/projeto/:slug" element={<ProjectPage />} />
@@ -94,11 +100,27 @@ function AppRoutes() {
   )
 }
 
+function PreviewNotice() {
+  const { pathname } = useLocation()
+  const { viewMode } = useContent()
+  if (!previewEnabled || pathname.startsWith('/admin')) return null
+  return (
+    <aside className="preview-notice" aria-label="Ambiente de demonstração">
+      <span>{viewMode === 'draft' ? 'Prévia do rascunho' : 'Site de demonstração'}</span>
+      <Link to="/admin">Abrir painel ↗</Link>
+      {viewMode === 'draft' && <Link to="/?preview=published">Ver versão publicada no preview</Link>}
+    </aside>
+  )
+}
+
 function App() {
   return (
-    <LanguageProvider>
-      <AppRoutes />
-    </LanguageProvider>
+    <ContentProvider>
+      <LanguageProvider>
+        <AppRoutes />
+        <PreviewNotice />
+      </LanguageProvider>
+    </ContentProvider>
   )
 }
 

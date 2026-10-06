@@ -1,0 +1,164 @@
+import { useEffect, useRef, useState } from 'react'
+import { Link, NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { useContent } from '../content/useContent'
+import { validMediaUrl, MEDIA_PREFIX } from '../content/model'
+import { getImageSources } from '../media'
+import { ConfirmModal, Icon, MediaField } from './components'
+import ProjectEditor from './ProjectEditor'
+import './admin.css'
+
+const statusLabels = { published: 'Visível', draft: 'Rascunho', archived: 'Arquivado' }
+
+function ProjectList({ notify }) {
+  const { draft, saveDraft, urls, ready } = useContent()
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState('all')
+  const [editing, setEditing] = useState(null)
+  const [deleting, setDeleting] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const all = draft.projects
+  const filtered = all.filter((project) => (filter === 'all' || project.status === filter) && `${project.title} ${project.category?.pt || ''} ${project.client}`.toLowerCase().includes(query.toLowerCase()))
+  const reorder = async (project, offset) => {
+    const index = all.findIndex((item) => item.id === project.id)
+    const nextIndex = index + offset
+    if (nextIndex < 0 || nextIndex >= all.length) return
+    const next = [...all]; [next[index], next[nextIndex]] = [next[nextIndex], next[index]]
+    setBusy(true)
+    try { await saveDraft({ ...draft, projects: next }); notify('Ordem salva no rascunho.') } catch (cause) { notify(cause.message, true) }
+    finally { setBusy(false) }
+  }
+  const remove = async () => {
+    await saveDraft({ ...draft, projects: all.filter((item) => item.id !== deleting.id) })
+    notify('Projeto removido do rascunho. Publique no preview para aplicar.')
+  }
+  return <>
+    <div className="admin-page-title"><div><p className="admin-eyebrow">CONTEÚDO / FILMES</p><h1>Portfólio<span>.</span></h1><p>Histórias que merecem estar em cena.</p></div><button className="admin-button" disabled={!ready} onClick={() => setEditing('new')}><Icon name="plus" />Novo projeto</button></div>
+    <div className="admin-stats"><div><span>Total de projetos</span><strong>{String(all.length).padStart(2, '0')}</strong></div><div><span>Visíveis no portfólio</span><strong>{String(all.filter((item) => item.status === 'published').length).padStart(2, '0')}<i /></strong></div><div><span>Em destaque na home</span><strong>{String(all.filter((item) => item.status === 'published' && item.featured).length).padStart(2, '0')}</strong></div></div>
+    <section className="admin-panel" aria-label="Lista de projetos">
+      <div className="admin-list-toolbar"><div className="admin-filter-tabs" aria-label="Filtrar por visibilidade">{[['all', 'Todos'], ['published', 'Visíveis'], ['draft', 'Rascunhos'], ['archived', 'Arquivados']].map(([key, label]) => <button key={key} className={filter === key ? 'is-active' : ''} aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>)}</div><label className="admin-search"><Icon name="search" /><input type="search" aria-label="Buscar projeto" placeholder="Buscar projeto…" value={query} onChange={(event) => setQuery(event.target.value)} /></label></div>
+      <div className="admin-list-heading"><span>PROJETO</span><span>VISIBILIDADE</span><span>HOME</span><span>ORDEM / AÇÕES</span></div>
+      <div className="admin-project-list">
+        {filtered.map((project) => {
+          const index = all.findIndex((item) => item.id === project.id)
+          const poster = project.poster?.startsWith(MEDIA_PREFIX) ? urls[project.poster] : getImageSources(project.poster).src
+          return <article className="admin-project-row" key={project.id}>
+            <button className="admin-project-summary" onClick={() => setEditing(project)}><div className="admin-project-thumb">{poster ? <img src={poster} alt="" loading="lazy" /> : <Icon name="film" size={24} />}<span>{String(index + 1).padStart(2, '0')}</span></div><div><h2>{project.title}</h2><p>{project.category?.pt && project.category.pt !== 'A DEFINIR' ? project.category.pt : 'Categoria a definir'}<span>·</span>{project.year}</p></div></button>
+            <span className={`admin-status admin-status--${project.status}`}><i />{statusLabels[project.status]}</span>
+            <span className="admin-featured">{project.featured ? <><Icon name="check" size={15} />Destaque</> : '—'}</span>
+            <div className="admin-row-actions"><button className="admin-icon-button" aria-label={`Mover ${project.title} para cima`} disabled={busy || index === 0} onClick={() => reorder(project, -1)}><Icon name="up" size={16} /></button><button className="admin-icon-button" aria-label={`Mover ${project.title} para baixo`} disabled={busy || index === all.length - 1} onClick={() => reorder(project, 1)}><Icon name="down" size={16} /></button><button className="admin-icon-button" aria-label={`Editar ${project.title}`} onClick={() => setEditing(project)}><Icon name="edit" size={16} /></button><button className="admin-icon-button admin-icon-button--danger" aria-label={`Remover ${project.title}`} onClick={() => setDeleting(project)}><Icon name="trash" size={16} /></button></div>
+          </article>
+        })}
+        {!filtered.length && <div className="admin-empty"><Icon name="film" size={36} /><h2>{all.length ? 'Nenhum projeto encontrado' : 'Seu próximo filme começa aqui'}</h2><p>{all.length ? 'Tente outro nome ou filtro.' : 'Adicione o primeiro projeto ao portfólio.'}</p><button className="admin-button admin-button--secondary" onClick={() => { if (all.length) { setQuery(''); setFilter('all') } else setEditing('new') }}>{all.length ? 'Limpar filtros' : 'Novo projeto'}</button></div>}
+      </div>
+      <div className="admin-list-footer"><span>{filtered.length} {filtered.length === 1 ? 'projeto' : 'projetos'}</span><span>Use as setas para ordenar os filmes.</span></div>
+    </section>
+    <div className="admin-tip"><Icon name="edit" /><p>Edite, confira o rascunho e clique em <strong>Publicar no preview</strong> quando estiver pronto.</p></div>
+    {editing && <ProjectEditor key={editing.id || 'new'} project={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => notify('Rascunho salvo. Você já pode conferir a prévia.')} />}
+    {deleting && <ConfirmModal title="Remover projeto?" message={`“${deleting.title}” será removido do rascunho. A versão publicada no preview continua igual até você publicar a alteração.`} action="Remover projeto" onConfirm={remove} onClose={() => setDeleting(null)} />}
+  </>
+}
+
+function HomeEditor({ notify }) {
+  const { draft, saveDraft } = useContent()
+  const [form, setForm] = useState(() => ({ ...draft.heroMedia }))
+  const [busy, setBusy] = useState(false)
+  const [uploading, setUploading] = useState(0)
+  const [error, setError] = useState('')
+  const [destination, setDestination] = useState(null)
+  const navigate = useNavigate()
+  const dirty = JSON.stringify(form) !== JSON.stringify(draft.heroMedia)
+  const update = (key, value) => setForm((previous) => ({ ...previous, [key]: value }))
+  useEffect(() => {
+    if (!dirty) return
+    const prevent = (event) => { event.preventDefault(); event.returnValue = '' }
+    const intercept = (event) => {
+      const anchor = event.target.closest('a')
+      if (!anchor || anchor.target === '_blank' || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0 || anchor.origin !== location.origin || anchor.pathname === location.pathname) return
+      event.preventDefault()
+      setDestination(`${anchor.pathname}${anchor.search}`)
+    }
+    window.addEventListener('beforeunload', prevent)
+    document.addEventListener('click', intercept, true)
+    return () => { window.removeEventListener('beforeunload', prevent); document.removeEventListener('click', intercept, true) }
+  }, [dirty])
+  const save = async (event) => {
+    event.preventDefault(); setError('')
+    if (!Object.values(form).every(validMediaUrl)) { setError('Use arquivos enviados, caminhos do site ou endereços HTTPS.'); return }
+    if (!form.video || !form.videoMobile || !form.poster || !form.posterMobile) { setError('Escolha os vídeos e as capas para desktop e celular.'); return }
+    setBusy(true)
+    try { await saveDraft({ ...draft, heroMedia: form }); notify('Abertura salva no rascunho.') } catch (cause) { setError(cause.message) }
+    finally { setBusy(false) }
+  }
+  return <>
+    <div className="admin-page-title"><div><p className="admin-eyebrow">CONTEÚDO / ABERTURA</p><h1>Página inicial<span>.</span></h1><p>A primeira cena da sua marca.</p></div><Link className="admin-button admin-button--secondary" to="/?preview=draft" target="_blank">Ver rascunho<Icon name="arrow" /></Link></div>
+    <form className="admin-home-form" onSubmit={save}>
+      <div className="admin-home-grid">{[['desktop', 'Desktop', 'video', 'poster', 'Para telas maiores.'], ['mobile', 'Celular', 'videoMobile', 'posterMobile', 'Uma abertura pensada para telas verticais.']].map(([key, title, video, poster, text]) => <section className="admin-panel admin-home-panel" key={key}><div className="admin-section-head"><span className="admin-device">{key === 'desktop' ? '16:9' : '9:16'}</span><div><h2>{title}</h2><p>{text}</p></div></div><MediaField label={`Vídeo de abertura · ${title}`} kind="video" value={form[video]} onChange={(value) => update(video, value)} disabled={busy} onBusyChange={(value) => setUploading((count) => count + (value ? 1 : -1))} /><MediaField label={`Capa de abertura · ${title}`} kind="image" value={form[poster]} onChange={(value) => update(poster, value)} disabled={busy} onBusyChange={(value) => setUploading((count) => count + (value ? 1 : -1))} /></section>)}</div>
+      <div className="admin-save-bar"><p>{dirty ? 'Há alterações para salvar no rascunho.' : 'O rascunho está atualizado.'}</p><button type="button" className="admin-button admin-button--secondary" disabled={!dirty || busy || uploading > 0} onClick={() => setForm({ ...draft.heroMedia })}>Descartar alterações</button><button className="admin-button" disabled={!dirty || busy || uploading > 0}><Icon name="check" />{busy ? 'Salvando…' : 'Salvar rascunho'}</button></div>
+      {error && <p className="admin-error" role="alert">{error}</p>}
+    </form>
+    <div className="admin-tip"><Icon name="film" /><p>Nesta demonstração, os vídeos enviados são reproduzidos como você os enviou. O processamento automático será integrado na etapa com Supabase.</p></div>
+    {destination && <ConfirmModal title="Sair sem salvar?" message="As alterações da abertura ainda não foram salvas no rascunho." action="Sair sem salvar" onConfirm={() => navigate(destination)} onClose={() => setDestination(null)} />}
+  </>
+}
+
+function MediaLibrary({ notify }) {
+  const { media, urls, draft, published, upload, removeMedia } = useContent()
+  const input = useRef(null)
+  const [busy, setBusy] = useState(false)
+  const [filter, setFilter] = useState('all')
+  const [deleting, setDeleting] = useState(null)
+  const files = media.filter((file) => filter === 'all' || file.type.startsWith(filter))
+  const uploadFile = async (file) => {
+    if (!file) return
+    setBusy(true)
+    try { await upload(file, file.type.startsWith('image/') ? 'image' : 'video'); notify('Arquivo enviado para a biblioteca de teste.') } catch (cause) { notify(cause.message, true) }
+    finally { setBusy(false); input.current.value = '' }
+  }
+  return <>
+    <div className="admin-page-title"><div><p className="admin-eyebrow">CONTEÚDO / ARQUIVOS</p><h1>Biblioteca<span>.</span></h1><p>Capas e vídeos para suas próximas histórias.</p></div><button className="admin-button" onClick={() => input.current.click()} disabled={busy}><Icon name="upload" />{busy ? 'Enviando…' : 'Enviar arquivo'}</button><input ref={input} type="file" hidden accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm" aria-label="Enviar arquivo para biblioteca" onChange={(event) => uploadFile(event.target.files[0])} /></div>
+    <div className="admin-library-note"><Icon name="media" /><p>Arquivos enviados ficam neste navegador. Escolha-os pelo botão <strong>Biblioteca</strong> ao editar um projeto ou a abertura.</p></div>
+    <div className="admin-filter-tabs admin-library-filters">{[['all', 'Todos os arquivos'], ['image/', 'Imagens'], ['video/', 'Vídeos']].map(([key, label]) => <button key={key} aria-pressed={filter === key} className={filter === key ? 'is-active' : ''} onClick={() => setFilter(key)}>{label}</button>)}</div>
+    {files.length ? <div className="admin-library-grid">{files.map((file) => {
+      const used = JSON.stringify([draft, published]).includes(file.id)
+      return <article className="admin-library-card" key={file.id}><div className="admin-library-card__image">{file.type.startsWith('image/') ? <img src={urls[file.id]} alt={file.name} /> : <video src={urls[file.id]} controls playsInline preload="metadata" />}</div><div className="admin-library-card__body"><h2 title={file.name}>{file.name}</h2><p>{(file.size / 1024 / 1024).toFixed(1)} MB · {file.type.split('/')[1].toUpperCase()}</p><div><span className={used ? 'admin-used' : ''}>{used ? 'Em uso' : 'Disponível'}</span><button className="admin-icon-button admin-icon-button--danger" disabled={used} aria-label={`Remover arquivo ${file.name}`} title={used ? 'Troque o arquivo nos projetos e publique antes de removê-lo.' : 'Remover arquivo'} onClick={() => setDeleting(file)}><Icon name="trash" /></button></div></div></article>
+    })}</div> : <div className="admin-panel admin-empty admin-library-empty"><Icon name="upload" size={40} /><h2>{media.length ? 'Nenhum arquivo desse tipo' : 'Espaço para novas cenas'}</h2><p>{media.length ? 'Selecione outro filtro ou envie um arquivo.' : 'Envie uma capa ou um vídeo para testar a biblioteca.'}</p><button className="admin-button admin-button--secondary" onClick={() => input.current.click()} disabled={busy}>Enviar primeiro arquivo</button></div>}
+    {deleting && <ConfirmModal title="Remover arquivo?" message={`“${deleting.name}” será excluído da biblioteca de teste.`} action="Remover arquivo" onConfirm={async () => { await removeMedia(deleting.id); notify('Arquivo removido.') }} onClose={() => setDeleting(null)} />}
+  </>
+}
+
+export default function AdminPage() {
+  const { ready, error, draft, hasChanges, publish, reset } = useContent()
+  const [toast, setToast] = useState(null)
+  const [confirm, setConfirm] = useState('')
+  const notify = (message, failed = false) => setToast({ message, failed })
+  useEffect(() => {
+    if (!toast) return
+    const timeout = window.setTimeout(() => setToast(null), 7000)
+    return () => window.clearTimeout(timeout)
+  }, [toast])
+  useEffect(() => {
+    document.title = 'Painel DUUK — Preview'
+    const robots = document.querySelector('meta[name="robots"]')
+    robots?.setAttribute('content', 'noindex, nofollow')
+  }, [])
+  return <div className="admin-shell">
+    <aside className="admin-sidebar">
+      <Link className="admin-brand" to="/admin"><img src="/media/duuk-logo-white.png" width="30" height="37" alt="" /><span>DUUK<small>STUDIO / PAINEL</small></span></Link>
+      <p className="admin-sidebar__label">GERENCIAR</p>
+      <nav aria-label="Painel administrativo"><NavLink to="/admin" end><Icon name="grid" />Portfólio</NavLink><NavLink to="/admin/inicio"><Icon name="home" />Página inicial</NavLink><NavLink to="/admin/midias"><Icon name="media" />Biblioteca</NavLink></nav>
+      <div className="admin-sidebar__bottom"><div className="admin-demo-card"><span className="admin-demo-dot" /><div><strong>Modo demonstração</strong><p>Dados salvos neste navegador.</p></div></div><button className="admin-reset" disabled={!ready || Boolean(error)} onClick={() => setConfirm('reset')}>Restaurar demonstração</button><span className="admin-sidebar__signature">DUUK® / FEITO PARA CRIAR</span></div>
+    </aside>
+    <div className="admin-workspace">
+      <header className="admin-topbar"><div className="admin-environment"><span />PREVIEW<span className="admin-topbar-divider">/</span><span className="admin-topbar-note">{hasChanges ? 'Alterações no rascunho' : 'Conteúdo atualizado'}</span></div><div className="admin-topbar__actions"><Link to="/?preview=draft" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16} /></Link><button className="admin-button" onClick={() => setConfirm('publish')} disabled={!ready || !hasChanges || Boolean(error)}><Icon name="check" />Publicar no preview</button></div></header>
+      <div className="admin-demo-banner"><span className="admin-demo-tag">DEMONSTRAÇÃO</span><p>Experimente à vontade. As alterações deste painel ficam apenas no preview deste navegador.</p></div>
+      <main className="admin-main">
+        {error && <p className="admin-error" role="alert">{error}</p>}
+        {!ready ? <div className="admin-empty"><p>Carregando seu conteúdo…</p></div> : <Routes><Route index element={<ProjectList notify={notify} />} /><Route path="inicio" element={<HomeEditor key={draft.updatedAt || 'initial'} notify={notify} />} /><Route path="midias" element={<MediaLibrary notify={notify} />} /><Route path="*" element={<Navigate to="/admin" replace />} /></Routes>}
+      </main>
+      <footer className="admin-footer"><span>DUUK / SÃO PAULO</span><button className="admin-mobile-reset" disabled={!ready || Boolean(error)} onClick={() => setConfirm('reset')}>Restaurar demonstração</button><span>Seu conteúdo. Seu ritmo.</span></footer>
+    </div>
+    {toast && <div className={`admin-toast${toast.failed ? ' admin-toast--error' : ''}`} role={toast.failed ? 'alert' : 'status'}><Icon name={toast.failed ? 'close' : 'check'} /><span>{toast.message}</span><button className="admin-icon-button" aria-label="Fechar aviso" onClick={() => setToast(null)}><Icon name="close" size={16} /></button></div>}
+    {confirm === 'publish' && <ConfirmModal title="Publicar no preview?" message="O rascunho será aplicado ao site de demonstração deste navegador. Você poderá conferir o resultado em Ver site. O domínio público continua na versão atual." action="Publicar no preview" onConfirm={async () => { await publish(); notify('Conteúdo publicado no preview. Abra o site para conferir.') }} onClose={() => setConfirm('')} />}
+    {confirm === 'reset' && <ConfirmModal title="Restaurar demonstração?" message="As edições e os arquivos enviados neste navegador serão apagados. Os projetos originais serão restaurados no preview." action="Restaurar dados" onConfirm={async () => { await reset(); notify('Demonstração restaurada.') }} onClose={() => setConfirm('')} />}
+  </div>
+}

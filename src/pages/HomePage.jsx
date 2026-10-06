@@ -12,10 +12,8 @@ import {
   ProjectIndex,
   Reveal,
 } from '../components/Site'
-import { heroMedia, projects } from '../data/projects'
+import { useContent } from '../content/useContent'
 import { useLanguage } from '../i18n'
-
-const featuredProjects = projects.filter((project) => project.featured)
 
 function useNarrowScreen() {
   const query = '(max-width: 800px)'
@@ -36,6 +34,8 @@ function useNarrowScreen() {
 
 export default function HomePage() {
   const { t } = useLanguage()
+  const { siteProjects: projects, siteHero: heroMedia } = useContent()
+  const featuredProjects = projects.filter((project) => project.featured)
   const narrow = useNarrowScreen()
   const heroVideoRef = useRef(null)
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
