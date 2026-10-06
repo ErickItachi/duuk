@@ -85,7 +85,7 @@ export function MediaField({ label, value = '', kind, onChange, disabled = false
         <input ref={input} type="file" aria-label={`Enviar ${label.toLowerCase()}`} accept={kind === 'image' ? 'image/jpeg,image/png,image/webp,image/avif' : 'video/mp4,video/webm'} onChange={(event) => uploadFile(event.target.files[0])} disabled={disabled || busy} hidden />
         <button type="button" className="admin-button admin-button--secondary" onClick={() => input.current.click()} disabled={disabled || busy}><Icon name="upload" />{busy ? `Enviando ${progress}%` : 'Enviar arquivo'}</button>
         <button type="button" className="admin-button admin-button--secondary" onClick={() => setLibraryOpen(true)} disabled={disabled || busy}><Icon name="media" />Biblioteca</button>
-        <span>{file ? file.name : kind === 'image' ? 'JPG, PNG, WebP ou AVIF' : 'MP4 ou WebM · até 50 MB'}</span>
+        <span>{file ? file.name : kind === 'image' ? 'JPG, PNG, WebP ou AVIF · fotos grandes são otimizadas' : 'MP4 ou WebM · até 50 MB'}</span>
       </div>
       <label className="admin-field"><span>Ou use um endereço HTTPS</span><input aria-label={`Endereço de ${label.toLowerCase()}`} value={value.startsWith(MEDIA_PREFIX) ? '' : value} placeholder="https://…" onChange={(event) => { setError(''); onChange(event.target.value.trim()) }} disabled={disabled || busy} /></label>
       {value && <button type="button" className="admin-text-button" onClick={() => onChange('')} disabled={disabled || busy}>Remover {kind === 'image' ? 'imagem' : 'vídeo'}</button>}

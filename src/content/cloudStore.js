@@ -1,5 +1,6 @@
 import { supabase, MEDIA_BUCKET, MAX_UPLOAD_BYTES } from './supabase'
 import { MEDIA_PREFIX } from './model'
+import { optimizeImage } from './optimizeImage'
 
 let signedCache = { scope: '', expires: 0, paths: '', urls: {} }
 const fail = (error) => { if (error) throw new Error(error.message || 'Não foi possível salvar. Tente novamente.') }
@@ -12,7 +13,7 @@ export async function readCloud(isAdmin) {
   fail(contentResult.error); fail(mediaResult.error)
   const published = contentResult.data.find((row) => row.key === 'published')
   const draft = contentResult.data.find((row) => row.key === 'draft')
-  if (!published || (isAdmin && !draft)) throw new Error('O conteúdo do preview não está disponível. Tente recarregar.')
+  if (!published || (isAdmin && !draft)) throw new Error('O conteúdo do site não está disponível. Tente recarregar.')
   const media = mediaResult.data.map((file) => ({ ...file, id: `${MEDIA_PREFIX}${file.id}`, createdAt: file.created_at }))
   const paths = JSON.stringify(media.map((file) => file.path))
   const scope = isAdmin ? 'admin' : 'public'
@@ -36,6 +37,10 @@ export async function saveCloudDraft(document, version) {
   const { error } = await supabase.rpc('duuk_save_draft', { document, expected_version: version })
   fail(error)
 }
+export async function saveCloudSite(document, version) {
+  const { error } = await supabase.rpc('duuk_save_site', { document, expected_version: version })
+  fail(error)
+}
 export async function publishCloud(version) {
   const { error } = await supabase.rpc('duuk_publish', { expected_version: version })
   fail(error)
@@ -46,6 +51,7 @@ export async function uploadCloud(file, kind, onProgress = () => {}) {
   if (!accepted.includes(file.type)) throw new Error(kind === 'image' ? 'Envie uma imagem JPG, PNG, WebP ou AVIF.' : 'Envie um vídeo MP4 ou WebM.')
   if (!file.size) throw new Error('O arquivo está vazio.')
   if (file.size > MAX_UPLOAD_BYTES) throw new Error('Cada arquivo pode ter até 50 MB. Para vídeos maiores, use um endereço HTTPS ou o YouTube.')
+  if (kind === 'image') file = await optimizeImage(file)
   const { data: { session }, error } = await supabase.auth.getSession()
   fail(error)
   if (!session) throw new Error('Entre novamente para enviar arquivos.')

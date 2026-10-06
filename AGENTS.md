@@ -1,20 +1,13 @@
 # Fluxo de trabalho da DUUK
 
-O usuário quer ver as alterações concluídas em `https://www.duukfilms.com/` sem fazer o envio manualmente.
+## Site e painel publicados
 
-## Painel administrativo em preview
+O usuário autorizou publicar o painel administrativo em produção e aplicar as alterações ao site público ao salvar.
 
-O usuário pediu expressamente que o painel administrativo seja desenvolvido e publicado apenas em preview, agora com integração real a um Supabase exclusivo de testes. Esta instrução tem prioridade sobre o fluxo de produção abaixo para essa funcionalidade.
-
-- Trabalhe na branch `preview/admin-panel` e envie apenas para essa branch. Não faça merge ou push do painel para `main` sem autorização posterior do usuário.
-- Compartilhe o endereço de preview da Vercel com `/admin`. A versão pública em `duukfilms.com` deve continuar na versão de produção.
-- O Supabase DUUK Preview é exclusivo deste ambiente. Login, conteúdo e uploads devem persistir na nuvem. Nunca exponha senhas ou chaves de serviço no código do navegador. Não conecte dados de produção.
-- Em builds com `VERCEL_ENV=production`, mantenha a demonstração e a rota de admin desabilitadas.
-
-## Publicação de alterações no site público
-
-- Depois de concluir e validar uma alteração solicitada neste projeto, faça commit dos arquivos e trechos dessa tarefa e envie para `origin/main`. A integração existente com a Vercel publica a branch `main` automaticamente.
-- Preserve alterações locais e arquivos preparados por outras tarefas. Não inclua mudanças alheias ao pedido no commit.
-- Se houver mudanças remotas, integre-as sem descartar trabalho local e sem usar force push.
-- Aguarde a publicação e confira no domínio o comportamento ou conteúdo alterado antes de afirmar que está online. Se a publicação falhar, informe o motivo.
-- Salvar um arquivo local não atualiza o domínio imediatamente: o usuário poderá recarregar o site depois da publicação. Na prévia com `npm run dev`, o Vite atualiza os arquivos salvos automaticamente.
+- O painel fica em `https://www.duukfilms.com/admin`, protegido por Supabase Auth e autorização no servidor.
+- Não inclua links, botões ou avisos sobre o painel nas páginas públicas da DUUK.
+- Salvar um projeto ou a abertura deve atualizar o site público numa única transação, sem um segundo botão de publicar. Projetos com status rascunho/arquivado continuam privados.
+- Mantenha Supabase no plano gratuito. Não contrate serviços, aumente planos ou habilite cobrança. O usuário aceitou links do YouTube para vídeos grandes, inclusive na abertura, mantendo uploads diretos com limites gratuitos.
+- Senhas e chaves de serviço não podem entrar no repositório nem no navegador.
+- Preserve alterações locais alheias à tarefa. O checkout original tem alterações anteriores ainda não publicadas.
+- Conclua os testes, faça commit e envie as alterações desta tarefa para `origin/main`. Aguarde a Vercel e confira o domínio antes de afirmar que está online.

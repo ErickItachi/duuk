@@ -2,25 +2,29 @@
 
 Site institucional e portfólio da DUUK, em React e Vite.
 
-## Painel administrativo em preview
+## Painel administrativo publicado
 
-O painel está na branch `preview/admin-panel`, separado do domínio público. Enviar essa branch gera um preview na Vercel. Não faça merge em `main` para testar.
+O painel fica em https://www.duukfilms.com/admin, protegido por login. O site público não mostra links para o painel. A conta administrativa é `contato@duukfilms.com`; a senha está apenas no Supabase Auth.
 
-- Painel: https://duuk-git-preview-admin-panel-duuk1.vercel.app/admin
-- Supabase: DUUK Preview (`ilohuxhyfqikjlvoarts`), na organização do usuário, região São Paulo.
-- Login administrativo: `contato@duukfilms.com`. A senha está somente no Supabase Auth, nunca no repositório.
+**Salvar no site** grava o conteúdo e atualiza a versão pública numa transação. Reordenar ou remover um projeto também atualiza o site ao confirmar a ação. Projetos com estado rascunho ou arquivado ficam privados. A atualização chega às páginas abertas por Supabase Realtime; recarregar também carrega os dados atuais.
 
-O painel permite editar projetos, textos PT/EN, ordem, visibilidade, capas, vídeos e abertura para desktop/celular. **Salvar rascunho** grava na nuvem; **Ver site** abre `/?preview=draft` para administradores; **Publicar no preview** atualiza a versão acessível a visitantes em todos os dispositivos. Nada disso publica no domínio oficial.
+O projeto Supabase existente (`ilohuxhyfqikjlvoarts`, nome DUUK Preview) passou a atender este site por autorização do usuário. Ele permanece no plano gratuito. Não há contratação de plano, armazenamento ou transcodificação pagos.
 
-Imagens e vídeos ficam em um bucket privado. Cada arquivo pode ter até **50 MB**, limite do Supabase gratuito. Vídeos acima de 6 MB usam envio retomável com progresso e novas tentativas. Para vídeos maiores, use HTTPS ou YouTube. O player reproduz o arquivo enviado; não há transcodificação automática. Os arquivos originais do site continuam no próprio projeto.
+### Vídeos e imagens gratuitos
 
-`duuk_content` separa rascunho e publicação. A publicação remove projetos com estado rascunho/arquivado antes de liberar o JSON aos visitantes. RLS protege conteúdo, biblioteca e arquivos; uma tabela de administradores controlada pelo servidor autoriza edições. Arquivos em uso não podem ser apagados. Revisões impedem sobrescrever uma edição feita em outra aba. Recarregar ou abrir em outro navegador recupera os dados da nuvem; abas abertas verificam atualizações a cada 30 segundos e ao voltar ao foco.
+O painel aceita links do YouTube em projetos e nas aberturas desktop/mobile. Envie o vídeo pelo YouTube, escolha visibilidade não listado, permita incorporação e cole o link no painel. Esse vídeo não consome o armazenamento do Supabase. O YouTube pode exibir sua marca e anúncios, conforme aceito pelo usuário; a incorporação precisa ser permitida pelo vídeo.
 
-`src/content/supabaseConfig.json` contém somente a URL e a chave **publishable**, próprias para o navegador. Overrides locais opcionais: `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`. Não use `service_role` nesses valores. `supabase/schema.sql` documenta a configuração inicial aplicada; não execute novamente num banco já configurado. A conta foi criada pelo Auth Admin API por uma função temporária com autenticação própria; essa função foi desativada após a criação e agora exige JWT e retorna 410.
+Uploads diretos continuam disponíveis para imagens JPG, PNG, WebP, AVIF e vídeos MP4/WebM. Limites: 50 MB por arquivo, 1 GB de armazenamento no plano gratuito, além das cotas de tráfego. Fotos maiores que 1 MB são otimizadas para WebP até 2560 px quando a conversão reduz o tamanho. Vídeos maiores que 6 MB usam envio retomável. O site não transcodifica vídeos enviados.
 
-A auditoria do Supabase não encontrou tabelas expostas sem RLS. O aviso restante é a [checagem de senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), disponível apenas no plano Pro. O projeto permanece gratuito, conforme autorizado.
+Não existe promessa de hospedagem ilimitada grátis. Os arquivos originais do site seguem no próprio projeto e não ocupam o espaço de uploads do Supabase. Consulte os [limites gratuitos](https://supabase.com/pricing); projetos gratuitos podem pausar por inatividade.
 
-O build com `VERCEL_ENV=production` desabilita a conexão cloud e a rota `/admin`. Preview e desenvolvimento recebem `noindex`. A produção só será integrada após autorização posterior.
+### Dados e segurança
+
+`src/content/supabaseConfig.json` contém apenas URL e chave publishable, próprias para o navegador. Overrides opcionais: `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`. Nunca use chaves de serviço nesses valores.
+
+RLS protege o conteúdo, a biblioteca, os arquivos e a tabela de administradores. Os RPCs autorizam administradores no servidor. A publicação filtra os projetos privados antes de liberar JSON aos visitantes; arquivos em uso não podem ser apagados. Revisões impedem sobrescrever uma edição feita em outra aba. `supabase/schema.sql` registra o esquema inicial e `supabase/live.sql` a publicação automática e o Realtime; esses arquivos já foram aplicados.
+
+A função temporária usada para criar a conta foi desativada e retorna 410. O aviso restante do Supabase é a [checagem de senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), disponível apenas no plano Pro.
 
 Use Node.js 22:
 
@@ -30,7 +34,7 @@ npm test
 npm run dev
 ```
 
-O teste remoto de permissões e conflitos roda quando `DUUK_TEST_PASSWORD` é fornecida no ambiente, sem gravá-la em arquivos do projeto.
+Testes remotos rodam quando `DUUK_TEST_PASSWORD` é fornecida no ambiente, sem gravar a senha no projeto.
 
 ## Vídeos e Git LFS
 

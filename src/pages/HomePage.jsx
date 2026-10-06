@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AmbientVideo from '../components/AmbientVideo'
+import YouTubeAmbient from '../components/YouTubeAmbient'
+import { heroVideo } from '../content/youtube'
 import DeferredImage from '../components/DeferredImage'
 import {
   Arrow,
@@ -39,9 +41,7 @@ export default function HomePage() {
   const narrow = useNarrowScreen()
   const heroVideoRef = useRef(null)
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
-  const hero = narrow
-    ? { poster: heroMedia.posterMobile, video: heroMedia.videoMobile }
-    : heroMedia
+  const hero = heroVideo(heroMedia, narrow)
 
   return (
     <>
@@ -50,7 +50,7 @@ export default function HomePage() {
       <main id="conteudo">
         <section className="home-hero" aria-label="DUUK">
           <DeferredImage className="home-hero__poster" src={hero.poster} alt="" eager />
-          <AmbientVideo
+          {hero.provider === 'youtube' ? <YouTubeAmbient key={hero.videoId} videoId={hero.videoId} videoRef={heroVideoRef} onAutoplayBlocked={setAutoplayBlocked} /> : <AmbientVideo
             key={hero.video}
             className="home-hero__video"
             poster={hero.poster}
@@ -63,7 +63,7 @@ export default function HomePage() {
             playsInline
             preload="auto"
             aria-hidden="true"
-          />
+          />}
           <span className="home-hero__overlay" aria-hidden="true" />
           <div className="home-hero__center">
             <Logo className="home-hero__logo" priority />

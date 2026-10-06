@@ -32,6 +32,9 @@ test('Supabase protege rascunhos, exige administrador e rejeita revisões antiga
   const stale = await call('rpc/duuk_save_draft', { document: draft.content, expected_version: draft.version - 1 })
   assert.equal(stale.status, 409)
   assert.equal(stale.data.code, 'PT409')
+  const staleLive = await call('rpc/duuk_save_site', { document: draft.content, expected_version: draft.version - 1 })
+  assert.equal(staleLive.status, 409)
+  assert.equal(staleLive.data.code, 'PT409')
   const after = (await call('duuk_content?key=eq.draft&select=version')).data[0]
   assert.equal(after.version, draft.version)
 })

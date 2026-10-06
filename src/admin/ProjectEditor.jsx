@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useContent } from '../content/useContent'
+import { youtubeId } from '../content/youtube'
 import { slugify, validateProject } from '../content/model'
 import { ConfirmModal, Icon, MediaField, Modal } from './components'
 
 function newProject() {
-  return { id: crypto.randomUUID(), title: '', slug: '', description: { pt: '', en: '' }, headline: { pt: '', en: '' }, category: { pt: '', en: '' }, alt: { pt: '', en: '' }, client: '', agency: '', director: '', year: String(new Date().getFullYear()), poster: '', video: '', provider: 'mp4', featured: false, coverLabel: true, objectPosition: 'center center', status: 'draft', credits: [] }
+  return { id: crypto.randomUUID(), title: '', slug: '', description: { pt: '', en: '' }, headline: { pt: '', en: '' }, category: { pt: '', en: '' }, alt: { pt: '', en: '' }, client: '', agency: '', director: '', year: String(new Date().getFullYear()), poster: '', video: '', provider: 'mp4', featured: false, coverLabel: true, objectPosition: 'center center', status: 'published', credits: [] }
 }
 
 export default function ProjectEditor({ project, onClose, onSaved }) {
@@ -34,13 +35,14 @@ export default function ProjectEditor({ project, onClose, onSaved }) {
     event.preventDefault(); setError(''); setBusy(true)
     try {
       const next = { ...form, title: form.title.trim(), slug: form.slug.trim() }
+      if (next.provider === 'youtube') { next.videoId = youtubeId(next.videoId); next.video = '' }
       validateProject(next, baseDraft.projects)
       await saveDraft({ ...baseDraft, projects: project ? baseDraft.projects.map((item) => item.id === next.id ? next : item) : [...baseDraft.projects, next] }, baseVersion)
       onSaved(); onClose()
     } catch (cause) { setError(cause.message); setBusy(false) }
   }
   return <>
-    <Modal title={project ? 'Editar projeto' : 'Novo projeto'} subtitle="Prepare o conteúdo e salve como rascunho antes de publicar no preview." onClose={close} wide>
+    <Modal title={project ? 'Editar projeto' : 'Novo projeto'} subtitle="Ao salvar, projetos visíveis são atualizados no site público." onClose={close} wide>
       <form onSubmit={save}>
         <fieldset disabled={busy} className="admin-editor">
           <div className="admin-editor__content">
@@ -52,7 +54,7 @@ export default function ProjectEditor({ project, onClose, onSaved }) {
             <div className="admin-field-row"><label className="admin-field"><span>Categoria · {language.toUpperCase()}</span><input value={form.category?.[language] || ''} onChange={(event) => translate('category', event.target.value)} placeholder="Institucional, evento, casamento…" /></label><label className="admin-field admin-field--year"><span>Ano</span><input inputMode="numeric" maxLength={4} value={form.year} onChange={(event) => update('year', event.target.value)} /></label></div>
             <div className="admin-field-row"><label className="admin-field"><span>Cliente</span><input value={form.client} onChange={(event) => update('client', event.target.value)} /></label><label className="admin-field"><span>Direção</span><input value={form.director} onChange={(event) => update('director', event.target.value)} /></label></div>
             <label className="admin-field"><span>Agência</span><input value={form.agency} onChange={(event) => update('agency', event.target.value)} /></label>
-            <label className="admin-field"><span>Visibilidade ao publicar no preview</span><select aria-label="Visibilidade ao publicar no preview" value={form.status} onChange={(event) => update('status', event.target.value)}><option value="published">Visível no portfólio</option><option value="draft">Rascunho</option><option value="archived">Arquivado</option></select></label>
+            <label className="admin-field"><span>Visibilidade no site</span><select aria-label="Visibilidade no site" value={form.status} onChange={(event) => update('status', event.target.value)}><option value="published">Visível no portfólio</option><option value="draft">Rascunho</option><option value="archived">Arquivado</option></select></label>
             <label className="admin-checkbox"><input type="checkbox" checked={form.featured} onChange={(event) => update('featured', event.target.checked)} /><span>Destacar na página inicial</span></label>
             <label className="admin-checkbox"><input type="checkbox" checked={form.coverLabel} onChange={(event) => update('coverLabel', event.target.checked)} /><span>Exibir categoria sobre a capa</span></label>
           </div>
@@ -61,11 +63,11 @@ export default function ProjectEditor({ project, onClose, onSaved }) {
             <label className="admin-field"><span>Descrição da imagem · {language.toUpperCase()}</span><input value={form.alt?.[language] || ''} onChange={(event) => translate('alt', event.target.value)} placeholder="Descreva a imagem para quem usa leitor de tela" /></label>
             <label className="admin-field"><span>Enquadramento da capa</span><select aria-label="Enquadramento da capa" value={form.objectPosition} onChange={(event) => update('objectPosition', event.target.value)}><option value="center center">Centro</option><option value="center top">Topo</option><option value="center bottom">Base</option>{!['center center', 'center top', 'center bottom'].includes(form.objectPosition) && <option value={form.objectPosition}>Atual ({form.objectPosition})</option>}</select></label>
             <label className="admin-field"><span>Origem do vídeo</span><select aria-label="Origem do vídeo" value={form.provider} onChange={(event) => update('provider', event.target.value)}><option value="mp4">Arquivo de vídeo</option><option value="youtube">YouTube</option></select></label>
-            {form.provider === 'youtube' ? <label className="admin-field"><span>ID do vídeo no YouTube</span><input value={form.videoId || ''} onChange={(event) => update('videoId', event.target.value.trim())} placeholder="11 caracteres do endereço do vídeo" /></label> : <MediaField label="Vídeo do projeto" kind="video" value={form.video} onChange={(value) => update('video', value)} onBusyChange={uploadStatus} />}
+            {form.provider === 'youtube' ? <label className="admin-field"><span>Link do vídeo no YouTube</span><input value={form.videoId || ''} onChange={(event) => update('videoId', event.target.value.trim())} placeholder="https://youtu.be/…" /></label> : <MediaField label="Vídeo do projeto" kind="video" value={form.video} onChange={(value) => update('video', value)} onBusyChange={uploadStatus} />}
           </div>
         </fieldset>
         {error && <p className="admin-error admin-editor__error" role="alert">{error}</p>}
-        <div className="admin-modal__foot"><span>Rascunho salvo na nuvem.</span><button type="button" className="admin-button admin-button--secondary" onClick={close} disabled={busy || uploading > 0}>Cancelar</button><button className="admin-button" disabled={busy || uploading > 0}><Icon name="check" />{busy ? 'Salvando…' : 'Salvar rascunho'}</button></div>
+        <div className="admin-modal__foot"><span>Alterações aplicadas ao salvar.</span><button type="button" className="admin-button admin-button--secondary" onClick={close} disabled={busy || uploading > 0}>Cancelar</button><button className="admin-button" disabled={busy || uploading > 0}><Icon name="check" />{busy ? 'Salvando…' : 'Salvar no site'}</button></div>
       </form>
     </Modal>
     {confirmClose && <ConfirmModal title="Descartar alterações?" message="As mudanças desse formulário ainda não foram salvas." action="Descartar alterações" onConfirm={onClose} onClose={() => setConfirmClose(false)} />}

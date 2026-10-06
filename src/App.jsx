@@ -1,15 +1,14 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Link, Route, Routes, useLocation } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { Logo } from './components/Site'
 import { LanguageProvider } from './i18n'
 import HomePage from './pages/HomePage'
 import { loadSecondaryPages } from './pages/loadPages'
 import { ContentProvider } from './content/ContentProvider'
-import { useContent } from './content/useContent'
-import { previewEnabled } from './content/config'
+import { adminEnabled } from './content/config'
 import { AuthProvider } from './content/AuthProvider'
 
-const AdminPage = previewEnabled ? lazy(() => import('./admin/AdminPage')) : null
+const AdminPage = adminEnabled ? lazy(() => import('./admin/AdminPage')) : null
 
 const lazyPage = (name) =>
   lazy(() => loadSecondaryPages().then((pages) => ({ default: pages[name] })))
@@ -33,6 +32,11 @@ function ScrollManager() {
   const { pathname, hash } = useLocation()
 
   useEffect(() => {
+    if (pathname.startsWith('/admin')) {
+      let robots = document.querySelector('meta[name=robots]')
+      if (!robots) { robots = document.createElement('meta'); robots.name = 'robots'; robots.dataset.duukAdmin = 'true'; document.head.append(robots) }
+      robots.content = 'noindex, nofollow'
+    } else document.querySelector('meta[data-duuk-admin]')?.remove()
     if (hash) {
       const target = document.getElementById(decodeURIComponent(hash.slice(1)))
       if (target) {
@@ -82,7 +86,7 @@ function AppRoutes() {
         >
           <ScrollManager />
           <Routes location={location}>
-            {previewEnabled && <Route path="/admin/*" element={<AdminPage />} />}
+            {adminEnabled && <Route path="/admin/*" element={<AdminPage />} />}
             <Route path="/" element={<HomePage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/projeto/:slug" element={<ProjectPage />} />
@@ -101,26 +105,12 @@ function AppRoutes() {
   )
 }
 
-function PreviewNotice() {
-  const { pathname } = useLocation()
-  const { viewMode } = useContent()
-  if (!previewEnabled || pathname.startsWith('/admin')) return null
-  return (
-    <aside className="preview-notice" aria-label="Ambiente de preview">
-      <span>{viewMode === 'draft' ? 'Prévia do rascunho' : 'Site de preview'}</span>
-      <Link to="/admin">Abrir painel ↗</Link>
-      {viewMode === 'draft' && <Link to="/?preview=published">Ver versão publicada no preview</Link>}
-    </aside>
-  )
-}
-
 function App() {
   return (
     <AuthProvider>
       <ContentProvider>
         <LanguageProvider>
           <AppRoutes />
-          <PreviewNotice />
         </LanguageProvider>
       </ContentProvider>
     </AuthProvider>

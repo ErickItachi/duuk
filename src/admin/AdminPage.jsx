@@ -3,6 +3,7 @@ import { Link, NavLink, Navigate, Route, Routes, useNavigate } from 'react-route
 import { useContent } from '../content/useContent'
 import { useAuth } from '../content/AuthContext'
 import LoginPage from './LoginPage'
+import { youtubeId } from '../content/youtube'
 import { validMediaUrl, MEDIA_PREFIX } from '../content/model'
 import { getImageSources } from '../media'
 import { ConfirmModal, Icon, MediaField } from './components'
@@ -26,12 +27,12 @@ function ProjectList({ notify }) {
     if (nextIndex < 0 || nextIndex >= all.length) return
     const next = [...all]; [next[index], next[nextIndex]] = [next[nextIndex], next[index]]
     setBusy(true)
-    try { await saveDraft({ ...draft, projects: next }); notify('Ordem salva no rascunho.') } catch (cause) { notify(cause.message, true) }
+    try { await saveDraft({ ...draft, projects: next }); notify('Ordem salva no site.') } catch (cause) { notify(cause.message, true) }
     finally { setBusy(false) }
   }
   const remove = async () => {
     await saveDraft({ ...draft, projects: all.filter((item) => item.id !== deleting.id) })
-    notify('Projeto removido do rascunho. Publique no preview para aplicar.')
+    notify('Projeto removido do site.')
   }
   return <>
     <div className="admin-page-title"><div><p className="admin-eyebrow">CONTEÚDO / FILMES</p><h1>Portfólio<span>.</span></h1><p>Histórias que merecem estar em cena.</p></div><button className="admin-button" disabled={!ready} onClick={() => setEditing('new')}><Icon name="plus" />Novo projeto</button></div>
@@ -54,9 +55,9 @@ function ProjectList({ notify }) {
       </div>
       <div className="admin-list-footer"><span>{filtered.length} {filtered.length === 1 ? 'projeto' : 'projetos'}</span><span>Use as setas para ordenar os filmes.</span></div>
     </section>
-    <div className="admin-tip"><Icon name="edit" /><p>Edite, confira o rascunho e clique em <strong>Publicar no preview</strong> quando estiver pronto.</p></div>
-    {editing && <ProjectEditor key={editing.id || 'new'} project={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => notify('Rascunho salvo. Você já pode conferir a prévia.')} />}
-    {deleting && <ConfirmModal title="Remover projeto?" message={`“${deleting.title}” será removido do rascunho. A versão publicada no preview continua igual até você publicar a alteração.`} action="Remover projeto" onConfirm={remove} onClose={() => setDeleting(null)} />}
+    <div className="admin-tip"><Icon name="edit" /><p>Ao clicar em <strong>Salvar no site</strong>, os projetos visíveis são atualizados no domínio público.</p></div>
+    {editing && <ProjectEditor key={editing.id || 'new'} project={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => notify('Conteúdo salvo. O site foi atualizado.')} />}
+    {deleting && <ConfirmModal title="Remover projeto?" message={`“${deleting.title}” será removido do painel e do site público ao confirmar.`} action="Remover projeto" onConfirm={remove} onClose={() => setDeleting(null)} />}
   </>
 }
 
@@ -87,21 +88,30 @@ function HomeEditor({ notify }) {
   }, [dirty])
   const save = async (event) => {
     event.preventDefault(); setError('')
-    if (!Object.values(form).every(validMediaUrl)) { setError('Use arquivos enviados, caminhos do site ou endereços HTTPS.'); return }
-    if (!form.video || !form.videoMobile || !form.poster || !form.posterMobile) { setError('Escolha os vídeos e as capas para desktop e celular.'); return }
+    const normalized = { ...form }
+    for (const key of ['poster', 'posterMobile']) {
+      if (!normalized[key] || !validMediaUrl(normalized[key])) { setError('Escolha capas válidas para desktop e celular.'); return }
+    }
+    for (const key of ['video', 'videoMobile']) {
+      if (normalized[`${key}Provider`] === 'youtube') {
+        normalized[`${key}Id`] = youtubeId(normalized[`${key}Id`])
+        normalized[key] = ''
+        if (!normalized[`${key}Id`]) { setError('Informe um link válido do YouTube para a abertura.'); return }
+      } else if (!normalized[key] || !validMediaUrl(normalized[key])) { setError('Escolha um vídeo ou endereço HTTPS para cada abertura.'); return }
+    }
     setBusy(true)
-    try { const saved = await saveDraft({ ...baseDraft, heroMedia: form }, baseVersion); setBaseVersion(saved.version); setBaseDraft(saved.draft); setForm({ ...saved.draft.heroMedia }); notify('Abertura salva no rascunho.') } catch (cause) { setError(cause.message) }
+    try { const saved = await saveDraft({ ...baseDraft, heroMedia: normalized }, baseVersion); setBaseVersion(saved.version); setBaseDraft(saved.draft); setForm({ ...saved.draft.heroMedia }); notify('Abertura salva no site.') } catch (cause) { setError(cause.message) }
     finally { setBusy(false) }
   }
   return <>
-    <div className="admin-page-title"><div><p className="admin-eyebrow">CONTEÚDO / ABERTURA</p><h1>Página inicial<span>.</span></h1><p>A primeira cena da sua marca.</p></div><Link className="admin-button admin-button--secondary" to="/?preview=draft" target="_blank">Ver rascunho<Icon name="arrow" /></Link></div>
+    <div className="admin-page-title"><div><p className="admin-eyebrow">CONTEÚDO / ABERTURA</p><h1>Página inicial<span>.</span></h1><p>A primeira cena da sua marca.</p></div><Link className="admin-button admin-button--secondary" to="/" target="_blank">Ver site<Icon name="arrow" /></Link></div>
     <form className="admin-home-form" onSubmit={save}>
-      <div className="admin-home-grid">{[['desktop', 'Desktop', 'video', 'poster', 'Para telas maiores.'], ['mobile', 'Celular', 'videoMobile', 'posterMobile', 'Uma abertura pensada para telas verticais.']].map(([key, title, video, poster, text]) => <section className="admin-panel admin-home-panel" key={key}><div className="admin-section-head"><span className="admin-device">{key === 'desktop' ? '16:9' : '9:16'}</span><div><h2>{title}</h2><p>{text}</p></div></div><MediaField label={`Vídeo de abertura · ${title}`} kind="video" value={form[video]} onChange={(value) => update(video, value)} disabled={busy} onBusyChange={(value) => setUploading((count) => count + (value ? 1 : -1))} /><MediaField label={`Capa de abertura · ${title}`} kind="image" value={form[poster]} onChange={(value) => update(poster, value)} disabled={busy} onBusyChange={(value) => setUploading((count) => count + (value ? 1 : -1))} /></section>)}</div>
-      <div className="admin-save-bar"><p>{version !== baseVersion ? 'O conteúdo mudou. Descarte as alterações para carregar a versão atual.' : dirty ? 'Há alterações para salvar no rascunho.' : 'O rascunho está atualizado.'}</p><button type="button" className="admin-button admin-button--secondary" disabled={(!dirty && version === baseVersion) || busy || uploading > 0} onClick={() => { setBaseVersion(version); setBaseDraft(draft); setForm({ ...draft.heroMedia }) }}>Descartar alterações</button><button className="admin-button" disabled={!dirty || busy || uploading > 0}><Icon name="check" />{busy ? 'Salvando…' : 'Salvar rascunho'}</button></div>
+      <div className="admin-home-grid">{[['desktop', 'Desktop', 'video', 'poster', 'Para telas maiores.'], ['mobile', 'Celular', 'videoMobile', 'posterMobile', 'Uma abertura pensada para telas verticais.']].map(([key, title, video, poster, text]) => <section className="admin-panel admin-home-panel" key={key}><div className="admin-section-head"><span className="admin-device">{key === 'desktop' ? '16:9' : '9:16'}</span><div><h2>{title}</h2><p>{text}</p></div></div><label className="admin-field"><span>Origem do vídeo · {title}</span><select aria-label={`Origem do vídeo · ${title}`} value={form[`${video}Provider`] || 'mp4'} onChange={(event) => update(`${video}Provider`, event.target.value)} disabled={busy}><option value="mp4">Arquivo ou endereço HTTPS</option><option value="youtube">YouTube · vídeos grandes sem upload aqui</option></select></label>{form[`${video}Provider`] === 'youtube' ? <label className="admin-field"><span>Link do YouTube · {title}</span><input aria-label={`Link do YouTube · ${title}`} type="text" value={form[`${video}Id`] || ''} onChange={(event) => update(`${video}Id`, event.target.value.trim())} placeholder="https://youtu.be/…" disabled={busy} /><small>Use um vídeo não listado com incorporação permitida.</small></label> : <MediaField label={`Vídeo de abertura · ${title}`} kind="video" value={form[video]} onChange={(value) => update(video, value)} disabled={busy} onBusyChange={(value) => setUploading((count) => count + (value ? 1 : -1))} />}<MediaField label={`Capa de abertura · ${title}`} kind="image" value={form[poster]} onChange={(value) => update(poster, value)} disabled={busy} onBusyChange={(value) => setUploading((count) => count + (value ? 1 : -1))} /></section>)}</div>
+      <div className="admin-save-bar"><p>{version !== baseVersion ? 'O conteúdo mudou. Descarte as alterações para carregar a versão atual.' : dirty ? 'Há alterações para salvar no site.' : 'As alterações estão salvas.'}</p><button type="button" className="admin-button admin-button--secondary" disabled={(!dirty && version === baseVersion) || busy || uploading > 0} onClick={() => { setBaseVersion(version); setBaseDraft(draft); setForm({ ...draft.heroMedia }) }}>Descartar alterações</button><button className="admin-button" disabled={!dirty || busy || uploading > 0}><Icon name="check" />{busy ? 'Salvando…' : 'Salvar no site'}</button></div>
       {error && <p className="admin-error" role="alert">{error}</p>}
     </form>
-    <div className="admin-tip"><Icon name="film" /><p>Envie vídeos MP4 ou WebM de até 50 MB. Para arquivos maiores, use um endereço HTTPS ou vincule um vídeo do YouTube no projeto.</p></div>
-    {destination && <ConfirmModal title="Sair sem salvar?" message="As alterações da abertura ainda não foram salvas no rascunho." action="Sair sem salvar" onConfirm={() => navigate(destination)} onClose={() => setDestination(null)} />}
+    <div className="admin-tip"><Icon name="film" /><p>Envie vídeos MP4 ou WebM de até 50 MB. Para arquivos maiores, use um endereço HTTPS ou use YouTube nos projetos ou na abertura.</p></div>
+    {destination && <ConfirmModal title="Sair sem salvar?" message="As alterações da abertura ainda não foram salvas no site." action="Sair sem salvar" onConfirm={() => navigate(destination)} onClose={() => setDestination(null)} />}
   </>
 }
 
@@ -120,7 +130,7 @@ function MediaLibrary({ notify }) {
   }
   return <>
     <div className="admin-page-title"><div><p className="admin-eyebrow">CONTEÚDO / ARQUIVOS</p><h1>Biblioteca<span>.</span></h1><p>Capas e vídeos para suas próximas histórias.</p></div><button className="admin-button" onClick={() => input.current.click()} disabled={busy}><Icon name="upload" />{busy ? 'Enviando…' : 'Enviar arquivo'}</button><input ref={input} type="file" hidden accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm" aria-label="Enviar arquivo para biblioteca" onChange={(event) => uploadFile(event.target.files[0])} /></div>
-    <div className="admin-library-note"><Icon name="media" /><p>Os arquivos ficam salvos na nuvem. Escolha-os pelo botão <strong>Biblioteca</strong> ao editar um projeto ou a abertura.</p></div>
+    <div className="admin-library-note"><Icon name="media" /><p>Os arquivos ficam salvos na nuvem. Uploads diretos têm até 50 MB por arquivo e 1 GB de espaço gratuito. Para vídeos grandes, use YouTube. Escolha os arquivos pelo botão <strong>Biblioteca</strong> ao editar um projeto ou a abertura.</p></div>
     <div className="admin-filter-tabs admin-library-filters">{[['all', 'Todos os arquivos'], ['image/', 'Imagens'], ['video/', 'Vídeos']].map(([key, label]) => <button key={key} aria-pressed={filter === key} className={filter === key ? 'is-active' : ''} onClick={() => setFilter(key)}>{label}</button>)}</div>
     {files.length ? <div className="admin-library-grid">{files.map((file) => {
       const used = JSON.stringify([draft, published]).includes(file.id)
@@ -132,9 +142,8 @@ function MediaLibrary({ notify }) {
 
 function AdminWorkspace() {
   const { user, signOut } = useAuth()
-  const { ready, error, hasChanges, publish, refresh } = useContent()
+  const { ready, error, refresh } = useContent()
   const [toast, setToast] = useState(null)
-  const [confirm, setConfirm] = useState('')
   const notify = (message, failed = false) => setToast({ message, failed })
   useEffect(() => {
     if (!toast) return
@@ -142,7 +151,7 @@ function AdminWorkspace() {
     return () => window.clearTimeout(timeout)
   }, [toast])
   useEffect(() => {
-    document.title = 'Painel DUUK — Preview'
+    document.title = 'Painel DUUK'
     const robots = document.querySelector('meta[name="robots"]')
     robots?.setAttribute('content', 'noindex, nofollow')
   }, [])
@@ -154,8 +163,8 @@ function AdminWorkspace() {
       <div className="admin-sidebar__bottom"><div className="admin-demo-card"><span className="admin-demo-dot" /><div><strong>Conectado à nuvem</strong><p>{user.email}</p></div></div><button className="admin-reset" onClick={() => signOut().catch((cause) => notify(cause.message, true))}>Sair da conta</button><span className="admin-sidebar__signature">DUUK® / FEITO PARA CRIAR</span></div>
     </aside>
     <div className="admin-workspace">
-      <header className="admin-topbar"><div className="admin-environment"><span />PREVIEW<span className="admin-topbar-divider">/</span><span className="admin-topbar-note">{hasChanges ? 'Alterações no rascunho' : 'Conteúdo atualizado'}</span></div><div className="admin-topbar__actions"><Link to="/?preview=draft" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16} /></Link><button className="admin-button" onClick={() => setConfirm('publish')} disabled={!ready || !hasChanges || Boolean(error)}><Icon name="check" />Publicar no preview</button></div></header>
-      <div className="admin-demo-banner"><span className="admin-demo-tag">PREVIEW</span><p>Conteúdo salvo na nuvem. Publicar aqui atualiza o preview em todos os dispositivos.</p></div>
+      <header className="admin-topbar"><div className="admin-environment"><span />PAINEL<span className="admin-topbar-divider">/</span><span className="admin-topbar-note">Atualizações diretas no site</span></div><div className="admin-topbar__actions"><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16} /></Link></div></header>
+      <div className="admin-demo-banner"><span className="admin-demo-tag">AO VIVO</span><p>Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.</p></div>
       <main className="admin-main">
         {error && <div className="admin-error" role="alert">{error} <button className="admin-text-button" onClick={() => refresh().catch(() => {})}>Tentar novamente</button></div>}
         {!ready ? <div className="admin-empty"><p>Carregando seu conteúdo…</p></div> : <Routes><Route index element={<ProjectList notify={notify} />} /><Route path="inicio" element={<HomeEditor notify={notify} />} /><Route path="midias" element={<MediaLibrary notify={notify} />} /><Route path="*" element={<Navigate to="/admin" replace />} /></Routes>}
@@ -163,7 +172,6 @@ function AdminWorkspace() {
       <footer className="admin-footer"><span>DUUK / SÃO PAULO</span><button className="admin-mobile-reset" onClick={() => signOut().catch((cause) => notify(cause.message, true))}>Sair da conta</button><span>Seu conteúdo. Seu ritmo.</span></footer>
     </div>
     {toast && <div className={`admin-toast${toast.failed ? ' admin-toast--error' : ''}`} role={toast.failed ? 'alert' : 'status'}><Icon name={toast.failed ? 'close' : 'check'} /><span>{toast.message}</span><button className="admin-icon-button" aria-label="Fechar aviso" onClick={() => setToast(null)}><Icon name="close" size={16} /></button></div>}
-    {confirm === 'publish' && <ConfirmModal title="Publicar no preview?" message="O rascunho será aplicado ao site de preview em todos os dispositivos. Projetos arquivados e rascunhos ficam privados. O domínio público continua na versão atual." action="Publicar no preview" onConfirm={async () => { await publish(); notify('Conteúdo publicado no preview. Abra o site para conferir.') }} onClose={() => setConfirm('')} />}
   </div>
 }
 
