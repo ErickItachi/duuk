@@ -6,6 +6,8 @@ Site institucional e portfólio da DUUK, em React e Vite.
 
 O painel fica em https://www.duukfilms.com/admin, protegido por login. O site público não mostra links para o painel. A conta administrativa é `contato@duukfilms.com`; a senha está apenas no Supabase Auth.
 
+O visual do administrativo segue a DUUK: logo original, Inter/Inter Tight, preto, off-white e acentos coral/laranja do site. O menu se recolhe em tablets e celulares; campos maiores, cards adaptáveis e modais com rolagem acomodam telas desde 320 px e orientação horizontal. Os formulários usam fontes de 16 px no celular para evitar o zoom automático do iOS.
+
 **Salvar no site** grava o conteúdo e atualiza a versão pública numa transação. Reordenar ou remover um projeto também atualiza o site ao confirmar a ação. Projetos com estado rascunho ou arquivado ficam privados. A atualização chega às páginas abertas por Supabase Realtime; recarregar também carrega os dados atuais.
 
 O projeto Supabase existente (`ilohuxhyfqikjlvoarts`, nome DUUK Preview) passou a atender este site por autorização do usuário. Ele permanece no plano gratuito. Não há contratação de plano, armazenamento ou transcodificação pagos.

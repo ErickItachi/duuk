@@ -4,6 +4,9 @@ import { useContent } from '../content/useContent'
 import { MEDIA_PREFIX } from '../content/model'
 
 const paths = {
+  menu: 'M4 6h16 M4 12h16 M4 18h16',
+  refresh: 'M20 7v5h-5 M4 17v-5h5 M6 6a8 8 0 0 1 13 2l1 4 M18 18A8 8 0 0 1 5 16l-1-4',
+  lock: 'M7 10V7a5 5 0 0 1 10 0v3 M5 10h14v11H5z M12 14v3',
   document: 'M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6',
   wallet: 'M3 6h17v15H3z M3 6V3h14v3 M20 11h-6v5h6 M16 13h.01',
   chart: 'M3 3v18h18 M7 17v-5 M12 17V7 M17 17v-8',
@@ -36,9 +39,9 @@ export function Modal({ title, subtitle, children, onClose, wide = false }) {
     return () => dialog.close()
   }, [])
   return (
-    <dialog ref={ref} className={`admin-modal${wide ? ' admin-modal--wide' : ''}`} onCancel={(event) => { event.preventDefault(); onClose() }} aria-labelledby={titleId}>
+    <dialog ref={ref} className={`admin-modal${wide ? ' admin-modal--wide' : ''}`} onCancel={(event) => { event.preventDefault(); event.stopPropagation(); onClose() }} aria-labelledby={titleId}>
       <div className="admin-modal__head">
-        <div><p className="admin-eyebrow">DUUK / CONTEÚDO</p><h2 id={titleId}>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>
+        <div><p className="admin-eyebrow">DUUK / ADMINISTRATIVO</p><h2 id={titleId}>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>
         <button type="button" className="admin-icon-button" onClick={onClose} aria-label="Fechar"><Icon name="close" /></button>
       </div>
       {children}

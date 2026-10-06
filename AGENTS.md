@@ -6,6 +6,7 @@ O usuário autorizou publicar o painel administrativo em produção e aplicar as
 
 - O painel fica em `https://www.duukfilms.com/admin`, protegido por Supabase Auth e autorização no servidor.
 - Não inclua links, botões ou avisos sobre o painel nas páginas públicas da DUUK.
+- Preserve a logo original em `public/media/duuk-logo-white.png`, sem redesenhar, recolorir ou acrescentar outra marca. O administrativo usa a paleta e a tipografia do site da DUUK; verifique celular, tablet e desktop, incluindo menu, modais e PDFs.
 - Salvar um projeto ou a abertura deve atualizar o site público numa única transação, sem um segundo botão de publicar. Projetos com status rascunho/arquivado continuam privados.
 - Mantenha Supabase no plano gratuito. Não contrate serviços, aumente planos ou habilite cobrança. O usuário aceitou links do YouTube para vídeos grandes, inclusive na abertura, mantendo uploads diretos com limites gratuitos.
 - Senhas e chaves de serviço não podem entrar no repositório nem no navegador.

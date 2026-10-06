@@ -1,95 +1,186 @@
-.office-muted { color:var(--admin-muted,#787970); font-size:12px; line-height:1.7; }
-.office-small { font-size:11px; }
-.office-panel { padding:24px; margin-bottom:20px; }
-.office-panel h2 { font-size:19px; font-weight:600; letter-spacing:-.03em; margin-bottom:16px; }
-.office-panel p + p { margin-top:12px; }
-.office-toolbar { display:flex; justify-content:space-between; align-items:end; gap:16px; margin-bottom:24px; }
-.office-toolbar .admin-field { width:200px; }
-.office-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
-.office-section-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
-.office-section-title h2 { margin:0; }
-.office-money-stats strong { font-size:clamp(20px,2.3vw,32px); overflow-wrap:anywhere; }
-.office-select { background:white; border:1px solid #e5e5df; border-radius:6px; padding:10px; font-size:12px; }
-.office-shortcuts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:28px; }
-.office-shortcut { display:flex; align-items:center; gap:18px; padding:22px; }
-.office-shortcut > svg:first-child { color:#e7523e; }
-.office-shortcut > svg:last-child { margin-left:auto; flex-shrink:0; }
-.office-shortcut h2 { font-size:18px; }
-.office-shortcut p { font-size:11px; color:#787970; margin-top:5px; }
-.office-mini-row { display:flex; align-items:center; justify-content:space-between; gap:14px; border-top:1px solid #e5e5df; padding:15px 0; font-size:12px; }
-.office-mini-row strong { font-weight:600; }
-.office-mini-row small { display:block; color:#787970; margin-top:4px; }
-.office-badge { padding:5px 8px; border-radius:4px; border:1px solid #e5e5df; background:#f6f6f2; color:#787970; font-size:10px; white-space:nowrap; }
-.office-badge.is-pending { background:#fff4e7; color:#976640; border-color:#f1e5d5; }
-.office-badge.is-done { background:#f2f7ef; color:#59805c; border-color:#dce6d7; }
-.office-record-title { min-width:0; text-align:left; }
-.office-record-title small, .office-contract-row small { display:block; font-size:11px; margin-top:6px; color:#787970; overflow-wrap:anywhere; }
-.office-record-title strong { font-size:13px; }
-.office-expense-row { display:grid; grid-template-columns:minmax(0,1fr) 120px 65px 80px; align-items:center; gap:18px; padding:22px 24px; border-top:1px solid #e5e5df; font-size:13px; }
-.office-row-actions { display:flex; gap:8px; }
-.office-contract-row { display:flex; align-items:center; gap:18px; padding:24px; border-top:1px solid #e5e5df; }
-.office-contract-row > div { flex:1; min-width:0; }
-.office-contract-row > svg { flex-shrink:0; }
-.office-contract-row strong { font-size:13px; overflow-wrap:anywhere; }
-.office-contract-filters { flex-wrap:wrap; }
-.office-form { padding:24px; display:grid; gap:18px; border:0; }
-.office-empty { padding:38px 24px; color:#787970; font-size:13px; }
-.office-bars { display:grid; gap:18px; margin-top:22px; }
-.office-bars > div { position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; padding-bottom:12px; font-size:11px; }
-.office-bars span { overflow-wrap:anywhere; }
-.office-bars i { position:absolute; left:0; bottom:0; height:4px; background:#e7523e; border-radius:2px; }
-.office-bars strong { font-weight:500; }
-.office-timeline { height:200px; display:flex; align-items:stretch; gap:4px; padding-top:20px; }
-.office-timeline > div { flex:1; min-width:0; position:relative; padding-bottom:24px; display:flex; align-items:end; }
-.office-timeline i { display:block; width:100%; background:#e7523e; border-radius:3px 3px 0 0; }
-.office-timeline span { position:absolute; left:50%; bottom:0; transform:translateX(-50%); font-size:8px; color:#787970; }
-.office-contract-layout { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:22px; align-items:start; }
-.office-document { min-width:0; padding:18px; background:#e9e9e3; border:1px solid #deded7; border-radius:8px; }
-.office-pdf-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; font-size:11px; }
-.office-pdf-toolbar select { border:1px solid #d6d6ce; background:#fff; border-radius:4px; margin-left:6px; padding:6px; }
-.office-pdf-page { background:#fff; position:relative; width:100%; box-shadow:0 3px 10px #11131012; }
-.office-pdf-page > canvas { width:100%; height:100%; display:block; }
-.office-pdf-field { position:absolute; display:flex; align-items:center; justify-content:center; padding:2px; border:1px dashed #ce784e; background:#fff1e3b0; color:#92623f; font-size:clamp(8px,.7vw,11px); overflow:hidden; }
-button.office-pdf-field { touch-action:none; cursor:move; }
-.office-pdf-field.is-duuk { border-color:#628bc0; background:#eaf2ffb0; color:#446b9d; }
-.office-pdf-field.is-selected { outline:2px solid #e7523e; outline-offset:1px; }
-.office-pdf-field img { width:100%; height:100%; object-fit:contain; }
-.office-contract-sidebar .office-panel { padding:20px; }
-.office-field-create { display:grid; gap:12px; margin:18px 0; }
-.office-field-list { display:grid; gap:6px; max-height:250px; overflow:auto; margin:18px 0; }
-.office-field-list button { text-align:left; border:1px solid #e5e5df; border-radius:4px; padding:9px; font-size:11px; }
-.office-field-list button.is-selected { border-color:#e7523e; background:#fff4ef; }
-.office-field-list small { display:block; font-size:9px; color:#787970; margin-top:3px; }
-.office-field-controls { border-top:1px solid #e5e5df; padding:16px 0; display:grid; gap:12px; }
-.office-coordinate-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.office-coordinate-grid .admin-field span { font-size:10px; }
-.office-full-button { width:100%; margin:12px 0; }
-.office-field-presets { display:grid; gap:10px; margin-top:16px; }
-.office-participant { padding:15px 0; border-top:1px solid #e5e5df; }
-.office-participant strong { display:block; font-size:12px; }
-.office-participant small { display:block; color:#787970; font-size:10px; margin:3px 0 12px; overflow-wrap:anywhere; }
-.office-contract-sidebar .admin-text-button { display:block; margin-top:12px; text-align:left; }
-.office-signing { display:block; }
-.office-signing-header { background:#111310; color:#fff; padding:24px 5vw; display:flex; justify-content:space-between; align-items:center; gap:14px; }
-.office-signing-header > span { font-size:9px; letter-spacing:.1em; color:#b3b7ae; }
-.office-signing-brand { display:flex; align-items:center; gap:12px; }
-.office-signing-brand img { width:30px; height:38px; object-fit:contain; }
-.office-signing-brand > span { font-size:24px; font-weight:700; letter-spacing:-.04em; }
-.office-signing-brand small { display:block; font-size:7px; font-weight:400; letter-spacing:.13em; color:#b3b7ae; }
-.office-signing-main { max-width:1300px; margin:auto; padding:40px 24px; }
-.office-signing-main h1 { font-size:clamp(26px,3vw,44px); overflow-wrap:anywhere; }
-.office-signing-grid { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; }
-.office-signing-form fieldset { border:0; display:grid; gap:20px; padding:0; margin:0; }
-.office-signature { min-width:0; }
-.office-signature > div { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12px; margin-bottom:10px; }
-.office-signature canvas { display:block; width:100%; aspect-ratio:3; border:1px dashed #c9cbbe; border-radius:5px; background:#fff; touch-action:none; }
-.office-signature small { color:#787970; font-size:10px; display:block; margin-top:8px; }
-.office-consent { font-size:11px; align-items:start; line-height:1.6; }
-.office-consent input { flex-shrink:0; margin-top:3px; }
-.office-signing-success { max-width:760px; margin:0 auto; }
-.office-signing-success h2 { margin-top:22px; }
-.office-signing-success .admin-button { margin:22px 12px 0 0; }
-.office-signing-footer { padding:24px; text-align:center; color:#787970; border-top:1px solid #e5e5df; font-size:10px; }
-@media(max-width:1150px){.office-contract-layout,.office-signing-grid {grid-template-columns:minmax(0,1fr) 280px}.office-panel {padding:20px}.office-expense-row {gap:10px;padding:18px}.office-contract-sidebar .office-panel {padding:16px}}
-@media(max-width:900px){.office-contract-layout,.office-signing-grid {grid-template-columns:1fr}.office-contract-sidebar {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.office-signing-form {max-width:600px;width:100%;margin:auto}.office-signing-main {padding:28px 18px}}
-@media(max-width:760px){.admin-sidebar nav {overflow-x:auto;max-width:100%;overscroll-behavior-x:contain}.admin-sidebar nav a {flex:0 0 auto;white-space:nowrap;padding:10px 12px}.admin-brand {margin-bottom:12px}.office-grid,.office-shortcuts {grid-template-columns:1fr;gap:12px}.office-money-stats strong {font-size:19px}.office-panel {padding:18px}.office-shortcut {padding:18px}.office-expense-row {grid-template-columns:1fr auto;gap:10px}.office-expense-row .office-record-title {grid-column:1/-1}.office-expense-row .office-badge {grid-column:1;grid-row:3;justify-self:start}.office-expense-row .office-row-actions {grid-column:2;grid-row:2/4}.office-expense-row > strong {grid-column:1;grid-row:2}.office-contract-row {padding:18px;flex-wrap:wrap;gap:12px}.office-contract-row > div {flex-basis:calc(100% - 70px)}.office-contract-row > .office-badge {margin-left:36px}.office-contract-row > svg:last-child {margin-left:auto}.office-contract-sidebar {display:block}.office-document {padding:10px}.office-form {padding:20px}.office-pdf-toolbar strong {font-size:10px}.office-timeline span {font-size:7px}.office-mini-row {flex-wrap:wrap}.office-contract-layout {gap:16px}.office-signing-header {padding:20px}.office-toolbar .admin-field {width:160px}}
+.office-muted { color: var(--admin-muted); font-size: 12px; line-height: 1.75; overflow-wrap: anywhere; }
+.office-small { font-size: 11px; }
+.office-panel { padding: 26px; margin-bottom: 22px; }
+.office-panel h2 { font-size: 21px; font-weight: 500; letter-spacing: -.035em; margin-bottom: 18px; line-height: 1.25; }
+.office-panel p + p { margin-top: 12px; }
+.office-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 26px; }
+.office-toolbar .admin-field { width: 210px; max-width: 100%; }
+.office-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.office-section-title { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.office-section-title h2 { margin: 0; }
+.office-money-stats strong, .admin-stats .office-value-long { font-size: clamp(20px, 8.6cqi, 34px); }
+.office-select { min-height: 46px; max-width: 100%; padding: 12px 14px; border: 1px solid var(--admin-line); border-radius: 8px; background: #fff; color: var(--admin-ink); font-size: 12px; }
+.office-dashboard-title { position: relative; padding: 36px; min-height: 230px; border-radius: 14px; color: #fff; background: linear-gradient(90deg, #080808 0%, #080808eb 48%, #0808085c 100%), url('/media/images/sobre-set-640.ed49c1b0f43a.webp') right 35% / cover; overflow: hidden; }
+.office-dashboard-title::after { content: ''; position: absolute; inset: auto 0 0; height: 3px; background: var(--gradient); }
+.office-dashboard-title > div { max-width: 570px; }
+.office-dashboard-title .admin-eyebrow { color: #c4b8ae; }
+.office-dashboard-title h1 { font-size: clamp(38px, 3.8vw, 56px); letter-spacing: -.055em; max-width: 480px; }
+.office-dashboard-title h1 + p { color: #c4b8ae; font-size: 13px; }
+.office-dashboard-title .admin-button { border-color: #ffffff3b; background: #ffffff12; color: #fff; backdrop-filter: blur(8px); }
+.office-dashboard-title .admin-button:hover { background: #ffffff26; }
+.office-stat-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.office-stat-heading > svg { flex-shrink: 0; color: var(--admin-accent); }
+.office-stat-note { display: block; color: var(--admin-muted); font-size: 10px; margin-top: 10px; }
+.office-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 28px; }
+.office-shortcut { display: flex; align-items: center; gap: 18px; padding: 24px; transition: border-color 180ms, transform 180ms; }
+.office-shortcut-icon { display: grid; place-items: center; width: 50px; height: 50px; flex-shrink: 0; border-radius: 12px; background: var(--admin-paper); color: var(--admin-accent); }
+.office-shortcut-copy { min-width: 0; flex: 1; }
+.office-shortcut > svg:last-child { flex-shrink: 0; color: #a49489; }
+.office-shortcut h2 { font-size: 22px; font-weight: 500; letter-spacing: -.035em; }
+.office-shortcut p { font-size: 12px; color: var(--admin-muted); margin-top: 6px; }
+@media (hover: hover) and (pointer: fine) { .office-shortcut:hover { border-color: #eb4b3f66; transform: translateY(-2px); } }
+.office-mini-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; border-top: 1px solid var(--admin-line); padding: 17px 0; font-size: 12px; }
+.office-mini-row > div { min-width: 0; }
+.office-mini-row strong { font-weight: 500; overflow-wrap: anywhere; }
+.office-mini-row small { display: block; color: var(--admin-muted); margin-top: 5px; overflow-wrap: anywhere; }
+.office-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid var(--admin-line); border-radius: 5px; background: #f7f3f0; color: var(--admin-muted); font-size: 10px; line-height: 1.6; white-space: nowrap; }
+.office-badge.is-pending { color: #aa382c; background: #fff3ed; border-color: #eb4b3f26; }
+.office-badge.is-done { color: var(--admin-ink); background: var(--admin-paper); }
+.office-badge.is-done::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--admin-ink); }
+.office-record-title { min-width: 0; text-align: left; }
+.office-record-title small, .office-contract-row small { display: block; font-size: 11px; margin-top: 7px; color: var(--admin-muted); overflow-wrap: anywhere; }
+.office-record-title strong { font-size: 13px; font-weight: 500; overflow-wrap: anywhere; }
+.office-expense-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(100px, auto) 76px 96px; align-items: center; gap: 18px; padding: 22px 24px; border-top: 1px solid var(--admin-line); font-size: 13px; }
+.office-expense-row > strong { font-weight: 500; overflow-wrap: anywhere; }
+.office-row-actions { display: flex; gap: 8px; }
+.office-contract-row { display: flex; align-items: center; gap: 18px; padding: 24px; border-top: 1px solid var(--admin-line); }
+.office-contract-row > div { flex: 1; min-width: 0; }
+.office-contract-row > svg { flex-shrink: 0; }
+.office-contract-row > svg:first-child { color: var(--admin-accent); }
+.office-contract-row > svg:last-child { color: #a49489; }
+.office-contract-row strong { font-size: 13px; font-weight: 500; overflow-wrap: anywhere; }
+.office-contract-filters { flex-wrap: wrap; }
+.office-form { display: grid; gap: 20px; min-width: 0; padding: 26px 28px; border: 0; margin: 0; }
+.office-empty { padding: 40px 24px; color: var(--admin-muted); font-size: 13px; }
+.office-bars { display: grid; gap: 22px; margin-top: 24px; }
+.office-bars > div { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding-bottom: 13px; font-size: 12px; }
+.office-bars span { overflow-wrap: anywhere; }
+.office-bars i { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--gradient); border-radius: 3px; }
+.office-bars strong { font-weight: 500; }
+.office-timeline { height: 220px; display: flex; align-items: stretch; justify-content: center; gap: 6px; padding-top: 20px; background: repeating-linear-gradient(to top, transparent 0, transparent 47px, #eae3de88 48px, transparent 49px); }
+.office-timeline > div { flex: 1; max-width: 52px; min-width: 0; position: relative; padding-bottom: 28px; display: flex; align-items: end; }
+.office-timeline i { display: block; width: 100%; background: linear-gradient(180deg, var(--orange), var(--coral)); border-radius: 4px 4px 0 0; }
+.office-timeline span { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); font-size: 9px; color: var(--admin-muted); }
+.office-timeline:has(> div:nth-child(31)) { gap: 3px; }
+.office-timeline:has(> div:nth-child(31)) span { visibility: hidden; }
+.office-timeline:has(> div:nth-child(31)) > div:nth-child(7n+1) span, .office-timeline:has(> div:nth-child(31)) > div:last-child span { visibility: visible; }
+.office-contract-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 24px; align-items: start; }
+.office-document { min-width: 0; padding: 20px; background: #eee7e1; border: 1px solid #e4d9d0; border-radius: var(--admin-radius); }
+.office-pdf-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; font-size: 12px; }
+.office-pdf-toolbar label { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.office-pdf-toolbar select { min-height: 44px; max-width: 100%; padding: 9px; border: 1px solid #d8c9be; border-radius: 6px; background: #fff; color: var(--admin-ink); }
+.office-pdf-page { background: #fff; position: relative; width: 100%; box-shadow: 0 6px 20px #30201812; }
+.office-pdf-page > canvas { width: 100%; height: 100%; display: block; }
+.office-pdf-field { position: absolute; display: flex; align-items: center; justify-content: center; padding: 2px; border: 1px dashed var(--coral); background: #fff0e8b8; color: #a83a2f; font-size: clamp(8px, .7vw, 11px); overflow: hidden; }
+button.office-pdf-field { touch-action: none; cursor: move; }
+.office-pdf-field.is-duuk { border-color: var(--black); background: #f5f1eecc; color: var(--black); }
+.office-pdf-field.is-selected { outline: 2px solid var(--coral); outline-offset: 1px; }
+.office-pdf-field img { width: 100%; height: 100%; object-fit: contain; }
+.office-contract-sidebar { min-width: 0; }
+.office-contract-sidebar .office-panel { padding: 22px; }
+.office-field-create { display: grid; gap: 14px; margin: 20px 0; }
+.office-field-list { display: grid; gap: 8px; max-height: 280px; overflow: auto; overscroll-behavior: contain; margin: 18px 0; }
+.office-field-list button { min-height: 48px; padding: 12px; border: 1px solid var(--admin-line); border-radius: 6px; font-size: 12px; text-align: left; overflow-wrap: anywhere; }
+.office-field-list button.is-selected { border-color: var(--admin-accent); background: var(--admin-paper); }
+.office-field-list small { display: block; font-size: 10px; color: var(--admin-muted); margin-top: 4px; }
+.office-field-controls { display: grid; gap: 14px; border-top: 1px solid var(--admin-line); padding: 20px 0; }
+.office-coordinate-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.office-coordinate-grid .admin-field span { font-size: 11px; }
+.office-full-button { width: 100%; margin: 12px 0; }
+.office-field-presets { display: grid; gap: 12px; margin-top: 18px; }
+.office-participant { padding: 18px 0; border-top: 1px solid var(--admin-line); }
+.office-participant strong { display: block; font-size: 13px; font-weight: 500; overflow-wrap: anywhere; }
+.office-participant small { display: block; color: var(--admin-muted); font-size: 11px; margin: 5px 0 12px; overflow-wrap: anywhere; }
+.office-contract-sidebar .admin-text-button { display: flex; margin-top: 8px; text-align: left; }
+.office-signing { display: block; }
+.office-signing-header { background: var(--black); color: #fff; padding: 24px max(24px, 5vw); display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.office-signing-header > span { padding: 6px 9px; border: 1px solid #ffffff26; border-radius: 4px; font-size: 8px; letter-spacing: .1em; color: #c4b8ae; flex-shrink: 0; }
+.office-signing-brand { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.office-signing-brand img { width: 44px; height: 54px; object-fit: contain; flex-shrink: 0; }
+.office-signing-brand > span { border-left: 1px solid #ffffff26; padding-left: 18px; font-size: 10px; font-weight: 500; letter-spacing: .1em; }
+.office-signing-brand small { display: block; font-size: 11px; font-weight: 400; letter-spacing: 0; margin-top: 5px; color: #b3a69c; }
+.office-signing-main { max-width: 1300px; margin: auto; padding: 44px 28px; }
+.office-signing-main h1 { font-size: clamp(30px, 3.5vw, 46px); overflow-wrap: anywhere; }
+.office-signing-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 26px; align-items: start; }
+.office-signing-form fieldset { min-width: 0; display: grid; gap: 22px; border: 0; padding: 0; margin: 0; }
+.office-signing-form h2 { font-size: 26px; }
+.office-signature { min-width: 0; }
+.office-signature > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; margin-bottom: 8px; }
+.office-signature canvas { display: block; width: 100%; aspect-ratio: 3; border: 1px dashed #c9b8ab; border-radius: 7px; background: #fff; touch-action: none; }
+.office-signature small { display: block; color: var(--admin-muted); font-size: 11px; margin-top: 10px; }
+.office-consent { font-size: 12px; align-items: start; line-height: 1.75; }
+.office-consent input { margin-top: 3px; }
+.office-signing-success { max-width: 760px; margin: 0 auto; padding: 32px; }
+.office-signing-success h2 { font-size: 30px; margin-top: 26px; }
+.office-signing-success .admin-button { margin: 24px 10px 0 0; }
+.office-signing-footer { padding: 24px; text-align: center; color: var(--admin-muted); border-top: 1px solid var(--admin-line); font-size: 11px; overflow-wrap: anywhere; }
+@media (max-width: 1200px) {
+  .office-contract-layout { grid-template-columns: minmax(0, 1fr) 280px; gap: 18px; }
+  .office-contract-sidebar .office-panel { padding: 18px; }
+  .office-panel { padding: 22px; }
+  .office-shortcut { gap: 14px; padding: 22px; }
+  .office-expense-row { gap: 12px; padding: 20px; }
+}
+@media (max-width: 900px) {
+  .office-contract-layout, .office-signing-grid { grid-template-columns: minmax(0, 1fr); }
+  .office-contract-sidebar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .office-signing-form { width: 100%; max-width: 620px; margin: auto; }
+  .office-signing-main { padding: 32px 24px; }
+  .office-dashboard-title { padding: 30px; }
+}
+@media (max-width: 680px) {
+  .office-grid, .office-shortcuts { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .office-dashboard-title { padding: 28px 24px; min-height: 0; gap: 22px; background-position: right 35%; }
+  .office-dashboard-title h1 { font-size: 42px; }
+  .office-dashboard-title .admin-button { min-height: 44px; }
+  .office-panel { padding: 22px 20px; }
+  .office-panel h2 { font-size: 22px; }
+  .office-shortcut { padding: 22px 20px; gap: 16px; }
+  .office-shortcut h2 { font-size: 22px; }
+  .office-shortcut-icon { width: 44px; height: 44px; border-radius: 10px; }
+  .office-shortcut p { font-size: 11px; }
+  .office-stat-heading { gap: 10px; }
+  .office-stat-heading > svg { width: 17px; height: 17px; }
+  .office-stat-note { font-size: 10px; }
+  .office-expense-row { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 20px; }
+  .office-expense-row .office-record-title { grid-column: 1/-1; }
+  .office-expense-row > strong { grid-column: 1; grid-row: 2; }
+  .office-expense-row .office-badge { grid-column: 1; grid-row: 3; justify-self: start; }
+  .office-expense-row .office-row-actions { grid-column: 2; grid-row: 2/4; }
+  .office-contract-row { padding: 20px; flex-wrap: wrap; gap: 12px; }
+  .office-contract-row > div { flex-basis: calc(100% - 60px); }
+  .office-contract-row > .office-badge { margin-left: 36px; }
+  .office-contract-row > svg:last-child { margin-left: auto; }
+  .office-contract-sidebar { display: block; }
+  .office-document { padding: 12px; }
+  .office-form { padding: 24px 20px; }
+  .office-pdf-toolbar { font-size: 12px; }
+  .office-pdf-toolbar select, .office-select { font-size: 16px; }
+  .office-timeline { gap: 4px; height: 190px; }
+  .office-timeline:has(> div:nth-child(15)) span { visibility: hidden; }
+  .office-timeline:has(> div:nth-child(15)) > div:nth-child(7n+1) span, .office-timeline:has(> div:nth-child(15)) > div:last-child span { visibility: visible; }
+  .office-contract-layout { gap: 20px; }
+  .office-signing-header { padding: 18px; gap: 12px; }
+  .office-signing-brand { gap: 12px; }
+  .office-signing-brand img { width: 36px; height: 44px; }
+  .office-signing-brand > span { padding-left: 12px; font-size: 8px; max-width: 160px; }
+  .office-signing-brand small { font-size: 9px; }
+  .office-signing-header > span { font-size: 7px; padding: 5px 6px; }
+  .office-signing-main { padding: 30px 18px; }
+  .office-signing-main h1 { font-size: 32px; }
+  .office-signing-form { margin: 0; }
+  .office-signing-success { padding: 24px 20px; }
+  .office-signing-success .admin-button { display: flex; width: 100%; margin: 18px 0 0; }
+  .office-consent { font-size: 13px; }
+  .office-signature small { font-size: 12px; }
+}
+@media (max-width: 380px) {
+  .office-dashboard-title { padding: 26px 22px; }
+  .office-dashboard-title h1 { font-size: 38px; }
+  .office-panel, .office-shortcut, .office-expense-row, .office-contract-row { padding: 20px 18px; }
+  .office-shortcut { gap: 12px; }
+  .office-stat-heading > svg { display: none; }
+  .office-toolbar { align-items: stretch; }
+  .office-toolbar .admin-field, .office-toolbar .admin-button { width: 100%; }
+  .office-signing-brand small { display: none; }
+}

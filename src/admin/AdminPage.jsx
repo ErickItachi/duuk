@@ -16,6 +16,15 @@ import './admin.css'
 import '../office/office.css'
 
 const statusLabels = { published: 'Visível', draft: 'Rascunho', archived: 'Arquivado' }
+const sections = [
+  { to: '/admin', label: 'Visão geral', icon: 'grid' },
+  { to: '/admin/contratos', label: 'Contratos', icon: 'document' },
+  { to: '/admin/despesas', label: 'Despesas', icon: 'wallet' },
+  { to: '/admin/insights', label: 'Insights', icon: 'chart' },
+  { to: '/admin/portfolio', label: 'Portfólio', icon: 'film' },
+  { to: '/admin/inicio', label: 'Página inicial', icon: 'home' },
+  { to: '/admin/midias', label: 'Biblioteca', icon: 'media' },
+]
 
 function ProjectList({ notify }) {
   const { draft, saveDraft, urls, ready } = useContent()
@@ -147,6 +156,8 @@ function MediaLibrary({ notify }) {
 
 function AdminWorkspace() {
   const { pathname } = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const section = sections.find(item => item.to !== '/admin' && (pathname === item.to || pathname.startsWith(`${item.to}/`))) || sections[0]
   const editingSite = ['/admin/portfolio','/admin/inicio','/admin/midias'].includes(pathname)
   const { user, signOut } = useAuth()
   const { ready, error, refresh } = useContent()
@@ -163,15 +174,20 @@ function AdminWorkspace() {
     robots?.setAttribute('content', 'noindex, nofollow')
   }, [])
   return <div className="admin-shell">
-    <aside className="admin-sidebar">
-      <Link className="admin-brand" to="/admin"><img src="/media/duuk-logo-white.png" width="30" height="37" alt="" /><span>DUUK<small>STUDIO / PAINEL</small></span></Link>
+    <aside className="admin-sidebar" onKeyDown={event => { if (event.key === 'Escape' && menuOpen) { setMenuOpen(false); event.currentTarget.querySelector('.admin-menu-toggle')?.focus() } }}>
+      <div className="admin-sidebar__head">
+        <Link className="admin-brand" to="/admin" aria-label="DUUK — visão geral" onClick={() => setMenuOpen(false)}><img src="/media/duuk-logo-white.png" width="52" height="64" alt="DUUK" /><span>ADMINISTRATIVO<small>Seu estúdio, em um só lugar.</small></span></Link>
+        <button type="button" className="admin-menu-toggle" aria-expanded={menuOpen} aria-controls="admin-navigation" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuOpen(open => !open)}><Icon name={menuOpen ? 'close' : 'menu'} /><span>Menu</span></button>
+      </div>
+      <div id="admin-navigation" className={`admin-sidebar__menu${menuOpen ? ' is-open' : ''}`}>
       <p className="admin-sidebar__label">GERENCIAR</p>
-      <nav aria-label="Painel administrativo"><NavLink to="/admin" end><Icon name="grid" />Visão geral</NavLink><NavLink to="/admin/contratos"><Icon name="document" />Contratos</NavLink><NavLink to="/admin/despesas"><Icon name="wallet" />Despesas</NavLink><NavLink to="/admin/insights"><Icon name="chart" />Insights</NavLink><NavLink to="/admin/portfolio"><Icon name="film" />Portfólio</NavLink><NavLink to="/admin/inicio"><Icon name="home" />Página inicial</NavLink><NavLink to="/admin/midias"><Icon name="media" />Biblioteca</NavLink></nav>
+      <nav aria-label="Painel administrativo">{sections.map(item => <NavLink key={item.to} to={item.to} end={item.to === '/admin'} onClick={() => setMenuOpen(false)}><Icon name={item.icon} />{item.label}</NavLink>)}</nav>
       <div className="admin-sidebar__bottom"><div className="admin-demo-card"><span className="admin-demo-dot" /><div><strong>Conectado à nuvem</strong><p>{user.email}</p></div></div><button className="admin-reset" onClick={() => signOut().catch((cause) => notify(cause.message, true))}>Sair da conta</button><span className="admin-sidebar__signature">DUUK® / FEITO PARA CRIAR</span></div>
+      </div>
     </aside>
     <div className="admin-workspace">
-      <header className="admin-topbar"><div className="admin-environment"><span />PAINEL<span className="admin-topbar-divider">/</span><span className="admin-topbar-note">Administrativo da DUUK</span></div><div className="admin-topbar__actions"><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16} /></Link></div></header>
-      <div className="admin-demo-banner"><span className="admin-demo-tag">{editingSite?'AO VIVO':'PRIVADO'}</span><p>{editingSite?'Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.':'Contratos, despesas e relatórios ficam restritos à equipe autorizada.'}</p></div>
+      <header className="admin-topbar"><div className="admin-environment">ADMINISTRATIVO<span className="admin-topbar-divider">/</span><span className="admin-topbar-note">{section.label}</span></div><div className="admin-topbar__actions"><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16} /></Link></div></header>
+      <div className="admin-demo-banner"><span className="admin-demo-tag"><Icon name={editingSite ? 'check' : 'lock'} size={12} />{editingSite?'AO VIVO':'PRIVADO'}</span><p>{editingSite?'Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.':'Contratos, despesas e relatórios ficam restritos à equipe autorizada.'}</p></div>
       <main className="admin-main">
         {error && <div className="admin-error" role="alert">{error} <button className="admin-text-button" onClick={() => refresh().catch(() => {})}>Tentar novamente</button></div>}
         {!ready && editingSite ? <div className="admin-empty"><p>Carregando seu conteúdo…</p></div> : <Routes><Route index element={<DashboardPage />} /><Route path="portfolio" element={<ProjectList notify={notify} />} /><Route path="inicio" element={<HomeEditor notify={notify} />} /><Route path="midias" element={<MediaLibrary notify={notify} />} /><Route path="contratos" element={<ContractsPage />} /><Route path="contratos/:id" element={<ContractEditor notify={notify} />} /><Route path="despesas" element={<ExpensesPage notify={notify} />} /><Route path="insights" element={<InsightsPage />} /><Route path="*" element={<Navigate to="/admin" replace />} /></Routes>}
