@@ -12,10 +12,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.117.2",
     "hls.js": "^1.7.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "tus-js-client": "4.3.1"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
@@ -24,5 +26,8 @@
     "oxlint": "^1.81.0",
     "sharp": "^0.35.4",
     "vite": "^8.3.0"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

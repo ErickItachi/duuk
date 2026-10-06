@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { initialContent, resolveContent, slugify, validateProject, validMediaUrl, visibleProjects } from '../src/content/model.js'
 
-test('a demonstração copia os projetos sem alterar os dados originais', () => {
+test('o conteúdo inicial copia os projetos sem alterar os dados originais', () => {
   const content = initialContent()
   content.projects[0].description.pt = 'Rascunho de teste'
   assert.notEqual(initialContent().projects[0].description.pt, 'Rascunho de teste')

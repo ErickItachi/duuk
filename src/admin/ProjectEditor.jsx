@@ -8,7 +8,9 @@ function newProject() {
 }
 
 export default function ProjectEditor({ project, onClose, onSaved }) {
-  const { draft, saveDraft } = useContent()
+  const { draft, saveDraft, version } = useContent()
+  const [baseVersion] = useState(version)
+  const [baseDraft] = useState(draft)
   const [original] = useState(() => project || newProject())
   const [form, setForm] = useState(() => structuredClone(original))
   const [language, setLanguage] = useState('pt')
@@ -32,8 +34,8 @@ export default function ProjectEditor({ project, onClose, onSaved }) {
     event.preventDefault(); setError(''); setBusy(true)
     try {
       const next = { ...form, title: form.title.trim(), slug: form.slug.trim() }
-      validateProject(next, draft.projects)
-      await saveDraft({ ...draft, projects: project ? draft.projects.map((item) => item.id === next.id ? next : item) : [...draft.projects, next] })
+      validateProject(next, baseDraft.projects)
+      await saveDraft({ ...baseDraft, projects: project ? baseDraft.projects.map((item) => item.id === next.id ? next : item) : [...baseDraft.projects, next] }, baseVersion)
       onSaved(); onClose()
     } catch (cause) { setError(cause.message); setBusy(false) }
   }
@@ -63,7 +65,7 @@ export default function ProjectEditor({ project, onClose, onSaved }) {
           </div>
         </fieldset>
         {error && <p className="admin-error admin-editor__error" role="alert">{error}</p>}
-        <div className="admin-modal__foot"><span>As alterações ficam na demonstração.</span><button type="button" className="admin-button admin-button--secondary" onClick={close} disabled={busy || uploading > 0}>Cancelar</button><button className="admin-button" disabled={busy || uploading > 0}><Icon name="check" />{busy ? 'Salvando…' : 'Salvar rascunho'}</button></div>
+        <div className="admin-modal__foot"><span>Rascunho salvo na nuvem.</span><button type="button" className="admin-button admin-button--secondary" onClick={close} disabled={busy || uploading > 0}>Cancelar</button><button className="admin-button" disabled={busy || uploading > 0}><Icon name="check" />{busy ? 'Salvando…' : 'Salvar rascunho'}</button></div>
       </form>
     </Modal>
     {confirmClose && <ConfirmModal title="Descartar alterações?" message="As mudanças desse formulário ainda não foram salvas." action="Descartar alterações" onConfirm={onClose} onClose={() => setConfirmClose(false)} />}

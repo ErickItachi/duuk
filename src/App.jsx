@@ -7,6 +7,7 @@ import { loadSecondaryPages } from './pages/loadPages'
 import { ContentProvider } from './content/ContentProvider'
 import { useContent } from './content/useContent'
 import { previewEnabled } from './content/config'
+import { AuthProvider } from './content/AuthProvider'
 
 const AdminPage = previewEnabled ? lazy(() => import('./admin/AdminPage')) : null
 
@@ -105,8 +106,8 @@ function PreviewNotice() {
   const { viewMode } = useContent()
   if (!previewEnabled || pathname.startsWith('/admin')) return null
   return (
-    <aside className="preview-notice" aria-label="Ambiente de demonstração">
-      <span>{viewMode === 'draft' ? 'Prévia do rascunho' : 'Site de demonstração'}</span>
+    <aside className="preview-notice" aria-label="Ambiente de preview">
+      <span>{viewMode === 'draft' ? 'Prévia do rascunho' : 'Site de preview'}</span>
       <Link to="/admin">Abrir painel ↗</Link>
       {viewMode === 'draft' && <Link to="/?preview=published">Ver versão publicada no preview</Link>}
     </aside>
@@ -115,12 +116,14 @@ function PreviewNotice() {
 
 function App() {
   return (
-    <ContentProvider>
-      <LanguageProvider>
-        <AppRoutes />
-        <PreviewNotice />
-      </LanguageProvider>
-    </ContentProvider>
+    <AuthProvider>
+      <ContentProvider>
+        <LanguageProvider>
+          <AppRoutes />
+          <PreviewNotice />
+        </LanguageProvider>
+      </ContentProvider>
+    </AuthProvider>
   )
 }
 

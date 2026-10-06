@@ -4,20 +4,33 @@ Site institucional e portfólio da DUUK, em React e Vite.
 
 ## Painel administrativo em preview
 
-O painel está na branch `preview/admin-panel`. Enviar essa branch ao GitHub gera um preview separado na Vercel. Não faça merge em `main` para testar: `main` publica no domínio oficial.
+O painel está na branch `preview/admin-panel`, separado do domínio público. Enviar essa branch gera um preview na Vercel. Não faça merge em `main` para testar.
 
-Abra `/admin` no endereço do preview para editar projetos, reordenar filmes, trocar vídeos e capas e configurar a abertura para desktop e celular. **Salvar rascunho** preserva o conteúdo para revisão; **Ver site** abre o rascunho; **Publicar no preview** aplica o rascunho à versão publicada da demonstração. Para ver essa versão, abra `/?preview=published`.
+- Painel: https://duuk-git-preview-admin-panel-duuk1.vercel.app/admin
+- Supabase: DUUK Preview (`ilohuxhyfqikjlvoarts`), na organização do usuário, região São Paulo.
+- Login administrativo: `contato@duukfilms.com`. A senha está somente no Supabase Auth, nunca no repositório.
 
-Esta etapa usa dados de demonstração, sem conexão ao Supabase e sem login real. Conteúdo e arquivos enviados ficam no IndexedDB do navegador, vinculados ao endereço do preview. Eles sobrevivem ao recarregamento, mas não são compartilhados com outras pessoas ou outros endereços de preview. A biblioteca permite enviar imagens e vídeos de até 250 MB por arquivo. Os vídeos enviados ainda não passam por conversão ou geração automática de HLS.
+O painel permite editar projetos, textos PT/EN, ordem, visibilidade, capas, vídeos e abertura para desktop/celular. **Salvar rascunho** grava na nuvem; **Ver site** abre `/?preview=draft` para administradores; **Publicar no preview** atualiza a versão acessível a visitantes em todos os dispositivos. Nada disso publica no domínio oficial.
 
-Use **Restaurar demonstração** para apagar as edições e os uploads locais e recuperar os projetos originais. Novas versões do mesmo preview de branch mantêm os dados desse endereço; previews de commits diferentes têm endereços diferentes.
+Imagens e vídeos ficam em um bucket privado. Cada arquivo pode ter até **50 MB**, limite do Supabase gratuito. Vídeos acima de 6 MB usam envio retomável com progresso e novas tentativas. Para vídeos maiores, use HTTPS ou YouTube. O player reproduz o arquivo enviado; não há transcodificação automática. Os arquivos originais do site continuam no próprio projeto.
 
-O build desabilita a rota de admin e os dados de demonstração quando `VERCEL_ENV=production`. Previews e builds locais recebem `noindex`. O painel deve permanecer em preview até o usuário aprovar a integração com um Supabase de testes e, posteriormente, a publicação em produção.
+`duuk_content` separa rascunho e publicação. A publicação remove projetos com estado rascunho/arquivado antes de liberar o JSON aos visitantes. RLS protege conteúdo, biblioteca e arquivos; uma tabela de administradores controlada pelo servidor autoriza edições. Arquivos em uso não podem ser apagados. Revisões impedem sobrescrever uma edição feita em outra aba. Recarregar ou abrir em outro navegador recupera os dados da nuvem; abas abertas verificam atualizações a cada 30 segundos e ao voltar ao foco.
+
+`src/content/supabaseConfig.json` contém somente a URL e a chave **publishable**, próprias para o navegador. Overrides locais opcionais: `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`. Não use `service_role` nesses valores. `supabase/schema.sql` documenta a configuração inicial aplicada; não execute novamente num banco já configurado. A conta foi criada pelo Auth Admin API por uma função temporária com autenticação própria; essa função foi desativada após a criação e agora exige JWT e retorna 410.
+
+A auditoria do Supabase não encontrou tabelas expostas sem RLS. O aviso restante é a [checagem de senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), disponível apenas no plano Pro. O projeto permanece gratuito, conforme autorizado.
+
+O build com `VERCEL_ENV=production` desabilita a conexão cloud e a rota `/admin`. Preview e desenvolvimento recebem `noindex`. A produção só será integrada após autorização posterior.
+
+Use Node.js 22:
 
 ```bash
-npm run test
+npm ci
+npm test
 npm run dev
 ```
+
+O teste remoto de permissões e conflitos roda quando `DUUK_TEST_PASSWORD` é fornecida no ambiente, sem gravá-la em arquivos do projeto.
 
 ## Vídeos e Git LFS
 

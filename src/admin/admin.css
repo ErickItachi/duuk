@@ -242,3 +242,28 @@
   .admin-toast { right: 12px; bottom: 12px; max-width: calc(100vw - 24px); font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) { .admin-shell *, .admin-modal * { transition: none; } }
+
+.admin-demo-card p { overflow-wrap: anywhere; }
+.admin-login { min-height: 100svh; display: grid; grid-template-columns: 1fr 1fr; }
+.admin-login__visual { min-height: 100svh; background: #111310 url('/media/images/sobre-set-640.ed49c1b0f43a.webp') center / cover; color: #fff; position: relative; padding: 52px; display: flex; flex-direction: column; justify-content: space-between; isolation: isolate; }
+.admin-login__visual::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, #11131099, #111310b8); z-index: -1; }
+.admin-login__visual .admin-brand { margin: 0; }
+.admin-login__visual h1 { font-size: clamp(40px, 4.5vw, 72px); font-weight: 600; letter-spacing: -.055em; line-height: 1.05; margin-bottom: 22px; }
+.admin-login__visual h1 span { color: #e7523e; }
+.admin-login__visual > div > p:last-child { color: #cccfc6; max-width: 350px; font-size: 14px; }
+.admin-login__visual .admin-eyebrow { color: #e5b09a; margin-bottom: 22px; }
+.admin-login__visual .admin-sidebar__signature { color: #a6a99f; margin: 0; }
+.admin-login__form { align-self: center; width: min(100%, 460px); padding: 56px 38px; margin: auto; }
+.admin-login__tag { color: #a98157; font-size: 9px; letter-spacing: .13em; }
+.admin-login__form h2 { font-size: 30px; letter-spacing: -.035em; line-height: 1.2; margin: 20px 0 10px; }
+.admin-login__form > p { color: #787970; font-size: 13px; margin-bottom: 28px; }
+.admin-login__form form { display: grid; gap: 20px; }
+.admin-login__form form .admin-button { width: 100%; margin-top: 5px; justify-content: space-between; }
+.admin-login__form .admin-login__foot { font-size: 11px; margin: 28px 0 12px; }
+@media (max-width: 720px) {
+  .admin-login { grid-template-columns: 1fr; }
+  .admin-login__visual { min-height: 290px; padding: 30px; gap: 28px; }
+  .admin-login__visual h1 { font-size: 40px; margin-bottom: 10px; }
+  .admin-login__visual > div > p:last-child, .admin-login__visual .admin-sidebar__signature, .admin-login__visual .admin-eyebrow { display: none; }
+  .admin-login__form { padding: 34px 28px; }
+}

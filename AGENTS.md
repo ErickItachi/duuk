@@ -4,11 +4,11 @@ O usuário quer ver as alterações concluídas em `https://www.duukfilms.com/` 
 
 ## Painel administrativo em preview
 
-O usuário pediu expressamente que o painel administrativo seja desenvolvido e publicado apenas em preview, com dados de demonstração. Esta instrução tem prioridade sobre o fluxo de produção abaixo para essa funcionalidade.
+O usuário pediu expressamente que o painel administrativo seja desenvolvido e publicado apenas em preview, agora com integração real a um Supabase exclusivo de testes. Esta instrução tem prioridade sobre o fluxo de produção abaixo para essa funcionalidade.
 
 - Trabalhe na branch `preview/admin-panel` e envie apenas para essa branch. Não faça merge ou push do painel para `main` sem autorização posterior do usuário.
 - Compartilhe o endereço de preview da Vercel com `/admin`. A versão pública em `duukfilms.com` deve continuar na versão de produção.
-- Os dados da demonstração são locais ao navegador. Não conecte dados de produção durante os testes. A integração real com Supabase será uma etapa posterior.
+- O Supabase DUUK Preview é exclusivo deste ambiente. Login, conteúdo e uploads devem persistir na nuvem. Nunca exponha senhas ou chaves de serviço no código do navegador. Não conecte dados de produção.
 - Em builds com `VERCEL_ENV=production`, mantenha a demonstração e a rota de admin desabilitadas.
 
 ## Publicação de alterações no site público
