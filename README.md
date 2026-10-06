@@ -6,7 +6,7 @@ Site institucional e portfólio da DUUK, em React e Vite.
 
 O painel fica em https://www.duukfilms.com/admin, protegido por login. O site público não mostra links para o painel. A conta administrativa é `contato@duukfilms.com`; a senha está apenas no Supabase Auth.
 
-O visual do administrativo segue a DUUK: logo original, Inter/Inter Tight, preto, off-white e acentos coral/laranja do site. O menu se recolhe em tablets e celulares; campos maiores, cards adaptáveis e modais com rolagem acomodam telas desde 320 px e orientação horizontal. Os formulários usam fontes de 16 px no celular para evitar o zoom automático do iOS.
+O visual do administrativo segue a DUUK: logo original, Inter/Inter Tight, fundo preto, textos off-white e gradiente coral/laranja do site. O menu se recolhe em tablets e celulares; no desktop, a opção de minimizar o menu é salva neste navegador. Campos maiores, cards adaptáveis e modais com rolagem acomodam telas desde 320 px e orientação horizontal. Os formulários usam fontes de 16 px no celular para evitar o zoom automático do iOS.
 
 **Salvar no site** grava o conteúdo e atualiza a versão pública numa transação. Reordenar ou remover um projeto também atualiza o site ao confirmar a ação. Projetos com estado rascunho ou arquivado ficam privados. A atualização chega às páginas abertas por Supabase Realtime; recarregar também carrega os dados atuais.
 
@@ -14,10 +14,11 @@ O projeto Supabase existente (`ilohuxhyfqikjlvoarts`, nome DUUK Preview) passou 
 
 ### Módulos
 
-- `/admin`: visão geral com despesas do mês, contratos pendentes e atividade dos últimos 30 dias.
+- `/admin`: visão geral com despesas do mês, próximos compromissos, contratos pendentes e atividade dos últimos 30 dias.
+- `/admin/agenda`: calendário mensal e lista, com gravações, edições, reuniões e entregas; cadastro, edição, exclusão, filtros e compromissos de vários dias. Datas e horários são locais de Brasília, sem conversão de fuso. Não há convites, notificações ou sincronização com calendários externos.
 - `/admin/portfolio`, `/admin/inicio`, `/admin/midias`: projetos, abertura e biblioteca, com publicação ao salvar.
-- `/admin/contratos`: PDFs privados, preparação de campos e acompanhamento das duas assinaturas.
-- `/admin/despesas`: cadastro, edição, exclusão, categorias, vencimentos, pagamentos e exportação CSV. Totais e filtros usam o mês do vencimento; valores são armazenados em centavos.
+- `/admin/contratos`: PDFs privados, preparação de campos, acompanhamento das duas assinaturas e lixeira com restauração.
+- `/admin/despesas`: cadastro, edição, exclusão, categorias, vencimentos, pagamentos e exportação Excel (`.xlsx`) ou CSV conforme o mês e o filtro selecionados. O Excel contém valores e datas numéricos, filtros, cabeçalho fixo e uma aba de resumo. Textos são células literais, sem avaliação de fórmulas. Totais usam o mês do vencimento; valores são armazenados em centavos.
 - `/admin/insights`: visualizações de páginas, aberturas de filmes e cliques de contato, com filtros de 7, 30 ou 90 dias. Abertura de filme conta um clique no player, não tempo assistido nem conclusão do vídeo.
 
 ### Contratos e assinaturas
@@ -26,7 +27,9 @@ Envie um PDF pronto de até **10 MB e 30 páginas**, sem senha, informe cliente 
 
 Salve os campos e gere um link para o cliente e outro para a DUUK. Cada link dura **sete dias**; gerar outro para a mesma pessoa invalida o anterior, enquanto ela ainda não assinou. Copie o link no momento da criação: apenas seu hash é guardado, e o painel não recupera o token depois. O administrador compartilha os links manualmente; o sistema não envia e-mails. O e-mail opcional do cliente serve para organização interna.
 
-Depois de gerar links, o PDF e os campos ficam bloqueados. Para corrigir um documento ainda sem assinaturas, cancele os links, exclua o contrato e envie o PDF corrigido. Contratos concluídos e assinaturas recebidas são preservados. Cancelar um contrato parcialmente assinado revoga os links e mantém as evidências; o painel permite gerar novamente seu PDF caso necessário.
+Depois de gerar links, o PDF e os campos ficam bloqueados. Para corrigir um documento ainda sem assinaturas, envie o PDF corrigido como um novo contrato. Cancelar um contrato parcialmente assinado revoga os links e mantém as evidências; o painel permite gerar novamente seu PDF caso necessário.
+
+**Excluir contrato** move qualquer status para a lixeira e revoga todos os links, inclusive de participantes que já assinaram. PDFs, campos e assinaturas permanecem guardados. Restaurar devolve o contrato à lista; os links antigos continuam revogados, e é preciso gerar novos links para quem ainda não assinou. A exclusão definitiva só é permitida, com confirmação, para contratos na lixeira **sem nenhuma assinatura recebida**. A autorização e as revisões são conferidas pelo servidor sob bloqueio da linha, inclusive quando uma assinatura acontece simultaneamente.
 
 Cada participante lê o PDF, informa seu nome, preenche seus campos de texto, desenha a assinatura e confirma o aceite. O PDF baixado inclui as assinaturas recebidas e uma página de registro. O administrativo também exporta JSON com consentimento, nome informado, data, IP, navegador e hashes SHA-256. As duas assinaturas podem acontecer ao mesmo tempo: o servidor preserva ambos os registros e gera a versão final. Reenvios não alteram uma assinatura já registrada.
 
@@ -54,7 +57,7 @@ PDFs originais e PDFs com assinaturas **compartilham o 1 GB de Storage** com os 
 
 RLS protege o conteúdo, a biblioteca, os arquivos e a tabela de administradores. Os RPCs autorizam administradores no servidor. A publicação filtra os projetos privados antes de liberar JSON aos visitantes; arquivos em uso não podem ser apagados. Revisões impedem sobrescrever uma edição feita em outra aba. `supabase/schema.sql` registra o esquema inicial e `supabase/live.sql` a publicação automática e o Realtime; esses arquivos já foram aplicados.
 
-`supabase/office.sql` registra os contratos, despesas, métricas, políticas e RPCs do administrativo; `office-render.sql` permite preservar o PDF recebido quando um cancelamento ocorre durante sua geração. Esses arquivos e `office-retention.sql` já foram aplicados ao projeto conectado. As tabelas de convites e assinaturas e os RPCs de negócio são exclusivos de `service_role`, acessíveis apenas pelas funções do servidor. Despesas usam RLS de administrador e controle de revisão.
+`supabase/office.sql` registra os contratos, despesas, métricas, políticas e RPCs do administrativo; `office-render.sql` permite preservar o PDF recebido quando um cancelamento ocorre durante sua geração. `agenda-and-trash.sql` acrescenta agenda privada, lixeira, revogação ao excluir e restrição da exclusão definitiva. Esses arquivos e `office-retention.sql` já foram aplicados ao projeto conectado. As tabelas de convites e assinaturas e os RPCs de negócio são exclusivos de `service_role`, acessíveis apenas pelas funções do servidor. Despesas e agenda usam RLS de administrador, permissões por coluna e controle de revisão.
 
 As funções em `supabase/functions/` foram publicadas: `duuk-office` exige JWT, valida a sessão no Supabase Auth e confere a participação administrativa; `duuk-sign` autentica pelo token privado aleatório de 256 bits e valida seu hash, expiração e revogação; `duuk-metrics` aceita apenas eventos públicos validados, com limitação temporária derivada do IP. As duas últimas não exigem JWT por terem esses fluxos próprios. Chaves de serviço ficam exclusivamente no ambiente do Supabase.
 
@@ -72,7 +75,7 @@ npm run dev
 
 Testes remotos rodam quando `DUUK_TEST_PASSWORD` é fornecida no ambiente, sem gravar a senha no projeto.
 
-Validação desta ampliação: testes de valores e CSV, integração de autorização/RLS e revisões, testes remotos de upload privado e assinaturas simultâneas, PDF final com hash e evidências, cancelamento e testes de navegador em desktop/mobile. Para conferir as funções, execute `deno check supabase/functions/{duuk-office,duuk-sign,duuk-metrics}/index.ts`.
+Validação: testes de valores, CSV, Excel e datas de calendário; integração de autorização/RLS e revisões; agenda com CRUD privado e períodos entre meses; testes remotos de upload, lixeira e restauração de contratos parciais e concluídos, com revogação dos links, preservação de evidências e PDF final com hash. O arquivo Excel baixado também foi aberto por um leitor independente. Os oito módulos, menu, formulários, calendários e PDFs foram conferidos em navegador entre 320 e 1440 px, incluindo orientação horizontal. Para conferir as funções, execute `deno check supabase/functions/{duuk-office,duuk-sign,duuk-metrics}/index.ts`.
 
 ## Vídeos e Git LFS
 

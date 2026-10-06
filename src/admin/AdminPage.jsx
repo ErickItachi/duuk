@@ -12,12 +12,15 @@ import DashboardPage from '../office/DashboardPage'
 import ContractsPage, { ContractEditor } from '../office/ContractsPage'
 import ExpensesPage from '../office/ExpensesPage'
 import InsightsPage from '../office/InsightsPage'
+import AgendaPage from '../office/AgendaPage'
 import './admin.css'
 import '../office/office.css'
+import '../office/calendar.css'
 
 const statusLabels = { published: 'Visível', draft: 'Rascunho', archived: 'Arquivado' }
 const sections = [
   { to: '/admin', label: 'Visão geral', icon: 'grid' },
+  { to: '/admin/agenda', label: 'Agenda', icon: 'calendar' },
   { to: '/admin/contratos', label: 'Contratos', icon: 'document' },
   { to: '/admin/despesas', label: 'Despesas', icon: 'wallet' },
   { to: '/admin/insights', label: 'Insights', icon: 'chart' },
@@ -157,6 +160,8 @@ function MediaLibrary({ notify }) {
 function AdminWorkspace() {
   const { pathname } = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [collapsed,setCollapsed] = useState(()=>{try{return localStorage.getItem('duuk-sidebar-collapsed')==='true'}catch{return false}})
+  const toggleSidebar=()=>setCollapsed(previous=>{const next=!previous;try{localStorage.setItem('duuk-sidebar-collapsed',String(next))}catch{}return next})
   const section = sections.find(item => item.to !== '/admin' && (pathname === item.to || pathname.startsWith(`${item.to}/`))) || sections[0]
   const editingSite = ['/admin/portfolio','/admin/inicio','/admin/midias'].includes(pathname)
   const { user, signOut } = useAuth()
@@ -173,24 +178,24 @@ function AdminWorkspace() {
     const robots = document.querySelector('meta[name="robots"]')
     robots?.setAttribute('content', 'noindex, nofollow')
   }, [])
-  return <div className="admin-shell">
+  return <div className={`admin-shell${collapsed?' is-collapsed':''}`}>
     <aside className="admin-sidebar" onKeyDown={event => { if (event.key === 'Escape' && menuOpen) { setMenuOpen(false); event.currentTarget.querySelector('.admin-menu-toggle')?.focus() } }}>
-      <div className="admin-sidebar__head">
+      <div className="admin-sidebar__head"><button type="button" className="admin-collapse-toggle" aria-expanded={!collapsed} aria-controls="admin-navigation" aria-label={collapsed?'Expandir menu':'Minimizar menu'} title={collapsed?'Expandir menu':'Minimizar menu'} onClick={toggleSidebar}><Icon name="sidebar" size={18} /></button>
         <Link className="admin-brand" to="/admin" aria-label="DUUK — visão geral" onClick={() => setMenuOpen(false)}><img src="/media/duuk-logo-white.png" width="52" height="64" alt="DUUK" /><span>ADMINISTRATIVO<small>Seu estúdio, em um só lugar.</small></span></Link>
         <button type="button" className="admin-menu-toggle" aria-expanded={menuOpen} aria-controls="admin-navigation" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuOpen(open => !open)}><Icon name={menuOpen ? 'close' : 'menu'} /><span>Menu</span></button>
       </div>
       <div id="admin-navigation" className={`admin-sidebar__menu${menuOpen ? ' is-open' : ''}`}>
       <p className="admin-sidebar__label">GERENCIAR</p>
-      <nav aria-label="Painel administrativo">{sections.map(item => <NavLink key={item.to} to={item.to} end={item.to === '/admin'} onClick={() => setMenuOpen(false)}><Icon name={item.icon} />{item.label}</NavLink>)}</nav>
-      <div className="admin-sidebar__bottom"><div className="admin-demo-card"><span className="admin-demo-dot" /><div><strong>Conectado à nuvem</strong><p>{user.email}</p></div></div><button className="admin-reset" onClick={() => signOut().catch((cause) => notify(cause.message, true))}>Sair da conta</button><span className="admin-sidebar__signature">DUUK® / FEITO PARA CRIAR</span></div>
+      <nav aria-label="Painel administrativo">{sections.map(item => <NavLink key={item.to} to={item.to} end={item.to === '/admin'} title={item.label} aria-label={item.label} onClick={() => setMenuOpen(false)}><Icon name={item.icon} /><span>{item.label}</span></NavLink>)}</nav>
+      <div className="admin-sidebar__bottom"><div className="admin-demo-card"><span className="admin-demo-dot" /><div><strong>Conectado à nuvem</strong><p>{user.email}</p></div></div><button className="admin-reset" aria-label="Sair da conta" title="Sair da conta" onClick={() => signOut().catch((cause) => notify(cause.message, true))}><Icon name="logout" size={17} /><span>Sair da conta</span></button><span className="admin-sidebar__signature">DUUK® / FEITO PARA CRIAR</span></div>
       </div>
     </aside>
     <div className="admin-workspace">
       <header className="admin-topbar"><div className="admin-environment">ADMINISTRATIVO<span className="admin-topbar-divider">/</span><span className="admin-topbar-note">{section.label}</span></div><div className="admin-topbar__actions"><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16} /></Link></div></header>
-      <div className="admin-demo-banner"><span className="admin-demo-tag"><Icon name={editingSite ? 'check' : 'lock'} size={12} />{editingSite?'AO VIVO':'PRIVADO'}</span><p>{editingSite?'Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.':'Contratos, despesas e relatórios ficam restritos à equipe autorizada.'}</p></div>
+      <div className="admin-demo-banner"><span className="admin-demo-tag"><Icon name={editingSite ? 'check' : 'lock'} size={12} />{editingSite?'AO VIVO':'PRIVADO'}</span><p>{editingSite?'Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.':'Sua agenda, contratos, despesas e relatórios ficam restritos à equipe autorizada.'}</p></div>
       <main className="admin-main">
         {error && <div className="admin-error" role="alert">{error} <button className="admin-text-button" onClick={() => refresh().catch(() => {})}>Tentar novamente</button></div>}
-        {!ready && editingSite ? <div className="admin-empty"><p>Carregando seu conteúdo…</p></div> : <Routes><Route index element={<DashboardPage />} /><Route path="portfolio" element={<ProjectList notify={notify} />} /><Route path="inicio" element={<HomeEditor notify={notify} />} /><Route path="midias" element={<MediaLibrary notify={notify} />} /><Route path="contratos" element={<ContractsPage />} /><Route path="contratos/:id" element={<ContractEditor notify={notify} />} /><Route path="despesas" element={<ExpensesPage notify={notify} />} /><Route path="insights" element={<InsightsPage />} /><Route path="*" element={<Navigate to="/admin" replace />} /></Routes>}
+        {!ready && editingSite ? <div className="admin-empty"><p>Carregando seu conteúdo…</p></div> : <Routes><Route index element={<DashboardPage />} /><Route path="portfolio" element={<ProjectList notify={notify} />} /><Route path="inicio" element={<HomeEditor notify={notify} />} /><Route path="midias" element={<MediaLibrary notify={notify} />} /><Route path="contratos" element={<ContractsPage notify={notify} />} /><Route path="contratos/:id" element={<ContractEditor notify={notify} />} /><Route path="agenda" element={<AgendaPage notify={notify} />} /><Route path="despesas" element={<ExpensesPage notify={notify} />} /><Route path="insights" element={<InsightsPage />} /><Route path="*" element={<Navigate to="/admin" replace />} /></Routes>}
       </main>
       <footer className="admin-footer"><span>DUUK / SÃO PAULO</span><button className="admin-mobile-reset" onClick={() => signOut().catch((cause) => notify(cause.message, true))}>Sair da conta</button><span>Seu conteúdo. Seu ritmo.</span></footer>
     </div>

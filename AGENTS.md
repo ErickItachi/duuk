@@ -13,6 +13,9 @@ O usuário autorizou publicar o painel administrativo em produção e aplicar as
 - O usuário autorizou ampliar e publicar o administrativo: visão geral, PDFs e assinaturas, despesas e insights, mantendo o portfólio e a abertura.
 - Os contratos começam com upload de PDFs prontos. Não implemente geração de modelos nesta etapa. Cliente e DUUK assinam por links privados separados, válidos por sete dias, compartilhados manualmente pelo administrador.
 - Preserve o PDF, os campos e as assinaturas após gerar links. Assinaturas são eletrônicas por aceite e desenho, sem certificado ICP-Brasil nem verificação de identidade por e-mail. Não apresente o fluxo como assinatura certificada.
+- O usuário autorizou a agenda e a exclusão de contratos: use lixeira com restauração e revogação dos links. Só permita exclusão definitiva sem assinaturas recebidas. Despesas exportam Excel e CSV conforme mês e filtro. A agenda usa horários locais de Brasília.
+- O usuário escolheu o painel escuro, com preto, coral e laranja. O menu do desktop pode ser minimizado, preservando a navegação no celular.
+- A integração com Nubank foi apenas uma pergunta: não conecte contas, solicite credenciais ou contrate provedores sem instrução do usuário.
 - Contratos, evidências e despesas são privados. Insights contam atividade pública agregada, excluem o administrativo, respeitam GPC e têm retenção de 90 dias. Não contrate analytics ou assinatura externos.
 - Preserve alterações locais alheias à tarefa. O checkout original tem alterações anteriores ainda não publicadas.
 - Conclua os testes, faça commit e envie as alterações desta tarefa para `origin/main`. Aguarde a Vercel e confira o domínio antes de afirmar que está online.

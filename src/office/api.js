@@ -12,7 +12,13 @@ export async function signRequest(body) {
 }
 const check=(result)=>{if(result.error)throw new Error('Não foi possível carregar ou salvar. Confira sua conexão.');return result.data}
 async function allRows(query) { const rows=[];for(let offset=0;;offset+=500){const batch=check(await query().range(offset,offset+499));rows.push(...batch);if(batch.length<500)return rows} }
-export const listContracts=()=>allRows(()=>supabase.from('duuk_contracts').select('id,title,client_name,client_email,duuk_name,status,version,created_at,updated_at,signed_path,rendered_version').order('created_at',{ascending:false}).order('id'))
+export const listContracts=(includeTrash=false)=>allRows(()=>{const query=supabase.from('duuk_contracts').select('id,title,client_name,client_email,duuk_name,status,version,created_at,updated_at,signed_path,rendered_version,deleted_at').order('created_at',{ascending:false}).order('id');return includeTrash?query:query.is('deleted_at',null)})
+export async function listEvents(month) { const range=monthRange(month);return allRows(()=>supabase.from('duuk_events').select('*').lt('start_date',range.end).gte('end_date',range.start).order('start_date').order('id')) }
+export async function saveEvent(form,record) {
+ const request=record?supabase.from('duuk_events').update(form).eq('id',record.id).eq('version',record.version):supabase.from('duuk_events').insert(form)
+ const result=await request.select().maybeSingle();check(result);if(!result.data)throw new Error('O compromisso foi alterado em outra aba. Atualize a agenda antes de editar.');return result.data
+}
+export async function deleteEvent(record) { const result=await supabase.from('duuk_events').delete().eq('id',record.id).eq('version',record.version).select('id');check(result);if(!result.data.length)throw new Error('O compromisso mudou. Atualize a agenda antes de excluir.') }
 export async function listExpenses(month) { const range=monthRange(month);return allRows(()=>supabase.from('duuk_expenses').select('*').gte('due_date',range.start).lt('due_date',range.end).order('due_date').order('id')) }
 export async function saveExpense(form,record) {
   const request=record ? supabase.from('duuk_expenses').update(form).eq('id',record.id).eq('version',record.version) : supabase.from('duuk_expenses').insert(form)

@@ -9,7 +9,7 @@ handler(async(req,headers)=>{
   const invite=checked(await db.from('duuk_contract_invites').select('*').eq('token_hash',digest).maybeSingle())
   if(!invite)throw new HttpError('Link inválido.',404)
   const contract=checked(await db.from('duuk_contracts').select('*').eq('id',invite.contract_id).single())
-  if(invite.revoked_at||Date.parse(invite.expires_at)<Date.now()||contract.status==='cancelled')throw new HttpError('Este link expirou ou foi cancelado.',410)
+  if(invite.revoked_at||Date.parse(invite.expires_at)<Date.now()||contract.status==='cancelled'||contract.deleted_at)throw new HttpError('Este link expirou ou foi cancelado.',410)
   const publicRecord=(item:any)=>({id:item.id,title:item.title,party:invite.party,name:invite.party==='client'?item.client_name:item.duuk_name,pages:item.pages,fields:item.fields.filter((f:any)=>f.party===invite.party),status:item.status,signed:Boolean(invite.signed_at),expires_at:invite.expires_at})
   if(body.action==='get')return json({...publicRecord(contract),original_url:await signedUrl(db,contract.original_path),signed_url:contract.rendered_version===contract.version ? await signedUrl(db,contract.signed_path) : null},headers)
   if(body.action!=='sign')throw new HttpError('Operação inválida.')

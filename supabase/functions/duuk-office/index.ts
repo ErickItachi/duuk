@@ -36,6 +36,7 @@ handler(async(req,headers)=>{
     return json({...result,url:`https://www.duukfilms.com/assinar/${token}`},headers)
   }
   if(body.action==='cancel')return json(checked(await db.rpc('duuk_office_cancel',{target:id,revision:body.version})),headers)
+  if(body.action==='trash'||body.action==='restore')return json(checked(await db.rpc('duuk_office_trash',{target:id,revision:body.version,restore:body.action==='restore'})),headers)
   if(body.action==='delete'){
     const path=checked(await db.rpc('duuk_office_delete',{target:id,revision:body.version}))
     checked(await db.storage.from('duuk-documents').remove([path]))

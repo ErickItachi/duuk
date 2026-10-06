@@ -4,6 +4,13 @@ import { useContent } from '../content/useContent'
 import { MEDIA_PREFIX } from '../content/model'
 
 const paths = {
+  calendar: 'M4 5h16v16H4z M8 3v4 M16 3v4 M4 10h16 M8 14h.01 M12 14h.01 M16 14h.01 M8 18h.01 M12 18h.01',
+  left: 'M15 5l-7 7 7 7',
+  right: 'M9 5l7 7-7 7',
+  sidebar: 'M3 4h18v16H3z M9 4v16 M14 9l-3 3 3 3',
+  restore: 'M4 4v6h6 M4 10a8 8 0 1 1 0 6 M12 8v5l3 2',
+  download: 'M12 3v13 M7 11l5 5 5-5 M4 17v4h16v-4',
+  logout: 'M9 3H4v18h5 M9 12h12 M16 7l5 5-5 5',
   menu: 'M4 6h16 M4 12h16 M4 18h16',
   refresh: 'M20 7v5h-5 M4 17v-5h5 M6 6a8 8 0 0 1 13 2l1 4 M18 18A8 8 0 0 1 5 16l-1-4',
   lock: 'M7 10V7a5 5 0 0 1 10 0v3 M5 10h14v11H5z M12 14v3',
