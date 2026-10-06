@@ -27,6 +27,12 @@ test('Supabase protege rascunhos, exige administrador e rejeita revisões antiga
   assert([401, 403].includes(forbidden.status))
   const admin = await call('duuk_admins?select=user_id')
   assert.deepEqual(admin.data.map((row) => row.user_id), [session.user.id])
+  for (const table of ['duuk_contracts','duuk_contract_invites','duuk_contract_signatures','duuk_expenses','duuk_daily_metrics']) {
+    const privateData = await call(table+'?select=*',null,false)
+    assert([401,403].includes(privateData.status),table+' precisa ficar privado')
+  }
+  const serviceOnly = await call('rpc/duuk_office_sign',{digest:'0'.repeat(64),payload:{}})
+  assert.equal(serviceOnly.status,403)
   const draft = (await call('duuk_content?key=eq.draft&select=content,version')).data[0]
   // A stale revision must fail before changing the row, even for an administrator.
   const stale = await call('rpc/duuk_save_draft', { document: draft.content, expected_version: draft.version - 1 })

@@ -7,8 +7,10 @@ import { loadSecondaryPages } from './pages/loadPages'
 import { ContentProvider } from './content/ContentProvider'
 import { adminEnabled } from './content/config'
 import { AuthProvider } from './content/AuthProvider'
+import AnalyticsTracker from './office/AnalyticsTracker'
 
 const AdminPage = adminEnabled ? lazy(() => import('./admin/AdminPage')) : null
+const SigningPage = lazy(() => import('./office/SigningPage'))
 
 const lazyPage = (name) =>
   lazy(() => loadSecondaryPages().then((pages) => ({ default: pages[name] })))
@@ -32,7 +34,7 @@ function ScrollManager() {
   const { pathname, hash } = useLocation()
 
   useEffect(() => {
-    if (pathname.startsWith('/admin')) {
+    if (/^\/(admin|assinar)(\/|$)/.test(pathname)) {
       let robots = document.querySelector('meta[name=robots]')
       if (!robots) { robots = document.createElement('meta'); robots.name = 'robots'; robots.dataset.duukAdmin = 'true'; document.head.append(robots) }
       robots.content = 'noindex, nofollow'
@@ -87,6 +89,7 @@ function AppRoutes() {
           <ScrollManager />
           <Routes location={location}>
             {adminEnabled && <Route path="/admin/*" element={<AdminPage />} />}
+            <Route path="/assinar/:token" element={<SigningPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/projeto/:slug" element={<ProjectPage />} />
@@ -111,6 +114,7 @@ function App() {
       <ContentProvider>
         <LanguageProvider>
           <AppRoutes />
+          <AnalyticsTracker />
         </LanguageProvider>
       </ContentProvider>
     </AuthProvider>

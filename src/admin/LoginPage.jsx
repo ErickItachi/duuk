@@ -23,7 +23,7 @@ export default function LoginPage() {
         {(error || auth.error) && <p className="admin-error" role="alert">{error || auth.error}</p>}
         <button className="admin-button" disabled={busy}>{busy ? 'Entrando…' : 'Entrar no painel'}<span aria-hidden="true">↗</span></button>
       </form>}
-      <p className="admin-login__foot">Gerencie o conteúdo do site da DUUK.</p><Link className="admin-text-button" to="/">Voltar ao site ↗</Link>
+      <p className="admin-login__foot">Contratos, despesas, insights e conteúdo da DUUK.</p><Link className="admin-text-button" to="/">Voltar ao site ↗</Link>
     </section>
   </main>
 }

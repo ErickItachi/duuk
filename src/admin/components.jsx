@@ -4,6 +4,9 @@ import { useContent } from '../content/useContent'
 import { MEDIA_PREFIX } from '../content/model'
 
 const paths = {
+  document: 'M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6',
+  wallet: 'M3 6h17v15H3z M3 6V3h14v3 M20 11h-6v5h6 M16 13h.01',
+  chart: 'M3 3v18h18 M7 17v-5 M12 17V7 M17 17v-8',
   grid: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
   home: 'M3 10l9-7 9 7v11h-7v-7h-4v7H3z',
   media: 'M3 5h18v14H3z M3 15l5-5 5 5 3-3 5 5 M15 8h.01',

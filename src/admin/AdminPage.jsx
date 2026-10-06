@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useContent } from '../content/useContent'
 import { useAuth } from '../content/AuthContext'
 import LoginPage from './LoginPage'
@@ -8,7 +8,12 @@ import { validMediaUrl, MEDIA_PREFIX } from '../content/model'
 import { getImageSources } from '../media'
 import { ConfirmModal, Icon, MediaField } from './components'
 import ProjectEditor from './ProjectEditor'
+import DashboardPage from '../office/DashboardPage'
+import ContractsPage, { ContractEditor } from '../office/ContractsPage'
+import ExpensesPage from '../office/ExpensesPage'
+import InsightsPage from '../office/InsightsPage'
 import './admin.css'
+import '../office/office.css'
 
 const statusLabels = { published: 'Visível', draft: 'Rascunho', archived: 'Arquivado' }
 
@@ -141,6 +146,8 @@ function MediaLibrary({ notify }) {
 }
 
 function AdminWorkspace() {
+  const { pathname } = useLocation()
+  const editingSite = ['/admin/portfolio','/admin/inicio','/admin/midias'].includes(pathname)
   const { user, signOut } = useAuth()
   const { ready, error, refresh } = useContent()
   const [toast, setToast] = useState(null)
@@ -159,15 +166,15 @@ function AdminWorkspace() {
     <aside className="admin-sidebar">
       <Link className="admin-brand" to="/admin"><img src="/media/duuk-logo-white.png" width="30" height="37" alt="" /><span>DUUK<small>STUDIO / PAINEL</small></span></Link>
       <p className="admin-sidebar__label">GERENCIAR</p>
-      <nav aria-label="Painel administrativo"><NavLink to="/admin" end><Icon name="grid" />Portfólio</NavLink><NavLink to="/admin/inicio"><Icon name="home" />Página inicial</NavLink><NavLink to="/admin/midias"><Icon name="media" />Biblioteca</NavLink></nav>
+      <nav aria-label="Painel administrativo"><NavLink to="/admin" end><Icon name="grid" />Visão geral</NavLink><NavLink to="/admin/contratos"><Icon name="document" />Contratos</NavLink><NavLink to="/admin/despesas"><Icon name="wallet" />Despesas</NavLink><NavLink to="/admin/insights"><Icon name="chart" />Insights</NavLink><NavLink to="/admin/portfolio"><Icon name="film" />Portfólio</NavLink><NavLink to="/admin/inicio"><Icon name="home" />Página inicial</NavLink><NavLink to="/admin/midias"><Icon name="media" />Biblioteca</NavLink></nav>
       <div className="admin-sidebar__bottom"><div className="admin-demo-card"><span className="admin-demo-dot" /><div><strong>Conectado à nuvem</strong><p>{user.email}</p></div></div><button className="admin-reset" onClick={() => signOut().catch((cause) => notify(cause.message, true))}>Sair da conta</button><span className="admin-sidebar__signature">DUUK® / FEITO PARA CRIAR</span></div>
     </aside>
     <div className="admin-workspace">
-      <header className="admin-topbar"><div className="admin-environment"><span />PAINEL<span className="admin-topbar-divider">/</span><span className="admin-topbar-note">Atualizações diretas no site</span></div><div className="admin-topbar__actions"><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16} /></Link></div></header>
-      <div className="admin-demo-banner"><span className="admin-demo-tag">AO VIVO</span><p>Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.</p></div>
+      <header className="admin-topbar"><div className="admin-environment"><span />PAINEL<span className="admin-topbar-divider">/</span><span className="admin-topbar-note">Administrativo da DUUK</span></div><div className="admin-topbar__actions"><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16} /></Link></div></header>
+      <div className="admin-demo-banner"><span className="admin-demo-tag">{editingSite?'AO VIVO':'PRIVADO'}</span><p>{editingSite?'Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.':'Contratos, despesas e relatórios ficam restritos à equipe autorizada.'}</p></div>
       <main className="admin-main">
         {error && <div className="admin-error" role="alert">{error} <button className="admin-text-button" onClick={() => refresh().catch(() => {})}>Tentar novamente</button></div>}
-        {!ready ? <div className="admin-empty"><p>Carregando seu conteúdo…</p></div> : <Routes><Route index element={<ProjectList notify={notify} />} /><Route path="inicio" element={<HomeEditor notify={notify} />} /><Route path="midias" element={<MediaLibrary notify={notify} />} /><Route path="*" element={<Navigate to="/admin" replace />} /></Routes>}
+        {!ready && editingSite ? <div className="admin-empty"><p>Carregando seu conteúdo…</p></div> : <Routes><Route index element={<DashboardPage />} /><Route path="portfolio" element={<ProjectList notify={notify} />} /><Route path="inicio" element={<HomeEditor notify={notify} />} /><Route path="midias" element={<MediaLibrary notify={notify} />} /><Route path="contratos" element={<ContractsPage />} /><Route path="contratos/:id" element={<ContractEditor notify={notify} />} /><Route path="despesas" element={<ExpensesPage notify={notify} />} /><Route path="insights" element={<InsightsPage />} /><Route path="*" element={<Navigate to="/admin" replace />} /></Routes>}
       </main>
       <footer className="admin-footer"><span>DUUK / SÃO PAULO</span><button className="admin-mobile-reset" onClick={() => signOut().catch((cause) => notify(cause.message, true))}>Sair da conta</button><span>Seu conteúdo. Seu ritmo.</span></footer>
     </div>

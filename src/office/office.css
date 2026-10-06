@@ -1,0 +1,95 @@
+.office-muted { color:var(--admin-muted,#787970); font-size:12px; line-height:1.7; }
+.office-small { font-size:11px; }
+.office-panel { padding:24px; margin-bottom:20px; }
+.office-panel h2 { font-size:19px; font-weight:600; letter-spacing:-.03em; margin-bottom:16px; }
+.office-panel p + p { margin-top:12px; }
+.office-toolbar { display:flex; justify-content:space-between; align-items:end; gap:16px; margin-bottom:24px; }
+.office-toolbar .admin-field { width:200px; }
+.office-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.office-section-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
+.office-section-title h2 { margin:0; }
+.office-money-stats strong { font-size:clamp(20px,2.3vw,32px); overflow-wrap:anywhere; }
+.office-select { background:white; border:1px solid #e5e5df; border-radius:6px; padding:10px; font-size:12px; }
+.office-shortcuts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:28px; }
+.office-shortcut { display:flex; align-items:center; gap:18px; padding:22px; }
+.office-shortcut > svg:first-child { color:#e7523e; }
+.office-shortcut > svg:last-child { margin-left:auto; flex-shrink:0; }
+.office-shortcut h2 { font-size:18px; }
+.office-shortcut p { font-size:11px; color:#787970; margin-top:5px; }
+.office-mini-row { display:flex; align-items:center; justify-content:space-between; gap:14px; border-top:1px solid #e5e5df; padding:15px 0; font-size:12px; }
+.office-mini-row strong { font-weight:600; }
+.office-mini-row small { display:block; color:#787970; margin-top:4px; }
+.office-badge { padding:5px 8px; border-radius:4px; border:1px solid #e5e5df; background:#f6f6f2; color:#787970; font-size:10px; white-space:nowrap; }
+.office-badge.is-pending { background:#fff4e7; color:#976640; border-color:#f1e5d5; }
+.office-badge.is-done { background:#f2f7ef; color:#59805c; border-color:#dce6d7; }
+.office-record-title { min-width:0; text-align:left; }
+.office-record-title small, .office-contract-row small { display:block; font-size:11px; margin-top:6px; color:#787970; overflow-wrap:anywhere; }
+.office-record-title strong { font-size:13px; }
+.office-expense-row { display:grid; grid-template-columns:minmax(0,1fr) 120px 65px 80px; align-items:center; gap:18px; padding:22px 24px; border-top:1px solid #e5e5df; font-size:13px; }
+.office-row-actions { display:flex; gap:8px; }
+.office-contract-row { display:flex; align-items:center; gap:18px; padding:24px; border-top:1px solid #e5e5df; }
+.office-contract-row > div { flex:1; min-width:0; }
+.office-contract-row > svg { flex-shrink:0; }
+.office-contract-row strong { font-size:13px; overflow-wrap:anywhere; }
+.office-contract-filters { flex-wrap:wrap; }
+.office-form { padding:24px; display:grid; gap:18px; border:0; }
+.office-empty { padding:38px 24px; color:#787970; font-size:13px; }
+.office-bars { display:grid; gap:18px; margin-top:22px; }
+.office-bars > div { position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; padding-bottom:12px; font-size:11px; }
+.office-bars span { overflow-wrap:anywhere; }
+.office-bars i { position:absolute; left:0; bottom:0; height:4px; background:#e7523e; border-radius:2px; }
+.office-bars strong { font-weight:500; }
+.office-timeline { height:200px; display:flex; align-items:stretch; gap:4px; padding-top:20px; }
+.office-timeline > div { flex:1; min-width:0; position:relative; padding-bottom:24px; display:flex; align-items:end; }
+.office-timeline i { display:block; width:100%; background:#e7523e; border-radius:3px 3px 0 0; }
+.office-timeline span { position:absolute; left:50%; bottom:0; transform:translateX(-50%); font-size:8px; color:#787970; }
+.office-contract-layout { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:22px; align-items:start; }
+.office-document { min-width:0; padding:18px; background:#e9e9e3; border:1px solid #deded7; border-radius:8px; }
+.office-pdf-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; font-size:11px; }
+.office-pdf-toolbar select { border:1px solid #d6d6ce; background:#fff; border-radius:4px; margin-left:6px; padding:6px; }
+.office-pdf-page { background:#fff; position:relative; width:100%; box-shadow:0 3px 10px #11131012; }
+.office-pdf-page > canvas { width:100%; height:100%; display:block; }
+.office-pdf-field { position:absolute; display:flex; align-items:center; justify-content:center; padding:2px; border:1px dashed #ce784e; background:#fff1e3b0; color:#92623f; font-size:clamp(8px,.7vw,11px); overflow:hidden; }
+button.office-pdf-field { touch-action:none; cursor:move; }
+.office-pdf-field.is-duuk { border-color:#628bc0; background:#eaf2ffb0; color:#446b9d; }
+.office-pdf-field.is-selected { outline:2px solid #e7523e; outline-offset:1px; }
+.office-pdf-field img { width:100%; height:100%; object-fit:contain; }
+.office-contract-sidebar .office-panel { padding:20px; }
+.office-field-create { display:grid; gap:12px; margin:18px 0; }
+.office-field-list { display:grid; gap:6px; max-height:250px; overflow:auto; margin:18px 0; }
+.office-field-list button { text-align:left; border:1px solid #e5e5df; border-radius:4px; padding:9px; font-size:11px; }
+.office-field-list button.is-selected { border-color:#e7523e; background:#fff4ef; }
+.office-field-list small { display:block; font-size:9px; color:#787970; margin-top:3px; }
+.office-field-controls { border-top:1px solid #e5e5df; padding:16px 0; display:grid; gap:12px; }
+.office-coordinate-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.office-coordinate-grid .admin-field span { font-size:10px; }
+.office-full-button { width:100%; margin:12px 0; }
+.office-field-presets { display:grid; gap:10px; margin-top:16px; }
+.office-participant { padding:15px 0; border-top:1px solid #e5e5df; }
+.office-participant strong { display:block; font-size:12px; }
+.office-participant small { display:block; color:#787970; font-size:10px; margin:3px 0 12px; overflow-wrap:anywhere; }
+.office-contract-sidebar .admin-text-button { display:block; margin-top:12px; text-align:left; }
+.office-signing { display:block; }
+.office-signing-header { background:#111310; color:#fff; padding:24px 5vw; display:flex; justify-content:space-between; align-items:center; gap:14px; }
+.office-signing-header > span { font-size:9px; letter-spacing:.1em; color:#b3b7ae; }
+.office-signing-brand { display:flex; align-items:center; gap:12px; }
+.office-signing-brand img { width:30px; height:38px; object-fit:contain; }
+.office-signing-brand > span { font-size:24px; font-weight:700; letter-spacing:-.04em; }
+.office-signing-brand small { display:block; font-size:7px; font-weight:400; letter-spacing:.13em; color:#b3b7ae; }
+.office-signing-main { max-width:1300px; margin:auto; padding:40px 24px; }
+.office-signing-main h1 { font-size:clamp(26px,3vw,44px); overflow-wrap:anywhere; }
+.office-signing-grid { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; }
+.office-signing-form fieldset { border:0; display:grid; gap:20px; padding:0; margin:0; }
+.office-signature { min-width:0; }
+.office-signature > div { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12px; margin-bottom:10px; }
+.office-signature canvas { display:block; width:100%; aspect-ratio:3; border:1px dashed #c9cbbe; border-radius:5px; background:#fff; touch-action:none; }
+.office-signature small { color:#787970; font-size:10px; display:block; margin-top:8px; }
+.office-consent { font-size:11px; align-items:start; line-height:1.6; }
+.office-consent input { flex-shrink:0; margin-top:3px; }
+.office-signing-success { max-width:760px; margin:0 auto; }
+.office-signing-success h2 { margin-top:22px; }
+.office-signing-success .admin-button { margin:22px 12px 0 0; }
+.office-signing-footer { padding:24px; text-align:center; color:#787970; border-top:1px solid #e5e5df; font-size:10px; }
+@media(max-width:1150px){.office-contract-layout,.office-signing-grid {grid-template-columns:minmax(0,1fr) 280px}.office-panel {padding:20px}.office-expense-row {gap:10px;padding:18px}.office-contract-sidebar .office-panel {padding:16px}}
+@media(max-width:900px){.office-contract-layout,.office-signing-grid {grid-template-columns:1fr}.office-contract-sidebar {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.office-signing-form {max-width:600px;width:100%;margin:auto}.office-signing-main {padding:28px 18px}}
+@media(max-width:760px){.admin-sidebar nav {overflow-x:auto;max-width:100%;overscroll-behavior-x:contain}.admin-sidebar nav a {flex:0 0 auto;white-space:nowrap;padding:10px 12px}.admin-brand {margin-bottom:12px}.office-grid,.office-shortcuts {grid-template-columns:1fr;gap:12px}.office-money-stats strong {font-size:19px}.office-panel {padding:18px}.office-shortcut {padding:18px}.office-expense-row {grid-template-columns:1fr auto;gap:10px}.office-expense-row .office-record-title {grid-column:1/-1}.office-expense-row .office-badge {grid-column:1;grid-row:3;justify-self:start}.office-expense-row .office-row-actions {grid-column:2;grid-row:2/4}.office-expense-row > strong {grid-column:1;grid-row:2}.office-contract-row {padding:18px;flex-wrap:wrap;gap:12px}.office-contract-row > div {flex-basis:calc(100% - 70px)}.office-contract-row > .office-badge {margin-left:36px}.office-contract-row > svg:last-child {margin-left:auto}.office-contract-sidebar {display:block}.office-document {padding:10px}.office-form {padding:20px}.office-pdf-toolbar strong {font-size:10px}.office-timeline span {font-size:7px}.office-mini-row {flex-wrap:wrap}.office-contract-layout {gap:16px}.office-signing-header {padding:20px}.office-toolbar .admin-field {width:160px}}

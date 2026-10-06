@@ -4,8 +4,8 @@ export const privacyPolicy = {
     en: 'How DUUK handles data from people who visit the site and get in touch.',
   },
   updated: {
-    pt: 'Atualizada em 25 de setembro de 2026.',
-    en: 'Updated on September 25, 2026.',
+    pt: 'Atualizada em 6 de outubro de 2026.',
+    en: 'Updated on October 6, 2026.',
   },
   lead: {
     pt: 'Esta página explica como a DUUK trata dados pessoais de quem visita este site e de quem fala com o estúdio.',
@@ -25,8 +25,8 @@ export const privacyPolicy = {
       title: { pt: 'O que este site coleta', en: 'What this site collects' },
       paragraphs: [
         {
-          pt: 'O site não tem cadastro, área de login nem pagamento.',
-          en: 'The site has no account, login area or payment.',
+          pt: 'A navegação pública dispensa cadastro e pagamento. Documentos para assinatura são acessados por um link privado enviado pela DUUK.',
+          en: 'Public browsing requires no account or payment. Documents for signing are accessed through a private link shared by DUUK.',
         },
         {
           pt: 'Se você usar o formulário de contato, pedimos nome, e-mail e mensagem. O formulário não guarda esses dados em um servidor da DUUK. Ao enviar, abre o seu programa de e-mail com uma mensagem pronta para contato@duukfilms.com. O envio só acontece se você confirmar no seu e-mail.',
@@ -41,8 +41,12 @@ export const privacyPolicy = {
           en: 'The language you choose, Portuguese or English, is saved only in your browser and is not sent to DUUK.',
         },
         {
-          pt: 'Este site não usa ferramenta de medição de audiência e não grava cookies próprios. O servidor que entrega as páginas pode registrar, de forma técnica e temporária, endereço IP, data, hora e a página acessada, apenas para o site funcionar.',
-          en: 'This site does not use an audience-measurement tool and does not set its own cookies. The server that delivers the pages may temporarily log your IP address, date, time and the page you opened, only so the site can work.',
+          pt: 'O site mede visualizações de páginas, aberturas de filmes e cliques de contato em contagens agregadas por dia, origem e tipo de dispositivo, sem cookies de análise ou identificação individual nos relatórios. Um código temporário derivado do IP limita abusos e é removido em até dois dias. Navegadores com Global Privacy Control ativado não entram nessa coleta. Os servidores também podem manter registros técnicos para funcionamento e segurança.',
+          en: 'The site measures page views, film opens and contact clicks as daily aggregate counts by source and device type, without analytics cookies or individual identification in reports. A temporary code derived from the IP limits abuse and is removed within two days. Browsers with Global Privacy Control enabled are excluded. Servers may also keep technical logs for operation and security.',
+        },
+        {
+          pt: 'Ao assinar um contrato, registramos o PDF, os campos preenchidos, o nome informado, o desenho da assinatura, o aceite, a data, o endereço IP e o navegador. Esses registros ficam privados. O link autoriza o participante pelo acesso a ele; a identidade não é verificada por certificado ICP-Brasil.',
+          en: 'When you sign a contract, we record the PDF, completed fields, declared name, drawn signature, acceptance, timestamp, IP address and browser. These records remain private. Access to the link authorizes the participant; identity is not verified through an ICP-Brasil certificate.',
         },
       ],
     },
@@ -56,6 +60,10 @@ export const privacyPolicy = {
         {
           pt: 'A preferência de idioma serve só para mostrar o site no idioma que você escolheu, no seu próprio aparelho.',
           en: 'The language preference only shows the site in the language you chose, on your own device.',
+        },
+        {
+          pt: 'As contagens de acesso ajudam a entender o uso do site. PDFs e evidências de assinatura são usados para acompanhar e comprovar os acordos entre a DUUK e seus clientes.',
+          en: 'Aggregate traffic counts help us understand site usage. PDFs and signature evidence are used to manage and document agreements between DUUK and its clients.',
         },
       ],
     },
@@ -83,6 +91,10 @@ export const privacyPolicy = {
           pt: 'Alguns filmes abrem no YouTube ou em um arquivo de vídeo hospedado fora deste site. Ao reproduzir, esse serviço pode receber dados técnicos do seu navegador, como o endereço IP. O player do YouTube usado aqui é o domínio youtube-nocookie.com.',
           en: 'Some films open on YouTube or as a video file hosted outside this site. When you play one, that service may receive technical data from your browser, such as your IP address. The YouTube player used here is the youtube-nocookie.com domain.',
         },
+        {
+          pt: 'A Vercel entrega as páginas do site. O Supabase armazena os arquivos enviados, contratos, evidências e registros administrativos, com controles de acesso. Os contratos e as despesas não são publicados no portfólio.',
+          en: 'Vercel delivers the website pages. Supabase stores uploaded files, contracts, evidence and administrative records with access controls. Contracts and expenses are not published in the portfolio.',
+        },
       ],
     },
     {
@@ -95,6 +107,10 @@ export const privacyPolicy = {
         {
           pt: 'A preferência de idioma permanece no navegador até você apagar os dados do site.',
           en: 'The language preference stays in your browser until you clear the site data.',
+        },
+        {
+          pt: 'As contagens agregadas do site são mantidas por até 90 dias. Contratos e evidências são preservados para execução e comprovação dos acordos e das obrigações aplicáveis. Para tratar de acesso, correção ou exclusão desses dados, fale com contato@duukfilms.com.',
+          en: 'Aggregate website counts are retained for up to 90 days. Contracts and evidence are retained to perform and document agreements and applicable obligations. For access, correction or deletion requests, contact contato@duukfilms.com.',
         },
       ],
     },
