@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.1.1",
+    "date": "2026-10-07",
+    "title": "E-mail conectado à GoDaddy",
+    "fixed": [
+      "Conexão IMAP com o Titan da GoDaddy corrigida: a negociação segura não cai antes da autenticação.",
+      "Erros de conexão e de senha agora têm mensagens diferentes, sem expor credenciais."
+    ],
+    "improved": [
+      "Orientações de acesso específicas para contas Titan contratadas pela GoDaddy."
+    ]
+  },
+  {
     "version": "1.1.0",
     "date": "2026-10-07",
     "title": "Seu e-mail, dentro da DUUK",

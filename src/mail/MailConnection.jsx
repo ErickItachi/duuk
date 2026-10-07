@@ -33,8 +33,8 @@ export default function MailConnection({ onClose, onConnected }) {
       <form onSubmit={submit}>
         <div className="admin-modal__body mail-connect-form">
           <p className="platform-muted">
-            Use a senha da caixa de e-mail, que pode ser diferente da senha
-            deste painel.
+            Use a senha que abre contato@duukfilms.com no webmail da GoDaddy /
+            Titan.
           </p>
           <label className="admin-field" htmlFor="titan-mailbox-password">
             <span>Senha da caixa Titan</span>
@@ -71,17 +71,17 @@ export default function MailConnection({ onClose, onConnected }) {
             e o envio antes de concluir.
           </small>
           <p className="platform-muted">
-            Se o Titan pedir, habilite o acesso por outros aplicativos no
-            webmail. Com autenticação em duas etapas, use uma senha de
-            aplicativo.
+            A senha de entrada na conta GoDaddy pode ser diferente da senha do
+            e-mail. Se usa verificação em duas etapas, consulte as opções de
+            acesso na segurança da sua conta GoDaddy.
           </p>
           <a
             className="admin-text-button"
-            href="https://support.titan.email/hc/en-us/articles/900000573066-How-to-configure-IMAP-for-Android"
+            href="https://www.godaddy.com/pt-br/help/usar-as-configuracoes-imap-para-adicionar-meu-professional-email-a-um-cliente-de-email-32204"
             target="_blank"
             rel="noreferrer"
           >
-            Ajuda do Titan <Icon name="arrow" />
+            Ajuda da GoDaddy <Icon name="arrow" />
           </a>
           {busy && (
             <p className="mail-connect-progress" role="status">

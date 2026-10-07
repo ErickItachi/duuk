@@ -1,4 +1,6 @@
 import { checked, database, HttpError } from "./http.ts";
+import { nativeImapTransport } from "./imap-transport.mjs";
+import { mailFailure } from "./mail-failure.mjs";
 
 export const mailbox = "contato@duukfilms.com";
 export const mailProvider = "Titan · GoDaddy";
@@ -44,7 +46,7 @@ export async function imapClient(credentials: MailCredentials) {
     socketTimeout: 20000,
   });
   client.on("error", () => {});
-  return client;
+  return nativeImapTransport(client);
 }
 export async function verifyMailbox(credentials: MailCredentials) {
   const client = await imapClient(credentials);
@@ -54,20 +56,32 @@ export async function verifyMailbox(credentials: MailCredentials) {
       await client.connect();
       const lock = await client.getMailboxLock("INBOX", { readOnly: true });
       lock.release();
-    } catch {
-      throw new HttpError(
-        "Não foi possível acessar o Titan. Confira a senha da caixa e a permissão de acesso por aplicativos no webmail.",
-        422,
+    } catch (error) {
+      const failure = mailFailure(error, "imap");
+      console.error(
+        JSON.stringify({
+          source: "mail",
+          stage: "imap",
+          kind: failure.kind,
+          code: failure.code,
+        }),
       );
+      throw new HttpError(failure.message, failure.status);
     }
     transport = await smtpTransport(credentials);
     try {
       await transport.verify();
-    } catch {
-      throw new HttpError(
-        "A entrada foi validada, mas o Titan não autorizou o envio. Confira a senha de aplicativo e o acesso por outros aplicativos.",
-        422,
+    } catch (error) {
+      const failure = mailFailure(error, "smtp");
+      console.error(
+        JSON.stringify({
+          source: "mail",
+          stage: "smtp",
+          kind: failure.kind,
+          code: failure.code,
+        }),
       );
+      throw new HttpError(failure.message, failure.status);
     }
   } finally {
     transport?.close();
