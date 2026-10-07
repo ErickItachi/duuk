@@ -10,7 +10,7 @@ import { validMediaUrl, MEDIA_PREFIX } from '../content/model'
 import { getImageSources } from '../media'
 import { ConfirmModal, Icon, MediaField } from './components'
 import { Avatar } from './forms'
-import { PwaProvider, AboutAdminPage, UpdateNotice, WhatsNew } from './Pwa'
+import { PwaProvider, AboutAdminPage, UpdateNotice } from './Pwa'
 import { currentRelease } from './pwaState'
 import { NotificationProvider, NotificationBell, NotificationsPage, NotificationSettingsPage } from './Notifications'
 import { UsersPage, PermissionsPage, ProfilePage, AuditPage } from './TeamPages'
@@ -187,7 +187,7 @@ function Allowed({ permission, children }) {
  return auth.hasPermission(permission)?children:<section className="admin-panel admin-empty"><Icon name="lock" size={32}/><h1>Acesso restrito.</h1><p>Sua conta não tem permissão para abrir este módulo.</p><Link className="admin-button admin-button--secondary" to="/admin">Voltar à visão geral</Link></section>
 }
 
-function AdminWorkspace({ interactive = true }) {
+function AdminWorkspace() {
  const {pathname}=useLocation(),auth=useAuth(),navigate=useNavigate()
  const [destination,setDestination]=useState(null)
  const [menuOpen,setMenuOpen]=useState(false),[narrow,setNarrow]=useState(()=>matchMedia('(max-width: 1023px)').matches)
@@ -212,7 +212,7 @@ function AdminWorkspace({ interactive = true }) {
   {menuOpen&&narrow&&<button type="button" className="admin-menu-overlay" onClick={()=>setMenuOpen(false)} aria-label="Fechar menu" tabIndex={-1}/>}
   <aside ref={sidebar} className={`admin-sidebar${menuOpen?' is-open':''}`} role={narrow?'dialog':undefined} aria-modal={narrow&&menuOpen?true:undefined} aria-label="Menu DUUK Admin" aria-hidden={narrow&&!menuOpen?true:undefined} inert={narrow&&!menuOpen?true:undefined}>
    <div className="admin-sidebar__drawer-head"><button className="admin-icon-button" aria-label="Fechar menu" onClick={()=>setMenuOpen(false)}><Icon name="close"/></button></div>
-   <div className="admin-sidebar__head"><button className="admin-collapse-toggle" aria-expanded={!collapsed} aria-controls="admin-navigation" aria-label={collapsed?'Expandir menu':'Minimizar menu'} title={collapsed?'Expandir menu':'Minimizar menu'} onClick={toggleSidebar}><Icon name="sidebar"/></button><Link className="admin-brand" to="/admin" onClick={()=>setMenuOpen(false)} aria-label="DUUK — visão geral"><img src="/media/duuk-logo-white.png" width="52" height="64" alt="DUUK"/><span>ADMIN<small>O espaço da equipe.</small></span></Link></div>
+   <div className="admin-sidebar__head"><Link className="admin-brand" to="/admin" onClick={()=>setMenuOpen(false)} aria-label="DUUK — visão geral"><img src="/media/duuk-logo-white.png" width="52" height="64" alt="DUUK"/><span>ADMIN<small>O espaço da equipe.</small></span></Link><button className="admin-collapse-toggle" aria-expanded={!collapsed} aria-controls="admin-navigation" aria-label={collapsed?'Expandir menu':'Minimizar menu'} title={collapsed?'Expandir menu':'Minimizar menu'} onClick={toggleSidebar}><Icon name={collapsed?"sidebarOpen":"sidebar"}/></button></div>
    <div id="admin-navigation" className="admin-sidebar__menu"><nav aria-label="Painel administrativo">{visible.filter(i=>!i.group).map(navItem)}{navGroup('Comercial','briefcase')}{navGroup('Site DUUK','film')}{navGroup('Configurações','settings')}</nav><div className="admin-sidebar__bottom"><Link className="admin-sidebar-profile" to="/admin/configuracoes/perfil" onClick={()=>setMenuOpen(false)}><Avatar profile={auth.profile}/><span><strong>{auth.profile.name}</strong><small>{auth.profile.is_super_admin?'Super administrador':auth.profile.role_name}</small></span></Link><button className="admin-reset" aria-label="Sair da conta" title="Sair da conta" onClick={()=>auth.signOut().catch(cause=>notify(cause.message,true))}><Icon name="logout"/><span>Sair da conta</span></button><span className="admin-sidebar__signature">DUUK® / {currentRelease.version}</span></div></div>
   </aside>
   <div className="admin-workspace" inert={narrow&&menuOpen?true:undefined}>
@@ -231,7 +231,6 @@ function AdminWorkspace({ interactive = true }) {
     </Routes>}
    </div></main><footer className="admin-footer"><span>DUUK / SÃO PAULO</span><span>Seu estúdio. Seu ritmo.</span><Link to="/admin/configuracoes/sobre">v{currentRelease.version}</Link></footer>
   </div>
-  {interactive&&<WhatsNew/>}
   {destination&&<ConfirmModal title="Sair sem salvar?" message="Existem alterações pendentes nesta página. Salve antes de continuar ou descarte ao sair." action="Sair sem salvar" onClose={()=>setDestination(null)} onConfirm={()=>navigate(destination)}/>}
   {toast&&<div className={`admin-toast${toast.failed?' admin-toast--error':''}`} role={toast.failed?'alert':'status'}><Icon name={toast.failed?'close':'check'}/><span>{toast.message}</span><button className="admin-icon-button" aria-label="Fechar aviso" onClick={()=>setToast(null)}><Icon name="close" size={16}/></button></div>}
  </div>
@@ -251,7 +250,7 @@ function AdminExperience() {
   return()=>{tags.forEach(tag=>tag.remove());theme.remove();if(publicIcons.length)publicIcons.forEach(node=>document.head.append(node));else{const link=document.createElement('link');link.rel='icon';link.type='image/png';link.href='/favicon.png';document.head.append(link)}}
  },[])
  return <>
-  {auth.ready&&<div className="admin-experience" inert={covered} aria-hidden={covered||undefined}>{auth.isAdmin?<NotificationProvider><AdminWorkspace interactive={!covered}/></NotificationProvider>:<LoginPage/>}</div>}
+  {auth.ready&&<div className="admin-experience" inert={covered} aria-hidden={covered||undefined}>{auth.isAdmin?<NotificationProvider><AdminWorkspace/></NotificationProvider>:<LoginPage/>}</div>}
   {covered&&<BrandLoader leaving={leaving}/>}
  </>
 }

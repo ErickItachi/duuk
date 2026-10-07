@@ -1,5 +1,23 @@
 [
   {
+    "version": "1.2.0",
+    "date": "2026-10-07",
+    "title": "Mais espaço para suas conversas",
+    "new": [
+      "Editor de e-mail com negrito, itálico, sublinhado, destaque, listas e links.",
+      "Cópia, cópia oculta, encaminhamento e pasta Enviados com cópia das novas mensagens."
+    ],
+    "improved": [
+      "Caixa de entrada com pastas, filtro de não lidas, leitura formatada e anexos organizados.",
+      "Anexos por seleção ou arraste, com tamanho visível e remoção individual."
+    ],
+    "fixed": [
+      "Botões de atualizar alinhados às outras ações, sem saltos ao exibir o resultado.",
+      "Logo no topo do menu e botão de minimizar alinhado, com ícone próprio para expandir.",
+      "Histórico de versões e janelas de novidades removidos da interface."
+    ]
+  },
+  {
     "version": "1.1.1",
     "date": "2026-10-07",
     "title": "E-mail conectado à GoDaddy",

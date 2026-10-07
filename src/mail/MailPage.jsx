@@ -10,8 +10,12 @@ import { fmtTime, timestamp, localInput } from "../crm/model";
 import { addFollowup } from "../crm/api";
 import { checked, mailRequest, rows } from "../admin/api";
 import { ConfirmModal, Icon, Modal, RefreshButton } from "../admin/components";
-import { Field, PageTitle, QueryState } from "../admin/forms";
+import { Field, LoadingPanel, PageTitle, QueryState } from "../admin/forms";
 import MailConnection from "./MailConnection";
+import MailComposer from "./MailComposer";
+import MailBody from "./MailBody";
+import { addressLabel, fileSize } from "./model";
+import "./mail.css";
 
 const templates = () => rows("duuk_mail_templates", (q) => q.order("title"));
 function TemplateEditor({ record, onClose, onSaved }) {
@@ -95,211 +99,38 @@ function TemplateEditor({ record, onClose, onSaved }) {
     </Modal>
   );
 }
-function Composer({ clients, models, reply, clientId, onClose, onSent }) {
-  const selectedClient = clients.find((c) => c.id === clientId);
-  const [requestId] = useState(() => crypto.randomUUID());
-  const [form, setForm] = useState({
-      to: reply?.from?.[0]?.address || selectedClient?.email || "",
-      subject: reply ? `Re: ${reply.subject.replace(/^Re:\s*/i, "")}` : "",
-      text: "",
-      client_id: selectedClient?.id || "",
-    }),
-    [attachments, setAttachments] = useState([]),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  useUnsavedChanges(true);
-  const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const files = async (e) => {
-    const selected = Array.from(e.target.files);
-    if (
-      selected.length > 5 ||
-      selected.reduce((sum, f) => sum + f.size, 0) > 5000000
-    ) {
-      setError("Escolha até 5 anexos, total máximo de 5 MB.");
-      return;
-    }
-    try {
-      const output = await Promise.all(
-        selected.map(
-          (file) =>
-            new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () =>
-                resolve({
-                  name: file.name,
-                  base64: reader.result.split(",")[1],
-                  size: file.size,
-                });
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            }),
-        ),
-      );
-      setAttachments(output);
-      setError("");
-    } catch {
-      setError("Não foi possível ler os anexos.");
-    }
-  };
-  return (
-    <Modal
-      title={reply ? "Responder conversa" : "Novo e-mail"}
-      subtitle="contato@duukfilms.com · Titan / GoDaddy"
-      onClose={() => !busy && onClose()}
-      wide
-    >
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          setError("");
-          try {
-            await mailRequest({
-              action: "send",
-              request_id: requestId,
-              ...form,
-              attachments: attachments.map(({ name, base64 }) => ({
-                name,
-                base64,
-              })),
-              in_reply_to: reply?.message_id,
-            });
-            await onSent();
-            onClose();
-          } catch (cause) {
-            setError(cause.message);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <div className="admin-modal__body admin-form-grid">
-          {clients.length > 0 && (
-            <Field label="Vincular a cliente">
-              <select
-                value={form.client_id}
-                onChange={(e) => {
-                  const c = clients.find((c) => c.id === e.target.value);
-                  setForm((f) => ({
-                    ...f,
-                    client_id: c?.id || "",
-                    to: c?.email || f.to,
-                  }));
-                }}
-              >
-                <option value="">Sem vínculo</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          )}
-          <Field label="Modelo de mensagem">
-            <select
-              defaultValue=""
-              onChange={(e) => {
-                const t = models.find((t) => t.id === e.target.value),
-                  c = clients.find((c) => c.id === form.client_id);
-                if (t)
-                  setForm((f) => ({
-                    ...f,
-                    subject: t.subject.replaceAll("{nome}", c?.name || ""),
-                    text: t.body.replaceAll("{nome}", c?.name || ""),
-                  }));
-              }}
-            >
-              <option value="">Escrever mensagem</option>
-              {models.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field
-            label="Para"
-            value={form.to}
-            onChange={(v) => update("to", v)}
-            type="email"
-            required
-            maxLength={254}
-          />
-          <Field
-            label="Assunto"
-            value={form.subject}
-            onChange={(v) => update("subject", v)}
-            required
-            maxLength={250}
-          />
-          <Field label="Mensagem">
-            <textarea
-              value={form.text}
-              onChange={(e) => update("text", e.target.value)}
-              required
-              rows={10}
-              maxLength={50000}
-            />
-          </Field>
-          <Field label="Anexos · até 5 MB no total">
-            <input type="file" multiple onChange={files} disabled={busy} />
-          </Field>
-          {attachments.length > 0 && (
-            <p className="platform-muted">
-              {attachments.map((a) => a.name).join(" · ")}
-            </p>
-          )}
-          {error && (
-            <p className="admin-error" role="alert">
-              {error}
-            </p>
-          )}
-        </div>
-        <div className="admin-modal__foot">
-          <button
-            type="button"
-            className="admin-button admin-button--secondary"
-            onClick={onClose}
-            disabled={busy}
-          >
-            Cancelar
-          </button>
-          <button className="admin-button" disabled={busy}>
-            <Icon
-              name={busy ? "refresh" : "send"}
-              className={busy ? "is-spinning" : ""}
-            />
-            {busy ? "Enviando…" : "Enviar e-mail"}
-          </button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
 function MessageView({
   message,
   clients,
   onClose,
   onReply,
+  onForward,
   notify,
   userId,
   canFollowup,
 }) {
   const query = useQuery(
       useCallback(
-        () => mailRequest({ action: "read", uid: message.uid }),
-        [message.uid],
+        () =>
+          mailRequest({
+            action: "read",
+            uid: message.uid,
+            folder: message.folder,
+          }),
+        [message.uid, message.folder],
       ),
     ),
     [clientId, setClientId] = useState(""),
     [due, setDue] = useState(localInput()),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [downloading, setDownloading] = useState(null);
   const download = async (a) => {
+    setDownloading(a.index);
     try {
       const data = await mailRequest({
         action: "attachment",
         uid: message.uid,
+        folder: message.folder,
         index: a.index,
       });
       const bytes = Uint8Array.from(atob(data.base64), (c) => c.charCodeAt(0));
@@ -309,6 +140,8 @@ function MessageView({
       );
     } catch (cause) {
       notify(cause.message, true);
+    } finally {
+      setDownloading(null);
     }
   };
   return (
@@ -322,23 +155,103 @@ function MessageView({
         <QueryState query={query}>
           {query.data && (
             <>
-              <p className="platform-muted">
-                De:{" "}
-                {query.data.from
-                  ?.map((a) => `${a.name || ""} <${a.address}>`)
-                  .join(", ")}
-              </p>
-              <pre className="mail-message">{query.data.text}</pre>
-              {query.data.attachments?.map((a) => (
+              <div className="mail-message-header">
+                <span className="mail-avatar">
+                  {(
+                    query.data.from?.[0]?.name ||
+                    query.data.from?.[0]?.address ||
+                    "E"
+                  )
+                    .slice(0, 1)
+                    .toUpperCase()}
+                </span>
+                <div>
+                  <strong>
+                    {query.data.from?.[0]?.name ||
+                      query.data.from?.[0]?.address ||
+                      "Remetente"}
+                  </strong>
+                  <span>{query.data.from?.[0]?.address}</span>
+                </div>
                 <button
-                  key={a.index}
-                  className="admin-button admin-button--secondary"
-                  onClick={() => download(a)}
+                  type="button"
+                  className="admin-icon-button"
+                  title="Marcar como não lida"
+                  aria-label="Marcar como não lida"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      await mailRequest({
+                        action: "flag",
+                        uid: message.uid,
+                        folder: message.folder,
+                        read: false,
+                      });
+                      notify("Mensagem marcada como não lida.");
+                      onClose();
+                    } catch (cause) {
+                      notify(cause.message, true);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
                 >
-                  <Icon name="download" />
-                  {a.name} · {Math.round(a.size / 1024)} KB
+                  <Icon name="mail" />
                 </button>
-              ))}
+              </div>
+              <details className="mail-message-details">
+                <summary>
+                  Para {addressLabel(query.data.to)} <Icon name="down" />
+                </summary>
+                <p>
+                  <strong>De:</strong> {addressLabel(query.data.from)}
+                </p>
+                <p>
+                  <strong>Para:</strong> {addressLabel(query.data.to)}
+                </p>
+                {!!query.data.cc?.length && (
+                  <p>
+                    <strong>Cc:</strong> {addressLabel(query.data.cc)}
+                  </p>
+                )}
+                <p>{fmtTime(query.data.date)}</p>
+              </details>
+              <MailBody html={query.data.html} text={query.data.text} />
+              {query.data.remote_images_blocked && (
+                <small className="mail-privacy-note">
+                  <Icon name="shield" />
+                  Imagens externas ficam bloqueadas para preservar sua
+                  privacidade.
+                </small>
+              )}
+              {!!query.data.attachments?.length && (
+                <div className="mail-received-attachments">
+                  <h3>
+                    <Icon name="attachment" />
+                    {query.data.attachments.length} anexo(s)
+                  </h3>
+                  {query.data.attachments.map((a) => (
+                    <button
+                      key={a.index}
+                      className="mail-file-card"
+                      disabled={downloading !== null}
+                      onClick={() => download(a)}
+                    >
+                      <Icon name="file" size={22} />
+                      <span>
+                        <strong>{a.name}</strong>
+                        <small>
+                          {downloading === a.index
+                            ? "Baixando…"
+                            : fileSize(a.size)}
+                        </small>
+                      </span>
+                      <Icon name="download" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </QueryState>
@@ -366,6 +279,7 @@ function MessageView({
                   await mailRequest({
                     action: "associate",
                     uid: message.uid,
+                    folder: message.folder,
                     client_id: clientId,
                   });
                   notify("Mensagem vinculada ao cliente.");
@@ -415,7 +329,7 @@ function MessageView({
           </div>
         )}
       </div>
-      <div className="admin-modal__foot">
+      <div className="admin-modal__foot mail-message-actions">
         <a
           href="https://email.godaddy.com"
           target="_blank"
@@ -426,11 +340,29 @@ function MessageView({
           <Icon name="arrow" />
         </a>
         <button
+          className="admin-button admin-button--secondary"
+          disabled={!query.data}
+          onClick={() => onForward(query.data)}
+        >
+          <Icon name="forward" />
+          Encaminhar
+        </button>
+        {!!query.data?.cc?.length || query.data?.to?.length > 1 ? (
+          <button
+            className="admin-button admin-button--secondary"
+            disabled={!query.data}
+            onClick={() => onReply(query.data, true)}
+          >
+            <Icon name="replyAll" />
+            Responder a todos
+          </button>
+        ) : null}
+        <button
           className="admin-button"
           disabled={!query.data}
           onClick={() => onReply(query.data)}
         >
-          <Icon name="mail" />
+          <Icon name="reply" />
           Responder
         </button>
       </div>
@@ -452,6 +384,7 @@ export default function MailPage({ notify }) {
   const [search, setSearch] = useState(""),
     [submittedSearch, setSubmittedSearch] = useState(""),
     [tab, setTab] = useState("inbox"),
+    [unreadOnly, setUnreadOnly] = useState(false),
     [compose, setCompose] = useState(() =>
       params.get("compor") === "1" ? { clientId: params.get("cliente") } : null,
     ),
@@ -463,13 +396,23 @@ export default function MailPage({ notify }) {
     [edit, setEdit] = useState(null),
     [deleting, setDeleting] = useState(null),
     [connecting, setConnecting] = useState(false);
+  const folder = tab === "sent" ? "sent" : "inbox";
   const inbox = useQuery(
     useCallback(
-      () =>
+      async () =>
         status.data?.configured
-          ? mailRequest({ action: "list", search: submittedSearch })
-          : Promise.resolve({ messages: [] }),
-      [status.data?.configured, submittedSearch],
+          ? {
+              ...(await mailRequest({
+                action: "list",
+                folder,
+                search: submittedSearch,
+                unread_only: unreadOnly,
+              })),
+              folder,
+              unreadOnly,
+            }
+          : { messages: [], folder, unreadOnly },
+      [status.data?.configured, submittedSearch, folder, unreadOnly],
     ),
   );
   return (
@@ -483,6 +426,7 @@ export default function MailPage({ notify }) {
           onRefresh={async () => {
             const result = await status.reload();
             if (result.failed) return result;
+            if (tab === "templates") return models.reload();
             if (status.data?.configured && result.configured)
               return inbox.reload();
           }}
@@ -505,167 +449,299 @@ export default function MailPage({ notify }) {
           Novo e-mail
         </button>
       </PageTitle>
-      <div className="admin-filter-tabs">
-        <button
-          className={tab === "inbox" ? "is-active" : ""}
-          onClick={() => setTab("inbox")}
-        >
-          Caixa de entrada
-        </button>
-        <button
-          className={tab === "templates" ? "is-active" : ""}
-          onClick={() => setTab("templates")}
-        >
-          Modelos de mensagem
-        </button>
-      </div>
-      {tab === "inbox" ? (
-        <QueryState query={status}>
-          {status.data && !status.data.configured ? (
-            <section className="admin-panel mail-connection">
-              <span className="office-shortcut-icon">
-                <Icon name="mail" size={24} />
-              </span>
-              <h2>Sua caixa Titan, aqui.</h2>
-              <p>
-                Conecte contato@duukfilms.com para ler, responder e enviar
-                mensagens sem sair do administrativo.
-              </p>
-              <span className="office-badge is-pending">
-                Aguardando conexão
-              </span>
-              {status.data.can_configure ? (
-                <button
-                  className="admin-button"
-                  onClick={() => setConnecting(true)}
-                >
-                  <Icon name="mail" />
-                  Conectar Titan
-                </button>
-              ) : (
-                <p>
-                  Peça a um super administrador para conectar a caixa da DUUK.
-                </p>
-              )}
-              <a
-                className="admin-button admin-button--secondary"
-                href="https://email.godaddy.com"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Abrir meu webmail
-                <Icon name="arrow" />
-              </a>
-            </section>
-          ) : (
-            <section className="admin-panel">
-              <form
-                className="admin-list-toolbar"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setSubmittedSearch(search);
-                }}
-              >
-                <label className="admin-search">
-                  <Icon name="search" />
-                  <input
-                    aria-label="Pesquisar e-mails"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Pesquisar na caixa…"
-                  />
-                </label>
-                <button className="admin-button admin-button--secondary">
-                  Pesquisar
-                </button>
-              </form>
-              <QueryState query={inbox}>
-                <div className="platform-list">
-                  {inbox.data?.messages.map((m) => (
+      <div className="mail-workspace">
+        <aside className="mail-folders">
+          <div className="mail-folders__account">
+            <span className="mail-avatar">D</span>
+            <div>
+              <strong>DUUK Films</strong>
+              <span>contato@duukfilms.com</span>
+            </div>
+          </div>
+          <nav aria-label="Pastas de e-mail">
+            <button
+              className={tab === "inbox" && !unreadOnly ? "is-active" : ""}
+              aria-current={tab === "inbox" && !unreadOnly ? "page" : undefined}
+              onClick={() => {
+                setTab("inbox");
+                setUnreadOnly(false);
+              }}
+            >
+              <Icon name="inbox" />
+              <span>Caixa de entrada</span>
+            </button>
+            <button
+              className={tab === "inbox" && unreadOnly ? "is-active" : ""}
+              aria-current={tab === "inbox" && unreadOnly ? "page" : undefined}
+              onClick={() => {
+                setTab("inbox");
+                setUnreadOnly(true);
+              }}
+            >
+              <Icon name="mail" />
+              <span>Não lidas</span>
+            </button>
+            <button
+              className={tab === "sent" ? "is-active" : ""}
+              aria-current={tab === "sent" ? "page" : undefined}
+              onClick={() => {
+                setTab("sent");
+                setUnreadOnly(false);
+              }}
+            >
+              <Icon name="send" />
+              <span>Enviados</span>
+            </button>
+            <button
+              className={tab === "templates" ? "is-active" : ""}
+              aria-current={tab === "templates" ? "page" : undefined}
+              onClick={() => setTab("templates")}
+            >
+              <Icon name="document" />
+              <span>Modelos de mensagem</span>
+            </button>
+          </nav>
+          <a
+            className="mail-folders__webmail"
+            href="https://email.godaddy.com"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Abrir webmail <Icon name="arrow" />
+          </a>
+          <small className="mail-folders__status">
+            <span
+              className={status.data?.configured ? "mail-connection-dot" : ""}
+            />
+            {status.data?.configured ? "Caixa conectada" : "Aguardando conexão"}
+          </small>
+        </aside>
+        <div className="mail-workspace__content">
+          {tab !== "templates" ? (
+            <QueryState query={status}>
+              {status.data && !status.data.configured ? (
+                <section className="admin-panel mail-connection">
+                  <span className="office-shortcut-icon">
+                    <Icon name="mail" size={24} />
+                  </span>
+                  <h2>Sua caixa Titan, aqui.</h2>
+                  <p>
+                    Conecte contato@duukfilms.com para ler, responder e enviar
+                    mensagens sem sair do administrativo.
+                  </p>
+                  <span className="office-badge is-pending">
+                    Aguardando conexão
+                  </span>
+                  {status.data.can_configure ? (
                     <button
-                      key={m.uid}
-                      className={`platform-row mail-row${m.unread ? " is-unread" : ""}`}
-                      onClick={() => setOpened(m)}
+                      className="admin-button"
+                      onClick={() => setConnecting(true)}
                     >
                       <Icon name="mail" />
-                      <div className="platform-row__main">
-                        <h2>{m.subject}</h2>
-                        <p>
-                          {m.from?.map((a) => a.name || a.address).join(", ")}
-                        </p>
-                      </div>
-                      <small>{fmtTime(m.date)}</small>
-                      {m.unread && <span className="mail-unread-dot" />}
+                      Conectar Titan
                     </button>
-                  ))}
-                  {inbox.data?.messages.length === 0 && (
-                    <div className="admin-empty">
-                      <p>Nenhuma mensagem encontrada.</p>
-                    </div>
-                  )}
-                  {inbox.data?.more && (
-                    <p className="platform-muted mail-more">
-                      Mostrando as 50 mensagens mais recentes. Use a pesquisa
-                      para encontrar mensagens anteriores.
+                  ) : (
+                    <p>
+                      Peça a um super administrador para conectar a caixa da
+                      DUUK.
                     </p>
                   )}
-                </div>
-              </QueryState>
-            </section>
-          )}
-        </QueryState>
-      ) : (
-        <>
-          <div className="crm-toolbar">
-            <p className="platform-muted">
-              Personalize com {"{nome}"}. Envio individual, pelo composer.
-            </p>
-            <button
-              className="admin-button admin-button--secondary"
-              onClick={() => setEdit("new")}
-            >
-              <Icon name="plus" />
-              Novo modelo
-            </button>
-          </div>
-          <QueryState query={models}>
-            <section className="admin-panel platform-list">
-              {models.data?.map((t) => (
-                <article className="platform-row" key={t.id}>
-                  <Icon name="document" />
-                  <div className="platform-row__main">
-                    <h2>{t.title}</h2>
-                    <p>{t.subject}</p>
+                  <a
+                    className="admin-button admin-button--secondary"
+                    href="https://email.godaddy.com"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Abrir meu webmail
+                    <Icon name="arrow" />
+                  </a>
+                </section>
+              ) : (
+                <section
+                  className="admin-panel mail-list-panel"
+                  aria-label={
+                    tab === "sent"
+                      ? "Mensagens enviadas"
+                      : "Mensagens recebidas"
+                  }
+                >
+                  <div className="mail-list-heading">
+                    <h2>
+                      {tab === "sent"
+                        ? "Enviados"
+                        : unreadOnly
+                          ? "Não lidas"
+                          : "Caixa de entrada"}
+                    </h2>
+                    <span>
+                      {inbox.loading
+                        ? "Atualizando…"
+                        : `${inbox.data?.total ?? inbox.data?.messages.length ?? 0} mensagem(ns)`}
+                    </span>
                   </div>
-                  <button
-                    className="admin-icon-button"
-                    aria-label={`Editar modelo ${t.title}`}
-                    onClick={() => setEdit(t)}
+                  <form
+                    className="admin-list-toolbar mail-list-search"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      setSubmittedSearch(search);
+                    }}
                   >
-                    <Icon name="edit" />
-                  </button>
-                  <button
-                    className="admin-icon-button"
-                    aria-label={`Excluir modelo ${t.title}`}
-                    onClick={() => setDeleting(t)}
-                  >
-                    <Icon name="trash" />
-                  </button>
-                </article>
-              ))}
-            </section>
-          </QueryState>
-        </>
-      )}
+                    <label className="admin-search">
+                      <Icon name="search" />
+                      <input
+                        aria-label="Pesquisar e-mails"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Pesquisar assunto, nome ou e-mail…"
+                      />
+                    </label>
+                    <button className="admin-button admin-button--secondary">
+                      Pesquisar
+                    </button>
+                  </form>
+                  {inbox.data &&
+                  (inbox.data.folder !== folder ||
+                    inbox.data.unreadOnly !== unreadOnly) ? (
+                    <LoadingPanel label="Abrindo a pasta…" />
+                  ) : (
+                    <QueryState query={inbox}>
+                      <div className="mail-list">
+                        {inbox.data?.messages.map((m) => (
+                          <button
+                            key={m.uid}
+                            className={`mail-row${m.unread ? " is-unread" : ""}`}
+                            onClick={() => setOpened({ ...m, folder })}
+                          >
+                            <span className="mail-avatar">
+                              {(
+                                (folder === "sent" ? m.to : m.from)?.[0]
+                                  ?.name ||
+                                (folder === "sent" ? m.to : m.from)?.[0]
+                                  ?.address ||
+                                "E"
+                              )
+                                .slice(0, 1)
+                                .toUpperCase()}
+                            </span>
+                            <div className="mail-row__main">
+                              <strong>
+                                {(folder === "sent" ? m.to : m.from)
+                                  ?.map((a) => a.name || a.address)
+                                  .join(", ") || "Remetente"}
+                              </strong>
+                              <h3>{m.subject}</h3>
+                            </div>
+                            <div className="mail-row__meta">
+                              <time>{fmtTime(m.date)}</time>
+                              <span>
+                                {m.has_attachments && (
+                                  <Icon name="attachment" size={14} />
+                                )}{" "}
+                                {m.unread && (
+                                  <span
+                                    className="mail-unread-dot"
+                                    aria-label="Não lida"
+                                  />
+                                )}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                        {inbox.data?.messages.length === 0 && (
+                          <div className="admin-empty">
+                            <Icon
+                              name={tab === "sent" ? "send" : "inbox"}
+                              size={32}
+                            />
+                            <h3>
+                              {unreadOnly
+                                ? "Tudo em dia."
+                                : "Nenhuma mensagem por aqui."}
+                            </h3>
+                            <p>
+                              {unreadOnly
+                                ? "Não há mensagens não lidas nesta pesquisa."
+                                : "As conversas da DUUK aparecem neste espaço."}
+                            </p>
+                          </div>
+                        )}
+                        {inbox.data?.more && (
+                          <p className="platform-muted mail-more">
+                            Mostrando as 50 mensagens mais recentes. Use a
+                            pesquisa para encontrar mensagens anteriores.
+                          </p>
+                        )}
+                      </div>
+                    </QueryState>
+                  )}
+                </section>
+              )}
+            </QueryState>
+          ) : (
+            <>
+              <div className="crm-toolbar">
+                <p className="platform-muted">
+                  Mensagens prontas para personalizar com {"{nome}"}.
+                </p>
+                <button
+                  className="admin-button admin-button--secondary"
+                  onClick={() => setEdit("new")}
+                >
+                  <Icon name="plus" />
+                  Novo modelo
+                </button>
+              </div>
+              <QueryState query={models}>
+                <section className="admin-panel platform-list">
+                  {models.data?.map((t) => (
+                    <article className="platform-row" key={t.id}>
+                      <Icon name="document" />
+                      <div className="platform-row__main">
+                        <h2>{t.title}</h2>
+                        <p>{t.subject}</p>
+                      </div>
+                      <button
+                        className="admin-icon-button"
+                        aria-label={`Editar modelo ${t.title}`}
+                        onClick={() => setEdit(t)}
+                      >
+                        <Icon name="edit" />
+                      </button>
+                      <button
+                        className="admin-icon-button"
+                        aria-label={`Excluir modelo ${t.title}`}
+                        onClick={() => setDeleting(t)}
+                      >
+                        <Icon name="trash" />
+                      </button>
+                    </article>
+                  ))}
+                </section>
+              </QueryState>
+            </>
+          )}
+        </div>
+      </div>
       {compose && clients.data && models.data && (
-        <Composer
+        <MailComposer
           clientId={compose.clientId}
           clients={clients.data || []}
           models={models.data || []}
           reply={compose.reply}
+          replyAll={compose.replyAll}
+          forward={compose.forward}
           onClose={() => setCompose(null)}
-          onSent={async () => {
-            notify("E-mail enviado pelo Titan.");
+          onSent={async (result) => {
+            notify(
+              result.rejected?.length
+                ? `E-mail enviado, mas estes destinatários foram recusados: ${result.rejected.join(", ")}. Confira os endereços antes de um novo envio.`
+                : result.sent_copy_saved === false
+                  ? "E-mail enviado. Não foi possível salvar a cópia em Enviados; não reenvie a mensagem."
+                  : result.sent_copy_saved === true
+                    ? "E-mail enviado e salvo em Enviados."
+                    : "E-mail enviado pelo Titan.",
+              !!result.rejected?.length,
+            );
             await inbox.reload();
           }}
         />
@@ -681,9 +757,13 @@ export default function MailPage({ notify }) {
             setOpened(null);
             inbox.reload();
           }}
-          onReply={(reply) => {
+          onReply={(reply, replyAll = false) => {
             setOpened(null);
-            setCompose({ reply });
+            setCompose({ reply, replyAll });
+          }}
+          onForward={(forward) => {
+            setOpened(null);
+            setCompose({ forward });
           }}
         />
       )}

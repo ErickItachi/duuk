@@ -7,7 +7,6 @@ import {
   json,
   member,
   readJson,
-  text,
   uuid,
 } from "../_shared/http.ts";
 import {
@@ -18,6 +17,14 @@ import {
   imapClient,
   verifyMailbox,
 } from "../_shared/mail.ts";
+import {
+  cleanMailHtml,
+  hasAttachments,
+  outgoingMail,
+  rawMail,
+  sentFolder,
+  archiveSentMessage,
+} from "../_shared/mail-content.ts";
 handler(async (req, headers) => {
   const db = database(),
     body = await readJson(req, 8000000);
@@ -93,25 +100,8 @@ handler(async (req, headers) => {
       503,
     );
   if (body.action === "send" && user) {
-    const to = text(body.to, "o destinatário", 254),
-      subject = text(body.subject, "o assunto", 250),
-      message = text(body.text, "a mensagem", 50000);
-    if (!/^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/.test(to))
-      throw new HttpError("Destinatário inválido.");
-    const attachments = (
-      Array.isArray(body.attachments) ? body.attachments : []
-    )
-      .slice(0, 5)
-      .map((a: any) => ({
-        filename: text(a.name, "o nome do anexo", 160),
-        content: Buffer.from(String(a.base64 || ""), "base64"),
-        contentType: "application/octet-stream",
-      }));
-    if (
-      attachments.reduce((n: number, a: any) => n + a.content.length, 0) >
-      5000000
-    )
-      throw new HttpError("Use anexos de até 5 MB no total.");
+    const outgoing = outgoingMail(body),
+      { subject } = outgoing;
     const clientId = body.client_id ? uuid(body.client_id) : null;
     if (clientId) {
       if (
@@ -166,6 +156,10 @@ handler(async (req, headers) => {
         "Limite de 10 envios por hora. Aguarde antes de enviar novamente.",
         429,
       );
+    const compiled = await rawMail({
+      ...outgoing,
+      from: { name: "DUUK Films", address: email },
+    });
     checked(
       await db.from("duuk_mail_outbox").insert({
         request_id: requestId,
@@ -174,21 +168,13 @@ handler(async (req, headers) => {
       }),
     );
     const transport = await smtpTransport(credentials);
-    let result;
+    let rejected: string[] = [];
     try {
-      result = await transport.sendMail({
-        from: { name: "DUUK Films", address: email },
-        to,
-        subject,
-        text: message,
-        attachments,
-        inReplyTo: body.in_reply_to
-          ? text(body.in_reply_to, "a conversa", 1000)
-          : undefined,
-        references: body.in_reply_to
-          ? [text(body.in_reply_to, "a conversa", 1000)]
-          : undefined,
+      const result = await transport.sendMail({
+        envelope: compiled.envelope,
+        raw: compiled.raw,
       });
+      rejected = (result.rejected || []).map(String);
     } catch {
       await db
         .from("duuk_mail_outbox")
@@ -204,17 +190,17 @@ handler(async (req, headers) => {
     checked(
       await db
         .from("duuk_mail_outbox")
-        .update({ status: "sent", message_id: result.messageId })
+        .update({ status: "sent", message_id: compiled.messageId })
         .eq("request_id", requestId),
     );
     checked(
       await db.from("duuk_mail_links").insert({
-        message_id: result.messageId,
+        message_id: compiled.messageId,
         client_id: clientId,
         subject,
         direction: "out",
         sender: email,
-        recipient: to,
+        recipient: outgoing.to.join(", "),
         sent_at: new Date().toISOString(),
         created_by: user.id,
       }),
@@ -237,16 +223,57 @@ handler(async (req, headers) => {
         actor_name: user.email,
         action: "email-sent",
         entity: "duuk_mail_links",
-        entity_id: result.messageId,
+        entity_id: compiled.messageId,
         summary: "E-mail enviado pelo Titan",
       }),
     );
-    return json({ sent: true, message_id: result.messageId }, headers);
+    // Delivery is recorded before archiving. An IMAP failure must not prompt a
+    // second SMTP send. Only this mailbox's private Sent copy includes Bcc.
+    let sentCopySaved = false;
+    const archive = await imapClient(credentials);
+    try {
+      await archive.connect();
+      sentCopySaved = await archiveSentMessage(archive, compiled);
+    } catch {
+      console.error(
+        JSON.stringify({
+          source: "mail",
+          stage: "sent-copy",
+          code: "archive-failed",
+        }),
+      );
+    } finally {
+      await archive.logout().catch(() => {});
+    }
+    return json(
+      {
+        sent: true,
+        message_id: compiled.messageId,
+        sent_copy_saved: sentCopySaved,
+        rejected,
+      },
+      headers,
+    );
   }
+  if (
+    !["poll", "list", "read", "attachment", "associate", "flag"].includes(
+      body.action,
+    )
+  )
+    throw new HttpError("Ação inválida.");
+  const folderKey = body.action === "poll" ? "inbox" : body.folder || "inbox";
+  if (!["inbox", "sent"].includes(folderKey))
+    throw new HttpError("Pasta inválida.");
   const client = await imapClient(credentials);
   try {
     await client.connect();
-    const lock = await client.getMailboxLock("INBOX");
+    const folder = folderKey === "sent" ? await sentFolder(client) : "INBOX";
+    if (!folder) {
+      if (body.action === "list")
+        return json({ messages: [], more: false, total: 0 }, headers);
+      throw new HttpError("Pasta não encontrada.", 404);
+    }
+    const lock = await client.getMailboxLock(folder);
     try {
       if (body.action === "poll") {
         const validity = String(
@@ -328,9 +355,19 @@ handler(async (req, headers) => {
           .trim()
           .slice(0, 160);
         const uids = await client.search(
-          search
-            ? { or: [{ subject: search }, { from: search }, { text: search }] }
-            : { all: true },
+          {
+            ...(search
+              ? {
+                  or: [
+                    { subject: search },
+                    { from: search },
+                    { to: search },
+                    { text: search },
+                  ],
+                }
+              : { all: true }),
+            ...(body.unread_only === true ? { seen: false } : {}),
+          },
           { uid: true },
         );
         const selected = (uids || []).slice(-50);
@@ -338,7 +375,13 @@ handler(async (req, headers) => {
         if (selected.length)
           for await (const m of client.fetch(
             selected,
-            { uid: true, envelope: true, flags: true, internalDate: true },
+            {
+              uid: true,
+              envelope: true,
+              flags: true,
+              internalDate: true,
+              bodyStructure: true,
+            },
             { uid: true },
           )) {
             messages.push({
@@ -355,16 +398,31 @@ handler(async (req, headers) => {
               date: m.envelope?.date || m.internalDate,
               message_id: m.envelope?.messageId,
               unread: !m.flags?.has("\\Seen"),
+              has_attachments: hasAttachments(m.bodyStructure),
+              folder: folderKey,
             });
           }
         return json(
-          { messages: messages.reverse(), more: (uids || []).length > 50 },
+          {
+            messages: messages.reverse(),
+            more: (uids || []).length > 50,
+            total: (uids || []).length,
+          },
           headers,
         );
       }
       const uid = Number(body.uid);
       if (!Number.isSafeInteger(uid) || uid < 1)
         throw new HttpError("Mensagem inválida.");
+      if (body.action === "flag") {
+        if (typeof body.read !== "boolean")
+          throw new HttpError("Estado de leitura inválido.");
+        const changed = body.read
+          ? await client.messageFlagsAdd(uid, ["\\Seen"], { uid: true })
+          : await client.messageFlagsRemove(uid, ["\\Seen"], { uid: true });
+        if (!changed) throw new HttpError("Mensagem não encontrada.", 404);
+        return json({ saved: true }, headers);
+      }
       if (body.action === "read") {
         const m = await client.fetchOne(
           uid,
@@ -379,13 +437,26 @@ handler(async (req, headers) => {
           {
             uid,
             subject: parsed.subject || "",
-            text:
-              parsed.text ||
-              "Esta mensagem contém apenas HTML. Abra o webmail para visualizar.",
+            text: parsed.text || "",
+            html: parsed.html
+              ? cleanMailHtml(String(parsed.html).slice(0, 500000))
+              : "",
+            remote_images_blocked:
+              !!parsed.html &&
+              /<(img|video|iframe)\b/i.test(String(parsed.html)),
             from: parsed.from?.value,
-            to: parsed.to,
+            to:
+              (Array.isArray(parsed.to)
+                ? parsed.to.flatMap((a: any) => a.value)
+                : parsed.to?.value) || [],
+            cc:
+              (Array.isArray(parsed.cc)
+                ? parsed.cc.flatMap((a: any) => a.value)
+                : parsed.cc?.value) || [],
+            reply_to: parsed.replyTo?.value || parsed.from?.value,
             message_id: parsed.messageId,
             date: parsed.date,
+            folder: folderKey,
             attachments: (parsed.attachments || []).map(
               (a: any, i: number) => ({
                 index: i,
@@ -399,6 +470,8 @@ handler(async (req, headers) => {
         );
       }
       if (body.action === "attachment") {
+        if (!Number.isSafeInteger(body.index) || body.index < 0)
+          throw new HttpError("Anexo inválido.");
         const m = await client.fetchOne(
           uid,
           { source: { maxLength: 6000000 } },

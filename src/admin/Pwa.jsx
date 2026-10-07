@@ -1,11 +1,8 @@
 import { dirtyForms } from "./unsavedChanges";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../content/AuthContext";
-import { supabase } from "../content/supabase";
+import { useNavigate } from "react-router-dom";
 import { PageTitle } from "./forms";
-import { Icon, Modal } from "./components";
-import releases from "./releases.json";
+import { Icon } from "./components";
 import BrandLoader from "../components/BrandLoader";
 
 import { PwaContext, usePwa, currentRelease, installedBuild } from "./pwaState";
@@ -270,174 +267,30 @@ export function PwaProvider({ children }) {
           {connection}
         </div>
       )}
-      {updating && <BrandLoader label={updating} detail="Atualizando DUUK Admin" />}
+      {updating && (
+        <BrandLoader label={updating} detail="Atualizando DUUK Admin" />
+      )}
     </PwaContext.Provider>
   );
 }
-function ReleaseNotes({ release }) {
-  return (
-    <div className="release-notes">
-      <p className="admin-eyebrow">
-        VERSÃO {release.version} ·{" "}
-        {new Date(release.date + "T12:00:00-03:00").toLocaleDateString("pt-BR")}
-      </p>
-      <h3>{release.title}</h3>
-      {[
-        ["new", "Novo"],
-        ["improved", "Melhorias"],
-        ["fixed", "Correções"],
-      ]
-        .filter(([key]) => release[key]?.length)
-        .map(([key, title]) => (
-          <div key={key}>
-            <h4>
-              <Icon
-                name={
-                  key === "new"
-                    ? "plus"
-                    : key === "improved"
-                      ? "spark"
-                      : "check"
-                }
-                size={16}
-              />
-              {title}
-            </h4>
-            <ul>
-              {release[key].map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-    </div>
-  );
-}
 export function UpdateNotice() {
-  const pwa = usePwa(),
-    [notes, setNotes] = useState(false);
+  const pwa = usePwa();
   if (!pwa.available) return null;
   return (
-    <>
-      <div className="admin-update-notice">
-        <Icon name="refresh" />
-        <div>
-          <strong>DUUK Admin {pwa.available.version} disponível</strong>
-          <p>
-            {pwa.message ===
-            "Salve ou descarte as alterações pendentes antes de atualizar."
-              ? pwa.message
-              : "Uma nova versão está pronta para você."}
-          </p>
-        </div>
-        <button className="admin-text-button" onClick={() => setNotes(true)}>
-          Ver novidades
-        </button>
-        <button
-          className="admin-button admin-button--secondary"
-          onClick={pwa.update}
-          disabled={!!pwa.updating || pwa.checking}
-        >
-          Atualizar app
-        </button>
+    <div className="admin-update-notice">
+      <Icon name="refresh" />
+      <div>
+        <strong>Uma atualização está disponível</strong>
+        <p>{pwa.message || "Atualize o aplicativo quando estiver pronto."}</p>
       </div>
-      {notes && (
-        <Modal title="O que vem na atualização" onClose={() => setNotes(false)}>
-          <div className="admin-modal__body">
-            <ReleaseNotes release={pwa.available} />
-          </div>
-          <div className="admin-modal__foot">
-            <button className="admin-button" onClick={() => { setNotes(false); pwa.update(); }}>
-              Atualizar agora
-            </button>
-          </div>
-        </Modal>
-      )}
-    </>
-  );
-}
-async function acknowledgeRelease(userId) {
-  // A nonessential acknowledgement must never prevent access to the workspace.
-  try {
-    await supabase
-      .from("duuk_release_seen")
-      .upsert({
-        user_id: userId,
-        version: currentRelease.version,
-        seen_at: new Date().toISOString(),
-      })
-      .abortSignal(AbortSignal.timeout(10000));
-  } catch {
-    // The session marker keeps the notice closed; retry when connectivity returns.
-  }
-}
-function dismissedRelease(key) {
-  try {
-    return sessionStorage.getItem(key) === "1";
-  } catch {
-    return false;
-  }
-}
-export function WhatsNew() {
-  const auth = useAuth(),
-    [show, setShow] = useState(false);
-  const seenKey = `duuk-release-seen:${auth.user.id}:${currentRelease.version}`;
-  useEffect(() => {
-    let active = true;
-    const retry = () => {
-      if (dismissedRelease(seenKey)) void acknowledgeRelease(auth.user.id);
-    };
-    window.addEventListener("online", retry);
-    if (dismissedRelease(seenKey)) retry();
-    else
-      supabase
-        .from("duuk_release_seen")
-        .select("version")
-        .eq("user_id", auth.user.id)
-        .maybeSingle()
-        .then((result) => {
-          if (
-            active &&
-            !dismissedRelease(seenKey) &&
-            !result.error &&
-            result.data?.version !== currentRelease.version
-          )
-            setShow(true);
-        });
-    return () => {
-      active = false;
-      window.removeEventListener("online", retry);
-    };
-  }, [auth.user.id, seenKey]);
-  const close = () => {
-    setShow(false);
-    try {
-      sessionStorage.setItem(seenKey, "1");
-    } catch {
-      /* Restricted storage still permits dismissal. */
-    }
-    void acknowledgeRelease(auth.user.id);
-  };
-  if (!show) return null;
-  return (
-    <Modal title="O que há de novo na DUUK" onClose={close}>
-      <div className="admin-modal__body">
-        <ReleaseNotes release={currentRelease} />
-      </div>
-      <div className="admin-modal__foot">
-        <Link
-          className="admin-text-button"
-          to="/admin/configuracoes/sobre"
-          onClick={close}
-        >
-          Ver todas as novidades
-          <Icon name="arrow" />
-        </Link>
-        <button className="admin-button" onClick={close}>
-          Vamos começar
-        </button>
-      </div>
-    </Modal>
+      <button
+        className="admin-button admin-button--secondary"
+        onClick={pwa.update}
+        disabled={!!pwa.updating || pwa.checking}
+      >
+        Atualizar app
+      </button>
+    </div>
   );
 }
 export function AboutAdminPage() {
@@ -512,12 +365,6 @@ export function AboutAdminPage() {
           </p>
         )}
       </section>
-      <h2 className="platform-subheading">Histórico de versões</h2>
-      {releases.map((release) => (
-        <section className="admin-panel platform-release" key={release.version}>
-          <ReleaseNotes release={release} />
-        </section>
-      ))}
     </>
   );
 }

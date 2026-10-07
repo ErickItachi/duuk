@@ -2,7 +2,7 @@
 
 ## Acesso e autorização
 
-O painel está em `https://www.duukfilms.com/admin`. O site institucional não contém links para ele. As contas individuais solicitadas foram criadas no Supabase Auth, sem senhas no repositório. A conta original continua ativa. Erick é super administrador; Douglas usa Administrador; Joao usa Comercial.
+O painel está em `https://www.duukfilms.com/admin`. O site institucional não contém links para ele. As contas individuais solicitadas foram criadas no Supabase Auth, sem senhas no repositório. As contas e permissões são administradas pelo usuário em Configurações; não reative uma conta desativada para executar testes.
 
 Em Configurações, o administrador pode gerenciar usuários, grupos e exceções individuais. Uma exceção de bloqueio prevalece sobre o grupo; super administradores mantêm acesso completo. O banco impede desativar ou rebaixar o último super administrador. Desativar uma conta bloqueia as operações no servidor imediatamente; a interface revalida o contexto ao focar e a cada minuto.
 
@@ -32,7 +32,7 @@ Para instalações anteriores, `DUUK_MAIL_USERNAME` e `DUUK_MAIL_PASSWORD` nos s
 
 Depois de conectar, valide a caixa de entrada e um envio individual para um destinatário autorizado. O job existente consulta mensagens novas a cada cinco minutos; a primeira consulta cria uma linha de base para não notificar todo o histórico antigo. A busca retorna até 50 mensagens recentes. Anexos do composer somam até 5 MB, no máximo cinco arquivos. Envios têm limite de dez por usuário/hora e identificador idempotente. Se o provedor não confirmar o envio, o painel pede conferir Enviados antes de tentar uma nova mensagem.
 
-Credenciais, corpos de mensagens e conteúdo dos anexos não entram na auditoria. O banco guarda referências de mensagens e vínculos comerciais; leitura e envio usam o provedor real. A caixa permanece aguardando conexão até o usuário informar a credencial correta pelo painel.
+Credenciais, corpos de mensagens e conteúdo dos anexos não entram na auditoria. O banco guarda referências de mensagens e vínculos comerciais; leitura e envio usam o provedor real. O usuário confirmou a conexão funcionando em 7 de outubro de 2026; a presença da configuração no Vault foi verificada sem ler sua senha.
 
 ## Notificações e aplicativo
 
@@ -42,18 +42,18 @@ No iPhone/iPad compatível, instale pelo Safari > Compartilhar > Adicionar à Te
 
 VAPID privado e token do agendamento ficam criptografados no Supabase Vault. O cliente recebe somente a chave pública. O Cron dispara a função a cada cinco minutos. Preferências, permissões, deduplicação, tentativas limitadas e remoção de endpoints expirados são verificadas no backend.
 
-Eventos reais incluem compromissos de amanhã/uma hora, follow-ups, assinatura recebida, resumo financeiro do mês encerrado, e-mails novos após conectar o Titan e versões publicadas. Notificações internas ficam por 180 dias. A publicação de uma versão gera um único evento por usuário e versão.
+Eventos reais incluem compromissos de amanhã/uma hora, follow-ups, assinatura recebida, resumo financeiro do mês encerrado e e-mails novos após conectar o Titan. Notificações internas ficam por 180 dias. O histórico de versões e os avisos de novidades foram removidos da interface a pedido do usuário; não publique novos eventos de versão.
 
 ## Publicar atualizações
 
 1. Atualize `src/admin/releases.json`: primeira entrada é a versão atual, com data real, título e mudanças. Esse é o único local com a versão da aplicação.
 2. Execute `npm test`, `npm run lint` e `npm run build` usando Node 22. O build gera identificador por conteúdo, shell, worker e metadados de versão.
 3. Envie o commit para `origin/main`, aguarde Vercel e verifique `/admin`, `/admin-version.json`, manifest e site público.
-4. Após confirmar o domínio atualizado, um super administrador pode chamar `duuk-notifications` autenticado com `{ "action": "publish-release", "version": "<versão>" }`. A operação é idempotente. Não publique o evento antes do frontend estar disponível.
+4. Confira o controle de atualização do aplicativo, sem publicar notificações de versão ou reintroduzir histórico/janelas de novidades. Os metadados públicos incluem somente a versão atual.
 
 O worker controla somente a área administrativa. Cache Storage contém shell genérico, JS/CSS/fontes e ícones; não armazena respostas de API, dados de CRM, PDFs ou assinaturas. Uma nova versão aguarda “Atualizar app”; formulários pendentes impedem a atualização. Somente a aba que solicitou a instalação recarrega. Caches necessários a outras abas abertas são preservados.
 
-O aviso de novidades fecha imediatamente, sem depender da gravação na API. Um marcador de versão por usuário na sessão evita reabertura caso falte conexão; a gravação é tentada novamente ao reconectar. Os upserts de novidades vistas e preferências incluem a chave `user_id`: o privilégio de atualização dessa coluna é necessário ao PostgREST, e as policies `USING`/`WITH CHECK` continuam impedindo acesso ou transferência para outro usuário. `supabase/tests/notification-settings.sql` verifica os dois upserts e essas restrições numa transação com rollback.
+O aviso e a consulta de novidades vistas foram retirados da interface. As policies da tabela legada continuam impedindo acesso ou transferência para outro usuário; o teste SQL de preferências e permissões permanece em `supabase/tests/notification-settings.sql`.
 
 Sem internet, o aplicativo abre o shell e informa a desconexão. Não grava alterações offline. No primeiro carregamento sem conexão, solicita reconexão para validar o acesso, sem persistir perfis ou dados privados em cache.
 
@@ -65,7 +65,7 @@ Navegador: 23 rotas, larguras 320/375/390/430/768/1024/1440, drawer, formulário
 
 Validação visual: capa e formulário de login em telas pequenas e baixas, carregamento único durante a troca do chunk inicial, atualização sem ocultar listas e recuperação de falhas. O pipeline foi exercitado com respostas interceptadas no navegador, incluindo arraste por mouse e eventos reais de toque, rolagem nas bordas, cancelamento, revisão retornada pelo servidor, falha com retorno do cartão e confirmação rápida sem interromper a animação. Esses testes visuais não gravam clientes de demonstração no banco.
 
-Limitações externas: a caixa Titan aguarda a conexão pelo painel com sua credencial; entrega Web Push em aparelho físico exige ativação e teste no aparelho. Nenhum plano pago, provedor bancário ou integração de cobrança foi contratado.
+Limitações externas: entrega Web Push em aparelho físico exige ativação e teste no aparelho. Nenhum plano pago, provedor bancário ou integração de cobrança foi contratado.
 
 Validação 1.1.0: `supabase/tests/mail-connection.sql` verifica privilégios, bloqueio de usuários sem super administração, criptografia, substituição atômica e auditoria sem segredo, com rollback de todos os dados de teste. A API real verifica status, acesso por módulo, bloqueio anônimo, senha vazia/excessiva e impossibilidade de chamar as RPCs de credenciais pelo navegador. Nenhuma tentativa de autenticação Titan é feita com senha fictícia. A validação de entrada e envio reais aguarda a credencial inserida pelo usuário.
 
@@ -78,3 +78,15 @@ O teste no Edge Runtime de produção reproduziu a queda de IMAP após o primeir
 O adaptador substitui a fábrica de sockets somente durante a chamada síncrona inicial de `connect()` e a restaura em `finally`, antes de qualquer espera. Essa propriedade depende do ImapFlow fixado em 2.2.6; teste novamente a negociação, o isolamento entre chamadas e a restauração da fábrica antes de atualizar a biblioteca. Autenticação recusada retorna 422; falha de transporte retorna 502. Logs contêm apenas etapa, categoria e códigos de uma lista fixa, sem mensagens brutas do provedor, corpo ou credenciais.
 
 Validação: 22 testes Node passaram (um opt-in foi ignorado), incluindo escrita parcial, preservação de bytes, timeout, destruição do socket, erros de TLS, isolamento/restauração da fábrica e ausência de segredos nos erros. Dois testes em `supabase/tests/imap-transport.integration.ts` autenticaram uma conta fictícia, abriram INBOX, pesquisaram UIDs, leram um literal e verificaram rejeição de senha sobre um servidor TLS local com CA de teste. Execute-os com Deno, `--allow-net --allow-read --allow-env --allow-sys=hostname` e as variáveis `DUUK_TEST_TLS_CERT`, `DUUK_TEST_TLS_KEY`, `DUUK_TEST_TLS_CA` apontando para certificados temporários de localhost; nunca use credenciais ou chaves reais nesse fixture. O novo texto do formulário passou em 11 dimensões e as restrições da API real continuaram passando. A negociação real com a GoDaddy foi verificada sem senha; recebimento e envio reais dependem de concluir a conexão pelo painel.
+
+## E-mail e interface — 1.2.0
+
+A caixa mostra Entrada, Não lidas, Enviados e modelos. A leitura permite resposta, resposta a todos, encaminhamento, download de anexos e marcação como não lida. O composer usa Tiptap local, carregado ao abrir: negrito, itálico, sublinhado, destaque, listas, links, desfazer/refazer e limpeza de formatação. Cc/Cco e múltiplos destinatários aceitam até 20 endereços por mensagem. Anexos continuam limitados a cinco arquivos e 5 MB no total, com adição cumulativa, remoção e arraste; o encaminhamento oferece inclusão explícita dos anexos originais.
+
+O backend valida destinatários, tamanho, base64 e cabeçalhos, sanitiza HTML e mantém o limite anterior de dez envios por usuário/hora. MailComposer gera uma mensagem com ID estável: o envelope SMTP inclui Cco, mas os bytes entregues não incluem o cabeçalho Bcc. A cópia privada em Enviados preserva Cco. A confirmação SMTP é registrada antes de salvar a cópia; uma falha no arquivo não pede reenvio. A pasta usa o atributo especial do provedor, com fallback fixo, e verifica o Message-ID para evitar duplicar uma cópia já criada pelo servidor.
+
+HTML recebido passa por uma lista de elementos/atributos permitidos e é exibido em iframe isolado, sem scripts, formulários, acesso à origem do painel ou recursos remotos. Mensagens de texto simples continuam legíveis. Conteúdo e anexos ficam na memória da composição, sem persistência em localStorage ou Cache Storage.
+
+O histórico de versões e as janelas de novidades foram retirados; o botão de atualização da PWA e a proteção de formulários pendentes permanecem. Os botões de atualizar não reservam uma linha vazia para feedback. O menu posiciona a logo original no topo e o botão de minimizar ao lado, com ícone próprio para expandir. O convite público de contato é “O QUE VEM A SEGUIR?” / “WHAT COMES NEXT?”.
+
+Validação: 22 testes Node passaram (um opt-in ignorado), lint com os três avisos preexistentes e build de produção. Os sete testes Deno em `supabase/tests/mail-content.test.ts` cobrem sanitização, cabeçalhos, destinatários, anexos, geração e leitura MIME, proteção de Cco e arquivo em Enviados. Execute com `deno test --allow-env --allow-sys=hostname supabase/tests/mail-content.test.ts`. A UI foi testada com dados de demonstração em 11 dimensões (320–1440 px, incluindo paisagem), envio simulado, erro/repetição com o mesmo identificador, resposta/encaminhamento e anexos. Menu, marca e ausência de histórico foram conferidos em cinco larguras; o convite público em quatro. Leitura em iframe e composição passaram também com os mesmos cabeçalhos de segurança da produção. A conta antiga utilizada pelos testes foi desativada durante o trabalho e continuou recebendo 403 na API; a consulta anônima continuou recebendo 401. Nenhuma permissão foi alterada para testar. A configuração da caixa e um super administrador ativo foram confirmados por consultas sem revelar segredos. Nenhum e-mail real foi enviado durante a validação.

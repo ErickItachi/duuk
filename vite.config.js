@@ -15,12 +15,12 @@ const deployment = JSON.parse(readFileSync(new URL('./vercel.json', import.meta.
 const securityHeaders = Object.fromEntries(deployment.headers.find(({ source }) => source === '/(.*)').headers.map(({ key, value }) => [key, value]))
 
 export default defineConfig({
-  define: { __DUUK_BUILD_ID__: JSON.stringify(buildId) },
+  define: { __DUUK_BUILD_ID__: JSON.stringify(buildId), __DUUK_RELEASE__: JSON.stringify(releases[0]) },
   preview: { headers: securityHeaders },
   plugins: [react(), {
     name: 'duuk-indexing',
     generateBundle() {
-      this.emitFile({ type: 'asset', fileName: 'admin-build.json', source: JSON.stringify({ ...releases[0], build_id: buildId, releases }) })
+      this.emitFile({ type: 'asset', fileName: 'admin-build.json', source: JSON.stringify({ ...releases[0], build_id: buildId }) })
     },
     transformIndexHtml() {
       return process.env.VERCEL_ENV === 'production' ? [] : [

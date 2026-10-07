@@ -1,10 +1,10 @@
-import { Activity, ArrowUpRight, Bell, BriefcaseBusiness, CalendarDays, ChartNoAxesCombined, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleHelp, Clock3, Columns3, Copy, Download, Eye, EyeOff, File, FileText, Film, GripVertical, House, Images, Info, LayoutDashboard, Link2, LockKeyhole, LogOut, Mail, Menu, PanelLeftClose, Pencil, Phone, Plus, RefreshCw, RotateCcw, Search, Send, Settings2, ShieldCheck, Sparkles, Trash2, Upload, UserRound, Users, Wallet, WifiOff, X } from 'lucide-react'
+import { Activity, ArrowUpRight, Bell, Bold, BriefcaseBusiness, CalendarDays, ChartNoAxesCombined, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleHelp, Clock3, Columns3, Copy, Download, Eye, EyeOff, File, FileText, Film, Forward, GripVertical, Highlighter, House, Images, Inbox, Info, Italic, LayoutDashboard, Link2, List, ListOrdered, LockKeyhole, LogOut, Mail, Menu, PanelLeftClose, PanelLeftOpen, Paperclip, Pencil, Phone, Plus, Redo2, RefreshCw, Reply, ReplyAll, RotateCcw, Search, Send, Settings2, ShieldCheck, Sparkles, Trash2, Underline, Undo2, Upload, UserRound, Users, Wallet, WifiOff, X, RemoveFormatting } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { getImageSources, getVideoSource } from '../media'
 import { useContent } from '../content/useContent'
 import { MEDIA_PREFIX } from '../content/model'
 
-const icons = { calendar: CalendarDays, left: ChevronLeft, right: ChevronRight, sidebar: PanelLeftClose, restore: RotateCcw, download: Download, logout: LogOut, menu: Menu, refresh: RefreshCw, lock: LockKeyhole, document: FileText, wallet: Wallet, chart: ChartNoAxesCombined, grid: LayoutDashboard, home: House, media: Images, plus: Plus, arrow: ArrowUpRight, close: X, upload: Upload, search: Search, down: ChevronDown, up: ChevronUp, edit: Pencil, check: Check, trash: Trash2, film: Film, eye: Eye, eyeOff: EyeOff, users: Users, user: UserRound, shield: ShieldCheck, settings: Settings2, bell: Bell, mail: Mail, phone: Phone, pipeline: Columns3, activity: Activity, clock: Clock3, info: Info, send: Send, link: Link2, wifi: WifiOff, copy: Copy, file: File, briefcase: BriefcaseBusiness, spark: Sparkles }
+const icons = { calendar: CalendarDays, left: ChevronLeft, right: ChevronRight, sidebar: PanelLeftClose, sidebarOpen: PanelLeftOpen, restore: RotateCcw, download: Download, logout: LogOut, menu: Menu, refresh: RefreshCw, lock: LockKeyhole, document: FileText, wallet: Wallet, chart: ChartNoAxesCombined, grid: LayoutDashboard, home: House, media: Images, plus: Plus, arrow: ArrowUpRight, close: X, upload: Upload, search: Search, down: ChevronDown, up: ChevronUp, edit: Pencil, check: Check, trash: Trash2, film: Film, eye: Eye, eyeOff: EyeOff, users: Users, user: UserRound, shield: ShieldCheck, settings: Settings2, bell: Bell, mail: Mail, phone: Phone, pipeline: Columns3, activity: Activity, clock: Clock3, info: Info, send: Send, link: Link2, wifi: WifiOff, copy: Copy, file: File, briefcase: BriefcaseBusiness, spark: Sparkles, inbox: Inbox, attachment: Paperclip, bold: Bold, italic: Italic, underline: Underline, highlight: Highlighter, list: List, listOrdered: ListOrdered, clearFormat: RemoveFormatting, undo: Undo2, redo: Redo2, reply: Reply, replyAll: ReplyAll, forward: Forward }
 export function Icon({ name, size = 18, ...props }) {
   const Component = (name === 'grip' ? GripVertical : icons[name]) || CircleHelp
   return <Component size={size} strokeWidth={1.6} aria-hidden="true" {...props} />
@@ -14,11 +14,11 @@ export function RefreshButton({ onRefresh, label = 'Atualizar', compact = false,
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
   const button = useRef(null)
-  const running = useRef(false), alive = useRef(true), spinner = useRef(null)
-  useEffect(() => { alive.current = true; return () => { alive.current = false; spinner.current?.cancel() } }, [])
+  const running = useRef(false), alive = useRef(true), spinner = useRef(null), feedbackTimer = useRef(null)
+  useEffect(() => { alive.current = true; return () => { alive.current = false; spinner.current?.cancel(); clearTimeout(feedbackTimer.current) } }, [])
   const refresh = async () => {
     if (running.current || disabled) return
-    running.current = true; setBusy(true); setStatus('')
+    running.current = true; setBusy(true); setStatus(''); clearTimeout(feedbackTimer.current)
     const started = performance.now(), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches, icon = button.current?.querySelector('svg')
     if (!reduced) spinner.current = icon?.animate?.([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 800, iterations: Infinity })
     let message
@@ -36,7 +36,7 @@ export function RefreshButton({ onRefresh, label = 'Atualizar', compact = false,
       spinner.current = icon.animate([{ transform: `rotate(${angle}deg)` }, { transform: 'rotate(360deg)' }], { duration: 200, easing: 'ease-out' })
       await spinner.current.finished.catch(() => {})
     }
-    if (alive.current) { setStatus(message); setBusy(false); running.current = false }
+    if (alive.current) { setStatus(message); setBusy(false); running.current = false; feedbackTimer.current = setTimeout(() => { if (alive.current) setStatus('') }, 6000) }
   }
   return <span className="admin-refresh"><button ref={button} type="button" className={compact ? 'admin-icon-button' : 'admin-button admin-button--secondary'} aria-label={label} aria-busy={busy} disabled={busy || disabled} onClick={refresh}><Icon name="refresh" />{!compact && label}</button><small role="status">{status}</small></span>
 }
