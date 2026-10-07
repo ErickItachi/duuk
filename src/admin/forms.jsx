@@ -1,4 +1,3 @@
-import { Icon } from "./components";
 export function Field({ label, value, onChange, children, ...props }) {
   return (
     <label className="admin-field">
@@ -33,14 +32,8 @@ export function QueryState({
   children,
   empty = "Nenhum registro por aqui ainda.",
 }) {
-  if (query.loading && !query.data)
-    return (
-      <div className="admin-panel admin-empty" role="status">
-        <Icon name="refresh" className="is-spinning" />
-        <p>Carregando…</p>
-      </div>
-    );
-  if (query.error)
+  if (query.loading && !query.data) return <LoadingPanel />;
+  if (query.error && !query.data)
     return (
       <div className="admin-error" role="alert">
         {query.error}
@@ -55,7 +48,29 @@ export function QueryState({
         <p>{empty}</p>
       </div>
     );
-  return children;
+  return (
+    <>
+      {query.error && (
+        <p className="admin-error" role="alert">
+          {query.error}{" "}
+          <button className="admin-text-button" onClick={query.reload}>
+            Tentar novamente
+          </button>
+        </p>
+      )}
+      {children}
+    </>
+  );
+}
+export function LoadingPanel({ label = "Carregando seu espaço…" }) {
+  return (
+    <div className="admin-panel admin-query-skeleton" role="status">
+      <p>{label}</p>
+      <span aria-hidden="true" />
+      <span aria-hidden="true" />
+      <span aria-hidden="true" />
+    </div>
+  );
 }
 export function Avatar({ profile, size = 36 }) {
   return (

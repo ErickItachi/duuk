@@ -12,7 +12,9 @@ RLS protege os registros privados e as Edge Functions validam o usuário ativo e
 
 Salvar portfólio ou abertura publica o conteúdo numa única transação, com controle de revisão. Rascunhos e arquivados ficam privados. Uploads diretos continuam limitados a 50 MB por arquivo e ao espaço disponível do plano gratuito; vídeos maiores podem usar YouTube.
 
-CRM usa clientes, atividades, follow-ups, histórico e etapas reais. Mudanças de pipeline e conclusões de follow-up verificam a revisão atual. No celular, o seletor de etapa complementa o arraste de cards. O sistema não contém leads de demonstração permanentes.
+CRM usa clientes, atividades, follow-ups, histórico e etapas reais. Mudanças de pipeline e conclusões de follow-up verificam a revisão atual. O pipeline move o cartão imediatamente, sinaliza o salvamento e confirma com o registro retornado pelo servidor; falhas devolvem o cartão e recarregam os dados. A alça permite arraste por mouse ou toque, com rolagem horizontal nas bordas. Escape cancela o arraste; o seletor de etapa oferece uma alternativa por teclado. O sistema não contém leads de demonstração permanentes.
+
+Login mobile exibe a foto de bastidores com a logo original. A abertura e a atualização do aplicativo usam o mesmo carregamento, com saída gradual e respeito à preferência por movimento reduzido. Atualizações de dados mantêm listas e valores visíveis; os placeholders aparecem apenas na primeira consulta ou ao mudar de mês.
 
 Contratos preservam PDFs privados, campos, links separados com validade de sete dias, aceite e desenho. Lixeira revoga links e permite restaurar. Exclusão definitiva exige ausência de assinaturas. Não há certificado ICP-Brasil nem verificação de identidade por e-mail.
 
@@ -61,5 +63,7 @@ Sem internet, o aplicativo abre o shell e informa a desconexão. Não grava alte
 Testes automatizados cobrem conteúdo, mídia, calendário, despesas/Excel e métricas comerciais. A integração real verifica autenticação, RLS, revisões antigas e funções exclusivas do servidor. A validação com registros temporários cobriu CRM, histórico, pipeline, follow-ups, exceções individuais, avatar privado e contas desativadas; os registros de teste foram removidos.
 
 Navegador: 23 rotas, larguras 320/375/390/430/768/1024/1440, drawer, formulários, permissões e cache. A atualização da PWA é exercitada localmente entre dois builds, incluindo formulário pendente, outra aba aberta e recuperação offline. Nenhum documento real é assinado ou alterado nesses testes.
+
+Validação visual: capa e formulário de login em telas pequenas e baixas, carregamento único durante a troca do chunk inicial, atualização sem ocultar listas e recuperação de falhas. O pipeline foi exercitado com respostas interceptadas no navegador, incluindo arraste por mouse e eventos reais de toque, rolagem nas bordas, cancelamento, revisão retornada pelo servidor, falha com retorno do cartão e confirmação rápida sem interromper a animação. Esses testes visuais não gravam clientes de demonstração no banco.
 
 Limitações externas: a caixa GoDaddy aguarda sua credencial; entrega Web Push em aparelho físico exige ativação e teste no aparelho. Nenhum plano pago, provedor bancário ou integração de cobrança foi contratado.

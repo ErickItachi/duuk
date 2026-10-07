@@ -6,6 +6,7 @@ import { supabase } from "../content/supabase";
 import { PageTitle } from "./forms";
 import { Icon, Modal } from "./components";
 import releases from "./releases.json";
+import BrandLoader from "../components/BrandLoader";
 
 import { PwaContext, usePwa, currentRelease, installedBuild } from "./pwaState";
 export function PwaProvider({ children }) {
@@ -269,14 +270,7 @@ export function PwaProvider({ children }) {
           {connection}
         </div>
       )}
-      {updating && (
-        <div className="admin-splash" role="status">
-          <img src="/media/duuk-logo-white.png" alt="DUUK" />
-          <Icon name="refresh" className="is-spinning" />
-          <p>{updating}</p>
-          <small>Atualizando DUUK Admin</small>
-        </div>
-      )}
+      {updating && <BrandLoader label={updating} detail="Atualizando DUUK Admin" />}
     </PwaContext.Provider>
   );
 }
@@ -353,7 +347,7 @@ export function UpdateNotice() {
             <ReleaseNotes release={pwa.available} />
           </div>
           <div className="admin-modal__foot">
-            <button className="admin-button" onClick={pwa.update}>
+            <button className="admin-button" onClick={() => { setNotes(false); pwa.update(); }}>
               Atualizar agora
             </button>
           </div>

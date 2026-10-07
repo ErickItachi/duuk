@@ -4,6 +4,7 @@ import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from
 import { useContent } from '../content/useContent'
 import { useAuth } from '../content/AuthContext'
 import LoginPage from './LoginPage'
+import BrandLoader from '../components/BrandLoader'
 import { youtubeId } from '../content/youtube'
 import { validMediaUrl, MEDIA_PREFIX } from '../content/model'
 import { getImageSources } from '../media'
@@ -186,7 +187,7 @@ function Allowed({ permission, children }) {
  return auth.hasPermission(permission)?children:<section className="admin-panel admin-empty"><Icon name="lock" size={32}/><h1>Acesso restrito.</h1><p>Sua conta não tem permissão para abrir este módulo.</p><Link className="admin-button admin-button--secondary" to="/admin">Voltar à visão geral</Link></section>
 }
 
-function AdminWorkspace() {
+function AdminWorkspace({ interactive = true }) {
  const {pathname}=useLocation(),auth=useAuth(),navigate=useNavigate()
  const [destination,setDestination]=useState(null)
  const [menuOpen,setMenuOpen]=useState(false),[narrow,setNarrow]=useState(()=>matchMedia('(max-width: 1023px)').matches)
@@ -230,14 +231,16 @@ function AdminWorkspace() {
     </Routes>}
    </div></main><footer className="admin-footer"><span>DUUK / SÃO PAULO</span><span>Seu estúdio. Seu ritmo.</span><Link to="/admin/configuracoes/sobre">v{currentRelease.version}</Link></footer>
   </div>
-  <WhatsNew/>
+  {interactive&&<WhatsNew/>}
   {destination&&<ConfirmModal title="Sair sem salvar?" message="Existem alterações pendentes nesta página. Salve antes de continuar ou descarte ao sair." action="Sair sem salvar" onClose={()=>setDestination(null)} onConfirm={()=>navigate(destination)}/>}
   {toast&&<div className={`admin-toast${toast.failed?' admin-toast--error':''}`} role={toast.failed?'alert':'status'}><Icon name={toast.failed?'close':'check'}/><span>{toast.message}</span><button className="admin-icon-button" aria-label="Fechar aviso" onClick={()=>setToast(null)}><Icon name="close" size={16}/></button></div>}
  </div>
 }
 function AdminExperience() {
- const auth=useAuth(),[minimum,setMinimum]=useState(false)
- useEffect(()=>{const timer=setTimeout(()=>setMinimum(true),1300);return()=>clearTimeout(timer)},[])
+ const auth=useAuth(),[minimum,setMinimum]=useState(false),[covered,setCovered]=useState(true)
+ useEffect(()=>{const timer=setTimeout(()=>setMinimum(true),900);return()=>clearTimeout(timer)},[])
+ const leaving=minimum&&auth.ready
+ useEffect(()=>{if(!leaving)return;const timer=setTimeout(()=>setCovered(false),matchMedia('(prefers-reduced-motion: reduce)').matches?0:360);return()=>clearTimeout(timer)},[leaving])
  useEffect(()=>{
   document.title='DUUK Admin'
   const existing=Array.from(document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"],link[rel="manifest"]'))
@@ -247,7 +250,9 @@ function AdminExperience() {
   const theme=document.createElement('meta');theme.name='theme-color';theme.content='#080808';document.head.append(theme)
   return()=>{tags.forEach(tag=>tag.remove());theme.remove();if(publicIcons.length)publicIcons.forEach(node=>document.head.append(node));else{const link=document.createElement('link');link.rel='icon';link.type='image/png';link.href='/favicon.png';document.head.append(link)}}
  },[])
- if(!minimum||!auth.ready)return <div className="admin-splash" role="status"><img src="/media/duuk-logo-white.png" alt="DUUK"/><span/><p>Preparando seu espaço</p></div>
- return auth.isAdmin?<NotificationProvider><AdminWorkspace/></NotificationProvider>:<LoginPage/>
+ return <>
+  {auth.ready&&<div className="admin-experience" inert={covered} aria-hidden={covered||undefined}>{auth.isAdmin?<NotificationProvider><AdminWorkspace interactive={!covered}/></NotificationProvider>:<LoginPage/>}</div>}
+  {covered&&<BrandLoader leaving={leaving}/>}
+ </>
 }
 export default function AdminPage() {return <PwaProvider><AdminExperience/></PwaProvider>}

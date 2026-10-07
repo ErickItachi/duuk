@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.0.2",
+    "date": "2026-10-07",
+    "title": "Mais movimento, no ritmo da DUUK",
+    "improved": [
+      "Capa com foto de bastidores e logo original no login do celular.",
+      "Carregamento unificado, transições suaves e dados preservados durante a atualização.",
+      "Pipeline com arraste animado por mouse ou toque, destaque de destino e retorno em caso de falha."
+    ],
+    "fixed": [
+      "Saltos entre telas de carregamento e aviso de atualização sobrepondo o progresso."
+    ]
+  },
+  {
     "version": "1.0.1",
     "date": "2026-10-07",
     "title": "Acesso livre para continuar criando",

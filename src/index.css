@@ -157,7 +157,7 @@ ul {
 }
 
 .route-view {
-  animation: route-enter 180ms ease-out both;
+  animation: route-enter 320ms ease-out both;
 }
 
 @keyframes route-enter {
@@ -169,142 +169,34 @@ ul {
   }
 }
 
-.intro-loader {
+/* One stable mark across route loading, authentication and app updates. */
+.route-view--admin { animation: none; }
+.duuk-loader {
   position: fixed;
   z-index: 1000;
   inset: 0;
   display: grid;
   place-items: center;
-  padding: max(24px, env(safe-area-inset-top, 0px))
-    max(24px, env(safe-area-inset-right, 0px))
-    max(24px, env(safe-area-inset-bottom, 0px))
-    max(24px, env(safe-area-inset-left, 0px));
-  visibility: hidden;
-  opacity: 0;
-  background: var(--black);
-  transition:
-    opacity 420ms var(--ease),
-    visibility 420ms;
-  pointer-events: none;
-}
-
-.intro-loader.is-visible {
-  visibility: visible;
+  padding: 24px;
+  background: #080808;
   opacity: 1;
+  transition: opacity 360ms cubic-bezier(.22, 1, .36, 1);
 }
-
-.intro-loader__content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 30px;
-  width: clamp(96px, 9vw, 136px);
-  opacity: 0;
-  transform: translateY(-8px);
-  transition:
-    opacity 280ms ease,
-    transform 420ms var(--ease);
+.duuk-loader.is-leaving { opacity: 0; pointer-events: none; }
+.duuk-loader__content { display: flex; flex-direction: column; align-items: center; width: min(100%, 280px); text-align: center; }
+.duuk-loader__content > img { width: 64px; height: auto; display: block; }
+.duuk-loader__track { width: 104px; height: 2px; margin: 32px 0 24px; overflow: hidden; background: #ffffff14; border-radius: 2px; }
+.duuk-loader__track > span { display: block; width: 100%; height: 100%; background: var(--gradient); transform-origin: left; animation: duuk-loading-track 1.6s cubic-bezier(.65, 0, .35, 1) infinite; }
+.duuk-loader__content > p { color: #b8aea7; font-size: 11px; letter-spacing: .08em; line-height: 1.6; margin: 0; }
+.duuk-loader__content > small { color: #776f69; font-size: 10px; margin-top: 8px; }
+@keyframes duuk-loading-track {
+  0% { transform: translateX(-100%) scaleX(.35); }
+  55% { transform: translateX(15%) scaleX(.65); }
+  100% { transform: translateX(100%) scaleX(.35); }
 }
-
-.intro-loader.is-visible .intro-loader__content {
-  opacity: 1;
-  transform: none;
-}
-
-.intro-loader__logo {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 718 / 886;
-}
-
-.intro-loader__half {
-  position: absolute;
-  right: 0;
-  left: 0;
-  height: 50%;
-  overflow: hidden;
-}
-
-.intro-loader__half .duuk-logo {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: auto;
-}
-
-.intro-loader__half--top,
-.intro-loader__half--top .duuk-logo {
-  top: 0;
-}
-
-.intro-loader__half--bottom,
-.intro-loader__half--bottom .duuk-logo {
-  bottom: 0;
-}
-
-.intro-loader__half--top {
-  animation: intro-logo-top 650ms var(--ease) both;
-}
-
-.intro-loader__half--bottom {
-  animation: intro-logo-bottom 650ms var(--ease) 120ms both;
-}
-
-.intro-loader__line {
-  position: relative;
-  width: 100%;
-  height: 1px;
-  overflow: hidden;
-  background: rgb(255 255 255 / 10%);
-}
-
-.intro-loader__line::after {
-  position: absolute;
-  inset: 0;
-  background: var(--gradient);
-  content: '';
-  transform-origin: left;
-  animation: intro-line 900ms var(--ease) both;
-}
-
-@keyframes intro-logo-top {
-  from {
-    opacity: 0;
-    transform: translate3d(-18px, -4px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes intro-logo-bottom {
-  from {
-    opacity: 0;
-    transform: translate3d(18px, 4px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes intro-line {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-.intro-loader--still {
-  z-index: 999;
-}
-
-.intro-loader--still .intro-loader__half,
-.intro-loader--still .intro-loader__line::after {
-  animation: none;
+@media (prefers-reduced-motion: reduce) {
+  .duuk-loader { transition: none; }
+  .duuk-loader__track > span { animation: none; transform: scaleX(.65); }
 }
 
 .duuk-logo {
@@ -1797,10 +1689,6 @@ a:hover .arrow--left {
     transform: none;
   }
 
-  .intro-loader__half,
-  .intro-loader__line::after {
-    animation: none;
-  }
 }
 
 .home-hero__youtube { position: absolute; inset: 0; width: 100%; height: 100%; }

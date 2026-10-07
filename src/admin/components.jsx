@@ -1,4 +1,4 @@
-import { Activity, ArrowUpRight, Bell, BriefcaseBusiness, CalendarDays, ChartNoAxesCombined, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleHelp, Clock3, Columns3, Copy, Download, Eye, EyeOff, File, FileText, Film, House, Images, Info, LayoutDashboard, Link2, LockKeyhole, LogOut, Mail, Menu, PanelLeftClose, Pencil, Phone, Plus, RefreshCw, RotateCcw, Search, Send, Settings2, ShieldCheck, Sparkles, Trash2, Upload, UserRound, Users, Wallet, WifiOff, X } from 'lucide-react'
+import { Activity, ArrowUpRight, Bell, BriefcaseBusiness, CalendarDays, ChartNoAxesCombined, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleHelp, Clock3, Columns3, Copy, Download, Eye, EyeOff, File, FileText, Film, GripVertical, House, Images, Info, LayoutDashboard, Link2, LockKeyhole, LogOut, Mail, Menu, PanelLeftClose, Pencil, Phone, Plus, RefreshCw, RotateCcw, Search, Send, Settings2, ShieldCheck, Sparkles, Trash2, Upload, UserRound, Users, Wallet, WifiOff, X } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { getImageSources, getVideoSource } from '../media'
 import { useContent } from '../content/useContent'
@@ -6,16 +6,39 @@ import { MEDIA_PREFIX } from '../content/model'
 
 const icons = { calendar: CalendarDays, left: ChevronLeft, right: ChevronRight, sidebar: PanelLeftClose, restore: RotateCcw, download: Download, logout: LogOut, menu: Menu, refresh: RefreshCw, lock: LockKeyhole, document: FileText, wallet: Wallet, chart: ChartNoAxesCombined, grid: LayoutDashboard, home: House, media: Images, plus: Plus, arrow: ArrowUpRight, close: X, upload: Upload, search: Search, down: ChevronDown, up: ChevronUp, edit: Pencil, check: Check, trash: Trash2, film: Film, eye: Eye, eyeOff: EyeOff, users: Users, user: UserRound, shield: ShieldCheck, settings: Settings2, bell: Bell, mail: Mail, phone: Phone, pipeline: Columns3, activity: Activity, clock: Clock3, info: Info, send: Send, link: Link2, wifi: WifiOff, copy: Copy, file: File, briefcase: BriefcaseBusiness, spark: Sparkles }
 export function Icon({ name, size = 18, ...props }) {
-  const Component = icons[name] || CircleHelp
+  const Component = (name === 'grip' ? GripVertical : icons[name]) || CircleHelp
   return <Component size={size} strokeWidth={1.6} aria-hidden="true" {...props} />
 }
 
-export function RefreshButton({ onRefresh, label = 'Atualizar', compact = false }) {
+export function RefreshButton({ onRefresh, label = 'Atualizar', compact = false, disabled = false }) {
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
   const button = useRef(null)
-  const refresh = async () => { setBusy(true); setStatus(''); try { const result = await onRefresh(); if (result?.failed) throw new Error(result.error); setStatus('Dados atualizados agora.'); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) button.current?.closest('main')?.querySelectorAll('.admin-page-title h1,.admin-stats strong,.crm-stats strong').forEach(element => element.animate?.([{ opacity: .5, transform: 'translateY(3px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 220, easing: 'ease-out' })) } catch (error) { setStatus(error.message || 'Não foi possível atualizar.') } finally { setBusy(false) } }
-  return <span className="admin-refresh"><button ref={button} type="button" className={compact ? 'admin-icon-button' : 'admin-button admin-button--secondary'} aria-label={label} aria-busy={busy} disabled={busy} onClick={refresh}><Icon name="refresh" className={busy ? 'is-spinning' : ''} />{!compact && label}</button>{status && <small role="status">{status}</small>}</span>
+  const running = useRef(false), alive = useRef(true), spinner = useRef(null)
+  useEffect(() => { alive.current = true; return () => { alive.current = false; spinner.current?.cancel() } }, [])
+  const refresh = async () => {
+    if (running.current || disabled) return
+    running.current = true; setBusy(true); setStatus('')
+    const started = performance.now(), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches, icon = button.current?.querySelector('svg')
+    if (!reduced) spinner.current = icon?.animate?.([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 800, iterations: Infinity })
+    let message
+    try {
+      const result = await onRefresh()
+      if (result?.failed) throw new Error(result.error)
+      message = 'Dados atualizados agora.'
+      if (!reduced && alive.current) button.current?.closest('main')?.querySelectorAll('.admin-stats strong,.crm-stats strong').forEach((element, index) => element.animate?.([{ opacity: .55, transform: 'translateY(3px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 320, delay: Math.min(index * 35, 140), easing: 'cubic-bezier(.22,1,.36,1)' }))
+    } catch (error) { message = error.message || 'Não foi possível atualizar.' }
+    await new Promise(resolve => setTimeout(resolve, Math.max(0, 400 - (performance.now() - started))))
+    if (!alive.current) return
+    if (spinner.current) {
+      const angle = (Number(spinner.current.currentTime || 0) % 800) / 800 * 360
+      spinner.current.cancel()
+      spinner.current = icon.animate([{ transform: `rotate(${angle}deg)` }, { transform: 'rotate(360deg)' }], { duration: 200, easing: 'ease-out' })
+      await spinner.current.finished.catch(() => {})
+    }
+    if (alive.current) { setStatus(message); setBusy(false); running.current = false }
+  }
+  return <span className="admin-refresh"><button ref={button} type="button" className={compact ? 'admin-icon-button' : 'admin-button admin-button--secondary'} aria-label={label} aria-busy={busy} disabled={busy || disabled} onClick={refresh}><Icon name="refresh" />{!compact && label}</button><small role="status">{status}</small></span>
 }
 
 export function Modal({ title, subtitle, children, onClose, wide = false }) {

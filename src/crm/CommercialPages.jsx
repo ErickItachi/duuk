@@ -1,5 +1,5 @@
 import { useUnsavedChanges } from "../admin/unsavedChanges";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../content/AuthContext";
 import { useQuery } from "../office/useQuery";
@@ -26,6 +26,8 @@ import {
   stages,
   timestamp,
 } from "./model";
+
+import PipelineBoard from "./PipelineBoard";
 
 const initialClient = {
   name: "",
@@ -801,17 +803,40 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
     await query.reload();
     notify("Registro salvo.");
   };
+  const moveLock = useRef(false);
   const move = async (id, next) => {
     const item = data.clients.find((c) => c.id === id);
-    if (!item || item.stage === next) return;
+    if (!item || item.stage === next || moveLock.current) return;
+    moveLock.current = true;
     setMoving(id);
+    query.updateData((current) => ({
+      ...current,
+      clients: current.clients.map((client) =>
+        client.id === id
+          ? { ...client, stage: next, updated_at: new Date().toISOString() }
+          : client,
+      ),
+    }));
     try {
-      await movePipeline(item, next);
-      await query.reload();
+      const saved = await movePipeline(item, next);
+      query.updateData((current) => ({
+        ...current,
+        clients: current.clients.map((client) =>
+          client.id === id ? saved : client,
+        ),
+      }));
       notify(`Cliente movido para ${stageLabel(next)}.`);
     } catch (cause) {
+      query.updateData((current) => ({
+        ...current,
+        clients: current.clients.map((client) =>
+          client.id === id ? item : client,
+        ),
+      }));
       notify(cause.message, true);
+      await query.reload();
     } finally {
+      moveLock.current = false;
       setMoving("");
     }
   };
@@ -893,7 +918,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
         title={titles[mode][0]}
         description={titles[mode][1]}
       >
-        <RefreshButton onRefresh={query.reload} />
+        <RefreshButton onRefresh={query.reload} disabled={!!moving} />
         {["clients", "pipeline"].includes(mode) ? (
           auth.hasPermission("crm.clients") && (
             <button className="admin-button" onClick={() => setEditing("new")}>
@@ -978,73 +1003,14 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
           </section>
         )}
         {mode === "pipeline" && (
-          <div className="crm-kanban" aria-label="Pipeline de oportunidades">
-            {stages
-              .filter(([k]) => !stage || k === stage)
-              .map(([key, label]) => (
-                <section
-                  className="crm-kanban-column"
-                  key={key}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    move(e.dataTransfer.getData("text/duuk-client"), key);
-                  }}
-                >
-                  <header>
-                    <h2>{label}</h2>
-                    <span>
-                      {filtered.filter((c) => c.stage === key).length}
-                    </span>
-                  </header>
-                  <div>
-                    {filtered
-                      .filter((c) => c.stage === key)
-                      .map((c) => (
-                        <article
-                          className="crm-kanban-card"
-                          key={c.id}
-                          draggable={!moving}
-                          onDragStart={(e) =>
-                            e.dataTransfer.setData("text/duuk-client", c.id)
-                          }
-                        >
-                          <button
-                            className="crm-client-button"
-                            onClick={() => setDetail(c)}
-                          >
-                            <h3>{c.name}</h3>
-                            <p>{c.company || "Oportunidade"}</p>
-                            <strong>{brl(c.estimated_cents)}</strong>
-                          </button>
-                          <small className="crm-person">
-                            <Avatar
-                              profile={data.people.find(
-                                (p) => p.id === c.owner_id,
-                              )}
-                              size={22}
-                            />
-                            {data.people.find((p) => p.id === c.owner_id)
-                              ?.name || "Sem responsável"}
-                          </small>
-                          <select
-                            aria-label={`Etapa de ${c.name}`}
-                            value={c.stage}
-                            disabled={!!moving}
-                            onChange={(e) => move(c.id, e.target.value)}
-                          >
-                            {stages.map(([k, l]) => (
-                              <option key={k} value={k}>
-                                {l}
-                              </option>
-                            ))}
-                          </select>
-                        </article>
-                      ))}
-                  </div>
-                </section>
-              ))}
-          </div>
+          <PipelineBoard
+            clients={filtered}
+            people={data.people}
+            stage={stage}
+            pendingId={moving}
+            onMove={move}
+            onOpen={setDetail}
+          />
         )}
         {mode === "activities" && (
           <section className="admin-panel platform-list">

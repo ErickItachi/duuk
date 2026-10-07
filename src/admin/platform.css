@@ -767,11 +767,11 @@
   font-size: 12px;
 }
 .admin-content-enter > .admin-page-title {
-  animation: admin-enter 230ms ease-out both;
+  animation: admin-enter 360ms cubic-bezier(.22,1,.36,1) both;
 }
 .admin-stats > div,
 .crm-stats > article {
-  animation: admin-enter 250ms ease-out both;
+  animation: admin-enter 380ms cubic-bezier(.22,1,.36,1) both;
 }
 .admin-stats > div:nth-child(2),
 .crm-stats > article:nth-child(2) {
@@ -1049,3 +1049,27 @@
   align-items: center;
   gap: 10px;
 }
+
+/* Pipeline: stable cards, visible targets and movement with the pointer. */
+.crm-kanban-hint { display: flex; align-items: center; gap: 6px; color: var(--admin-muted); font-size: 11px; margin: 0 0 14px; }
+.crm-kanban { padding: 4px 4px 22px; scroll-padding-inline: 4px; }
+.crm-kanban.is-dragging { scroll-snap-type: none; }
+.crm-kanban-column { position: relative; transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+.crm-kanban-column.is-drop-target { background: #eb4b3f0a; border-color: #eb4b3f80; box-shadow: inset 0 0 0 1px #eb4b3f10; }
+.crm-drop-slot { position: absolute; z-index: 4; top: 52px; left: 14px; right: 14px; height: 68px; opacity: 0; overflow: hidden; transform: translateY(-4px); display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed transparent; border-radius: 8px; color: #ff9b7d; font-size: 11px; transition: opacity 180ms ease, transform 180ms ease; pointer-events: none; }
+.crm-drop-slot.is-visible { opacity: 1; transform: translateY(0); border-color: #eb4b3f60; background: #241713; }
+.crm-kanban-card { position: relative; transition: opacity 150ms ease, box-shadow 180ms ease, border-color 180ms ease; cursor: default; }
+.crm-kanban-card:hover { border-color: #635046; box-shadow: 0 5px 18px #0002; }
+.crm-kanban-card.is-drag-source { opacity: .3; border-style: dashed; }
+.crm-kanban-card.is-saving { border-color: #eb4b3f70; box-shadow: 0 0 0 2px #eb4b3f0a; }
+.crm-kanban-card__head { display: flex; align-items: flex-start; gap: 4px; }
+.crm-kanban-card__head .crm-client-button { flex: 1; min-width: 0; }
+.crm-kanban-card__head .crm-drag-handle { flex: 0 0 32px; width: 32px; height: 36px; min-height: 36px; margin: -6px -8px 0 0; color: var(--admin-muted); cursor: grab; touch-action: none; }
+.crm-drag-handle:active { cursor: grabbing; color: #ff9b7d; }
+.crm-kanban-card > strong { margin: 0; }
+.crm-kanban-card .crm-kanban-saving { display: flex; align-items: center; gap: 6px; color: #ff9b7d; font-size: 10px; }
+.crm-kanban-ghost { position: fixed; z-index: 1500; inset: 0 auto auto 0; pointer-events: none; display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid #f57958; border-radius: 10px; background: #1d1a17; color: #fff8f3; box-shadow: 0 18px 48px #0008, 0 2px 8px #0005; font: 13px/1.5 Inter, sans-serif; transform-origin: center; will-change: transform; }
+.crm-kanban-ghost > span, .crm-kanban-ghost > small { color: #b8aea7; font-size: 11px; }
+.crm-kanban-ghost > b { font-weight: 500; }
+@media (pointer: coarse) { .crm-kanban-card__head .crm-drag-handle { flex-basis: 44px; width: 44px; height: 44px; min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .crm-kanban-column, .crm-kanban-card, .crm-drop-slot { transition: none; } }

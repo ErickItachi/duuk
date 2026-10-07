@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
-import { Logo } from './components/Site'
+import BrandLoader from './components/BrandLoader'
 import { LanguageProvider } from './i18n'
 import HomePage from './pages/HomePage'
 import { loadSecondaryPages } from './pages/loadPages'
@@ -25,7 +25,7 @@ const ProjectPage = lazyPage('ProjectPage')
 
 function prefetchRoute(event) {
   const link = event.target.closest('a[href]')
-  if (link?.origin === window.location.origin && link.pathname !== '/') {
+  if (link?.origin === window.location.origin && link.pathname !== '/' && !/^\/(admin|assinar)(\/|$)/.test(link.pathname)) {
     loadSecondaryPages().catch(() => {})
   }
 }
@@ -52,35 +52,14 @@ function ScrollManager() {
   return null
 }
 
-function IntroLoader({ visible, animate = true }) {
-  return (
-    <div
-      className={`intro-loader${visible ? ' is-visible' : ''}${animate ? '' : ' intro-loader--still'}`}
-      aria-hidden="true"
-    >
-      <div className="intro-loader__content">
-        <div className="intro-loader__logo">
-          <span className="intro-loader__half intro-loader__half--top">
-            <Logo priority />
-          </span>
-          <span className="intro-loader__half intro-loader__half--bottom">
-            <Logo priority />
-          </span>
-        </div>
-        <span className="intro-loader__line" />
-      </div>
-    </div>
-  )
-}
-
 function AppRoutes() {
   const location = useLocation()
 
   return (
     <>
-      <Suspense fallback={<IntroLoader visible animate={false} />}>
+      <Suspense fallback={<BrandLoader />}>
         <div
-          className="route-view"
+          className={location.pathname.startsWith('/admin') ? 'route-view route-view--admin' : 'route-view'}
           key={location.pathname.startsWith('/admin') ? 'admin' : location.pathname}
           onPointerOver={prefetchRoute}
           onPointerDown={prefetchRoute}
