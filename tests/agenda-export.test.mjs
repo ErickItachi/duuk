@@ -17,8 +17,10 @@ test('calendário mantém dias e períodos ao atravessar ano e ano bissexto',()=
  assert.equal(eventsOnDay(events,'2026-10-03').length,0)
 })
 test('agenda valida períodos, horários e remove horários de compromissos de dia inteiro',()=>{
- const form={title:' Gravação ',description:'',location:'',client_name:'',start_date:'2026-10-06',end_date:'2026-10-06',all_day:true,start_time:'09:00',end_time:'08:00',category:'filming',status:'planned'}
+ const form={title:' Gravação ',description:'',location:'',client_name:'',start_date:'2026-10-06',end_date:'2026-10-06',all_day:true,start_time:'09:00',end_time:'08:00',category:'filming',status:'planned',responsible_id:'person-1'}
  assert.equal(eventPayload(form).start_time,null);assert.equal(eventPayload(form).title,'Gravação')
+ assert.equal(eventPayload(form).responsible_id,'person-1')
+ assert.throws(()=>eventPayload({...form,responsible_id:''}))
  assert.throws(()=>eventPayload({...form,end_date:'2026-10-05'}))
  assert.throws(()=>eventPayload({...form,all_day:false}))
  assert.throws(()=>eventPayload({...form,all_day:false,start_time:''}))

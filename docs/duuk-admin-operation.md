@@ -18,7 +18,7 @@ Login mobile exibe a foto de bastidores com a logo original. A abertura e a atua
 
 Contratos preservam PDFs privados, campos, links separados com validade de sete dias, aceite e desenho. Lixeira revoga links e permite restaurar. Exclusão definitiva exige ausência de assinaturas. Não há certificado ICP-Brasil nem verificação de identidade por e-mail.
 
-Despesas exportam Excel/CSV conforme mês e filtro. A agenda usa horários de Brasília. Insights excluem administrativo e assinaturas; retenção de 90 dias e limpeza diária de chaves temporárias derivadas do IP permanecem ativas.
+Despesas exportam Excel/CSV conforme mês e filtro. A agenda usa horários de Brasília e cada compromisso registra uma pessoa responsável escolhida entre os perfis ativos da equipe; eventos antigos foram atribuídos a quem os criou. Insights excluem administrativo e assinaturas; retenção de 90 dias e limpeza diária de chaves temporárias derivadas do IP permanecem ativas.
 
 ## Conectar a caixa Titan da GoDaddy
 

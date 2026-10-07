@@ -13,6 +13,7 @@ create table public.duuk_events (
  category text not null default 'filming' check (category in ('filming','editing','meeting','delivery','other')),
  status text not null default 'planned' check (status in ('planned','confirmed','done','cancelled')),
  created_by uuid not null default auth.uid() references auth.users(id),
+ responsible_id uuid not null default auth.uid() references public.duuk_profiles(id) on delete restrict,
  version bigint not null default 1,
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
@@ -21,11 +22,12 @@ create table public.duuk_events (
 );
 create index duuk_events_dates_idx on public.duuk_events(start_date, end_date);
 create index duuk_events_created_by_idx on public.duuk_events(created_by);
+create index duuk_events_responsible_idx on public.duuk_events(responsible_id);
 alter table public.duuk_events enable row level security;
 revoke all on public.duuk_events from public, anon, authenticated;
 grant select, delete on public.duuk_events to authenticated;
-grant insert(title,description,location,client_name,start_date,end_date,all_day,start_time,end_time,category,status),
- update(title,description,location,client_name,start_date,end_date,all_day,start_time,end_time,category,status) on public.duuk_events to authenticated;
+grant insert(title,description,location,client_name,start_date,end_date,all_day,start_time,end_time,category,status,responsible_id),
+ update(title,description,location,client_name,start_date,end_date,all_day,start_time,end_time,category,status,responsible_id) on public.duuk_events to authenticated;
 grant all on public.duuk_events to service_role;
 create policy events_admin on public.duuk_events for all to authenticated
  using ((select duuk_private.is_admin())) with check ((select duuk_private.is_admin()));

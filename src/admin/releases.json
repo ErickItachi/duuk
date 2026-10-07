@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.2",
+    "date": "2026-10-07",
+    "title": "Responsáveis na agenda",
+    "fixed": [
+      "Cada compromisso registra uma pessoa responsável, com seleção da equipe e exibição nos detalhes da agenda.",
+      "Compromissos antigos receberam como responsável a pessoa que os criou."
+    ]
+  },
+  {
     "version": "1.2.1",
     "date": "2026-10-07",
     "title": "Notificações em cada dispositivo",
