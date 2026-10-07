@@ -9,10 +9,10 @@ import { Link } from "react-router-dom";
 import { supabase } from "../content/supabase";
 import { useAuth } from "../content/AuthContext";
 import { useQuery } from "../office/useQuery";
-import { checked, notificationRequest } from "./api";
+import { checked } from "./api";
 import { Icon, RefreshButton } from "./components";
 import { PageTitle, QueryState } from "./forms";
-import { usePwa } from "./pwaState";
+import PushDevice from "./PushDevice";
 import { fmtTime } from "../crm/model";
 
 const NotificationContext = createContext(null);
@@ -217,14 +217,8 @@ export function NotificationsPage({ notify }) {
     </>
   );
 }
-function applicationKey(value) {
-  const padding = "=".repeat((4 - (value.length % 4)) % 4),
-    raw = atob((value + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
 export function NotificationSettingsPage({ notify }) {
   const auth = useAuth(),
-    pwa = usePwa(),
     query = useQuery(
       useCallback(
         async () =>
@@ -238,100 +232,22 @@ export function NotificationSettingsPage({ notify }) {
         [auth.user.id],
       ),
     );
-  const [busy, setBusy] = useState(""),
-    [enabled, setEnabled] = useState(false),
-    [devices, setDevices] = useState(0),
-    [status, setStatus] = useState("");
-  const supported =
-    "Notification" in window &&
-    "PushManager" in window &&
-    "serviceWorker" in navigator;
-  const inspect = useCallback(async () => {
-    if (!supported) return;
-    const reg = await navigator.serviceWorker.getRegistration("/admin/");
-    const sub = await reg?.pushManager.getSubscription();
-    setEnabled(!!sub);
-    const result = await notificationRequest({ action: "status" });
-    setDevices(result.devices);
-  }, [supported]);
-  useEffect(() => {
-    const timer = setTimeout(() => inspect().catch(() => {}), 0);
-    return () => clearTimeout(timer);
-  }, [inspect]);
+  const [busy, setBusy] = useState("");
   const preference = async (key, value) => {
     setBusy(key);
     try {
       checked(
-        await supabase
-          .from("duuk_notification_preferences")
-          .upsert({
-            user_id: auth.user.id,
-            ...defaults,
-            ...query.data,
-            [key]: value,
-          }),
+        await supabase.from("duuk_notification_preferences").upsert({
+          user_id: auth.user.id,
+          ...defaults,
+          ...query.data,
+          [key]: value,
+        }),
       );
       await query.reload();
       notify("Preferência salva.");
     } catch (cause) {
       notify(cause.message, true);
-    } finally {
-      setBusy("");
-    }
-  };
-  const enable = async () => {
-    setBusy("push");
-    setStatus("");
-    try {
-      if (!supported)
-        throw new Error(
-          "Instale o DUUK Admin na Tela de Início e abra pelo ícone para ativar notificações neste aparelho.",
-        );
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted")
-        throw new Error(
-          "Notificações não autorizadas. Você pode liberar nas configurações do navegador.",
-        );
-      const result = await notificationRequest({ action: "status" }),
-        reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: applicationKey(result.public_key),
-      });
-      await notificationRequest({
-        action: "subscribe",
-        subscription: sub.toJSON(),
-        device_name:
-          navigator.userAgentData?.platform ||
-          navigator.platform ||
-          "Dispositivo",
-      });
-      setEnabled(true);
-      await inspect();
-      setStatus("Notificações ativadas neste dispositivo.");
-    } catch (cause) {
-      setStatus(cause.message);
-    } finally {
-      setBusy("");
-    }
-  };
-  const disable = async () => {
-    setBusy("push");
-    try {
-      const reg = await navigator.serviceWorker.getRegistration("/admin/"),
-        sub = await reg?.pushManager.getSubscription();
-      if (sub) {
-        await notificationRequest({
-          action: "unsubscribe",
-          endpoint: sub.endpoint,
-        });
-        await sub.unsubscribe();
-      }
-      setEnabled(false);
-      await inspect();
-      setStatus("Notificações desativadas neste dispositivo.");
-    } catch (cause) {
-      setStatus(cause.message);
     } finally {
       setBusy("");
     }
@@ -369,58 +285,7 @@ export function NotificationSettingsPage({ notify }) {
             ))}
           </QueryState>
         </section>
-        <section className="admin-panel platform-form">
-          <span className="office-shortcut-icon">
-            <Icon name="bell" size={24} />
-          </span>
-          <h2>No seu dispositivo</h2>
-          <p className="platform-muted">
-            Receba lembretes da agenda, contratos, follow-ups e novidades mesmo
-            com o aplicativo fechado.
-          </p>
-          <p className="platform-muted">
-            {devices}{" "}
-            {devices === 1
-              ? "dispositivo registrado"
-              : "dispositivos registrados"}{" "}
-            na sua conta.
-          </p>
-          {!supported && (
-            <p className="platform-muted">
-              No iPhone, use Safari → Compartilhar → Adicionar à Tela de Início.
-              Abra pelo ícone para ativar (iOS 16.4 ou mais recente).
-            </p>
-          )}
-          {pwa.canInstall && (
-            <button
-              className="admin-button admin-button--secondary"
-              onClick={pwa.install}
-            >
-              <Icon name="download" />
-              Instalar DUUK Admin
-            </button>
-          )}
-          <button
-            className="admin-button"
-            disabled={!!busy || !pwa.registration}
-            onClick={enabled ? disable : enable}
-          >
-            <Icon
-              name={busy === "push" ? "refresh" : "bell"}
-              className={busy === "push" ? "is-spinning" : ""}
-            />
-            {busy === "push"
-              ? "Aguarde…"
-              : enabled
-                ? "Desativar neste dispositivo"
-                : "Ativar notificações"}
-          </button>
-          {status && (
-            <p role="status" className="platform-muted">
-              {status}
-            </p>
-          )}
-        </section>
+        <PushDevice />
       </div>
     </>
   );

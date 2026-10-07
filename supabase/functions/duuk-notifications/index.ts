@@ -9,45 +9,12 @@ import {
   readJson,
   text,
 } from "../_shared/http.ts";
-function subscriptionOf(input: any) {
-  let url: URL;
-  try {
-    url = new URL(input?.endpoint);
-  } catch {
-    throw new HttpError("Dispositivo inválido.");
-  }
-  if (
-    url.protocol !== "https:" ||
-    url.username ||
-    url.password ||
-    (url.port && url.port !== "443") ||
-    ![
-      "fcm.googleapis.com",
-      "updates.push.services.mozilla.com",
-      "web.push.apple.com",
-      "notify.windows.com",
-      "wns.windows.com",
-    ].some((host) => url.hostname === host || url.hostname.endsWith("." + host))
-  )
-    throw new HttpError("Serviço de notificações inválido.");
-  const keys = input.keys || {};
-  const length = (s: unknown) => {
-    try {
-      const value = String(s || "");
-      if (!/^[A-Za-z0-9_-]+$/.test(value)) return 0;
-      return atob(value.replace(/-/g, "+").replace(/_/g, "/")).length;
-    } catch {
-      return 0;
-    }
-  };
-  if (
-    url.href.length > 4096 ||
-    length(keys.auth) !== 16 ||
-    length(keys.p256dh) !== 65
-  )
-    throw new HttpError("Chaves do dispositivo inválidas.");
-  return { endpoint: url.href, keys: { auth: keys.auth, p256dh: keys.p256dh } };
-}
+import {
+  subscriptionOf,
+  sendPush,
+  pushFailure,
+  testDevicePush,
+} from "../_shared/push.ts";
 handler(async (req, headers) => {
   const db = database(),
     body = await readJson(req, 16000);
@@ -66,17 +33,20 @@ handler(async (req, headers) => {
     secrets = checked(await db.rpc("duuk_backend_secrets"));
   }
   if (body.action === "status" && user) {
+    const devices =
+      checked(
+        await db
+          .from("duuk_push_subscriptions")
+          .select("id,endpoint")
+          .eq("user_id", user.id),
+      ) || [];
+    const endpoint = text(body.endpoint, "o dispositivo", 4096, false);
     return json(
       {
         public_key: secrets["duuk.vapid.public"],
-        devices: (
-          checked(
-            await db
-              .from("duuk_push_subscriptions")
-              .select("id,device_name,created_at")
-              .eq("user_id", user.id),
-          ) || []
-        ).length,
+        devices: devices.length,
+        registered:
+          !!endpoint && devices.some((s: any) => s.endpoint === endpoint),
       },
       headers,
     );
@@ -86,26 +56,27 @@ handler(async (req, headers) => {
       checked(
         await db
           .from("duuk_push_subscriptions")
-          .select("id")
+          .select("id,endpoint")
           .eq("user_id", user.id),
       ) || [];
-    if (count.length >= 10)
+    const subscription = subscriptionOf(body.subscription);
+    if (
+      count.length >= 10 &&
+      !count.some((s: any) => s.endpoint === subscription.endpoint)
+    )
       throw new HttpError(
         "Limite de 10 dispositivos por conta. Desative um dispositivo antes de adicionar outro.",
       );
-    const subscription = subscriptionOf(body.subscription);
     checked(
-      await db
-        .from("duuk_push_subscriptions")
-        .upsert(
-          {
-            ...subscription,
-            user_id: user.id,
-            device_name: text(body.device_name, "o dispositivo", 120, false),
-            last_used_at: new Date().toISOString(),
-          },
-          { onConflict: "endpoint" },
-        ),
+      await db.from("duuk_push_subscriptions").upsert(
+        {
+          ...subscription,
+          user_id: user.id,
+          device_name: text(body.device_name, "o dispositivo", 120, false),
+          last_used_at: new Date().toISOString(),
+        },
+        { onConflict: "endpoint" },
+      ),
     );
     return json({ registered: true }, headers);
   }
@@ -118,6 +89,12 @@ handler(async (req, headers) => {
         .eq("endpoint", text(body.endpoint, "o dispositivo", 4096)),
     );
     return json({ removed: true }, headers);
+  }
+  if (body.action === "test" && user) {
+    return json(
+      await testDevicePush(db, user.id, body.endpoint, secrets),
+      headers,
+    );
   }
   if (body.action === "publish-release" && user) {
     const p = checked(
@@ -138,11 +115,11 @@ handler(async (req, headers) => {
   if (body.action !== "dispatch" || !isCron)
     throw new HttpError("Ação não permitida.", 403);
   await fetch(Deno.env.get("SUPABASE_URL") + "/functions/v1/duuk-mail", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-duuk-cron": cron! },
-      body: JSON.stringify({ action: "poll" }),
-      signal: AbortSignal.timeout(20000),
-    }).catch(() => {});
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-duuk-cron": cron! },
+    body: JSON.stringify({ action: "poll" }),
+    signal: AbortSignal.timeout(20000),
+  }).catch(() => {});
   checked(await db.rpc("duuk_generate_notifications"));
   const notifications = checked(await db.rpc("duuk_claim_push")) || [];
   let delivered = 0,
@@ -173,27 +150,27 @@ handler(async (req, headers) => {
     let retry = false;
     for (const s of subscriptions) {
       try {
-        await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: s.keys },
-          JSON.stringify({
+        await sendPush(
+          s,
+          {
             title: n.title,
             body: n.body,
             url: n.link,
             tag: n.id,
-          }),
-          {
-            vapidDetails: {
-              subject: "mailto:contato@duukfilms.com",
-              publicKey: secrets["duuk.vapid.public"],
-              privateKey: secrets["duuk.vapid.private"],
-            },
-            TTL: 3600,
-            timeout: 10000,
           },
+          secrets,
         );
         delivered++;
       } catch (error: any) {
-        if ([404, 410].includes(error.statusCode)) {
+        const failure = pushFailure(error);
+        console.error(
+          JSON.stringify({
+            source: "push",
+            stage: "dispatch",
+            status: failure.status,
+          }),
+        );
+        if (failure.expired) {
           checked(
             await db.from("duuk_push_subscriptions").delete().eq("id", s.id),
           );

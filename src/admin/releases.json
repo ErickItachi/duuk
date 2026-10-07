@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.1",
+    "date": "2026-10-07",
+    "title": "Notificações em cada dispositivo",
+    "fixed": [
+      "O painel confirma o cadastro deste aparelho no servidor antes de mostrar as notificações como conectadas.",
+      "Reconexão de cadastros incompletos, diagnóstico de permissões no iPhone e teste direcionado ao próprio dispositivo."
+    ]
+  },
+  {
     "version": "1.2.0",
     "date": "2026-10-07",
     "title": "Mais espaço para suas conversas",
