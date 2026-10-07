@@ -23,6 +23,6 @@ O usuário autorizou publicar o painel administrativo em produção e aplicar as
 ## Plataforma 1.0.0
 
 - CRM, equipe, perfis, permissões, auditoria, notificações e PWA integram o mesmo administrativo. Preserve a autorização por módulo no frontend, nas Edge Functions e no banco; exceções individuais prevalecem sobre o grupo. Nunca remova a proteção do último super administrador.
-- A caixa é GoDaddy Professional Email. IMAP/SMTP está preparado, mas aguarda `DUUK_MAIL_PASSWORD` nos segredos das Edge Functions. Não confunda essa credencial com a senha de login do painel.
+- A caixa é Titan adquirido pela GoDaddy. Um super administrador conecta em Comercial > E-mails > Conectar Titan, usando a senha da caixa. A Edge Function valida IMAP/SMTP e guarda a credencial criptografada no Vault; as RPCs de credenciais são exclusivas de `service_role`. `DUUK_MAIL_PASSWORD` continua como fallback legado, sem prioridade sobre o Vault. Não confunda a credencial da caixa com a senha de login do painel.
 - `src/admin/releases.json` é a fonte única de versões. A PWA aguarda atualização explícita, protege formulários pendentes e nunca guarda dados privados em Cache Storage. Publique a notificação da versão somente após confirmar o frontend no domínio.
 - Consulte `docs/duuk-admin-operation.md` para operação, limites, configurações externas e validação.

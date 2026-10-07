@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.1.0",
+    "date": "2026-10-07",
+    "title": "Seu e-mail, dentro da DUUK",
+    "new": [
+      "Conexão da caixa Titan da GoDaddy pelo painel, com validação de entrada e envio e senha criptografada no servidor."
+    ],
+    "improved": [
+      "Filtros comerciais se reorganizam no celular para manter as opções acessíveis.",
+      "Formulários, calendários e anexos revisados em celular, tablet e desktop."
+    ],
+    "fixed": [
+      "Rolagem lateral na criação de usuários e quebra de textos longos nas caixas de edição."
+    ]
+  },
+  {
     "version": "1.0.2",
     "date": "2026-10-07",
     "title": "Mais movimento, no ritmo da DUUK",

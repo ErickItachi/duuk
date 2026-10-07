@@ -10,28 +10,78 @@ import {
   text,
   uuid,
 } from "../_shared/http.ts";
-// GoDaddy Professional Email. Hosts are fixed server-side, never accepted from a request.
-const email = "contato@duukfilms.com";
-const config = () => ({
-  user: Deno.env.get("DUUK_MAIL_USERNAME") || email,
-  password: Deno.env.get("DUUK_MAIL_PASSWORD") || "",
-});
+import {
+  mailbox as email,
+  mailProvider,
+  mailCredentials,
+  smtpTransport,
+  imapClient,
+  verifyMailbox,
+} from "../_shared/mail.ts";
 handler(async (req, headers) => {
   const db = database(),
-    body = await readJson(req, 8000000),
-    credentials = config();
+    body = await readJson(req, 8000000);
   const cron = req.headers.get("x-duuk-cron"),
     secrets = cron ? checked(await db.rpc("duuk_backend_secrets")) : null,
     isCron = !!cron && cron === secrets?.["duuk.push.cron"];
   const user = isCron ? null : await member(req, db, "mail");
   if (isCron && body.action !== "poll")
     throw new HttpError("Ação não permitida.", 403);
+  const canConfigure = async () =>
+    !!user &&
+    !!checked(
+      await db
+        .from("duuk_profiles")
+        .select("is_super_admin")
+        .eq("id", user.id)
+        .single(),
+    )?.is_super_admin;
+  if (body.action === "connect" && user) {
+    if (!(await canConfigure()))
+      throw new HttpError(
+        "Somente um super administrador pode conectar a caixa.",
+        403,
+      );
+    if (
+      typeof body.password !== "string" ||
+      !body.password.length ||
+      body.password.length > 1024
+    )
+      throw new HttpError("Informe a senha da caixa de e-mail.");
+    if (
+      !checked(
+        await db.rpc("duuk_action_limit", {
+          action_name: "mail-connect",
+          actor: user.id,
+          maximum: 5,
+          window_seconds: 900,
+        }),
+      )
+    )
+      throw new HttpError(
+        "Aguarde alguns minutos antes de tentar conectar novamente.",
+        429,
+      );
+    await verifyMailbox({ user: email, password: body.password });
+    checked(
+      await db.rpc("duuk_connect_mail", {
+        actor: user.id,
+        mailbox_password: body.password,
+      }),
+    );
+    return json(
+      { connected: true, provider: mailProvider, address: email },
+      headers,
+    );
+  }
+  const credentials = await mailCredentials(db);
   if (body.action === "status")
     return json(
       {
-        provider: "GoDaddy",
+        provider: mailProvider,
         address: email,
         configured: !!credentials.password,
+        can_configure: await canConfigure(),
       },
       headers,
     );
@@ -39,7 +89,7 @@ handler(async (req, headers) => {
     return json({ configured: false }, headers);
   if (!credentials.password)
     throw new HttpError(
-      "A conexão GoDaddy aguarda a configuração segura da caixa de e-mail no servidor.",
+      "Conecte a caixa Titan para acessar seus e-mails.",
       503,
     );
   if (body.action === "send" && user) {
@@ -117,27 +167,13 @@ handler(async (req, headers) => {
         429,
       );
     checked(
-      await db
-        .from("duuk_mail_outbox")
-        .insert({
-          request_id: requestId,
-          created_by: user.id,
-          status: "sending",
-        }),
+      await db.from("duuk_mail_outbox").insert({
+        request_id: requestId,
+        created_by: user.id,
+        status: "sending",
+      }),
     );
-    const nodemailer = (await import("npm:nodemailer@10.0.15")).default;
-    const transport = nodemailer.createTransport({
-      host: "smtpout.secureserver.net",
-      port: 465,
-      secure: true,
-      auth: { user: credentials.user, pass: credentials.password },
-      connectionTimeout: 15000,
-      socketTimeout: 20000,
-      logger: false,
-      debug: false,
-      disableFileAccess: true,
-      disableUrlAccess: true,
-    });
+    const transport = await smtpTransport(credentials);
     let result;
     try {
       result = await transport.sendMail({
@@ -159,7 +195,7 @@ handler(async (req, headers) => {
         .update({ status: "uncertain" })
         .eq("request_id", requestId);
       throw new HttpError(
-        "A GoDaddy não confirmou o envio. Confira a pasta Enviados no webmail antes de enviar novamente.",
+        "O Titan não confirmou o envio. Confira a pasta Enviados no webmail antes de enviar novamente.",
         502,
       );
     } finally {
@@ -172,57 +208,42 @@ handler(async (req, headers) => {
         .eq("request_id", requestId),
     );
     checked(
-      await db
-        .from("duuk_mail_links")
-        .insert({
-          message_id: result.messageId,
-          client_id: clientId,
-          subject,
-          direction: "out",
-          sender: email,
-          recipient: to,
-          sent_at: new Date().toISOString(),
-          created_by: user.id,
-        }),
+      await db.from("duuk_mail_links").insert({
+        message_id: result.messageId,
+        client_id: clientId,
+        subject,
+        direction: "out",
+        sender: email,
+        recipient: to,
+        sent_at: new Date().toISOString(),
+        created_by: user.id,
+      }),
     );
     if (clientId) {
       checked(
-        await db
-          .from("duuk_activities")
-          .insert({
-            client_id: clientId,
-            user_id: user.id,
-            channel: "email",
-            notes: `E-mail enviado: ${subject}`,
-            result: "Envio confirmado pelo servidor SMTP",
-            next_step: "",
-          }),
+        await db.from("duuk_activities").insert({
+          client_id: clientId,
+          user_id: user.id,
+          channel: "email",
+          notes: `E-mail enviado: ${subject}`,
+          result: "Envio confirmado pelo servidor SMTP",
+          next_step: "",
+        }),
       );
     }
     checked(
-      await db
-        .from("duuk_audit")
-        .insert({
-          actor_id: user.id,
-          actor_name: user.email,
-          action: "email-sent",
-          entity: "duuk_mail_links",
-          entity_id: result.messageId,
-          summary: "E-mail enviado pela GoDaddy",
-        }),
+      await db.from("duuk_audit").insert({
+        actor_id: user.id,
+        actor_name: user.email,
+        action: "email-sent",
+        entity: "duuk_mail_links",
+        entity_id: result.messageId,
+        summary: "E-mail enviado pelo Titan",
+      }),
     );
     return json({ sent: true, message_id: result.messageId }, headers);
   }
-  const { ImapFlow } = await import("npm:imapflow@2.2.6");
-  const client = new ImapFlow({
-    host: "imap.secureserver.net",
-    port: 993,
-    secure: true,
-    auth: credentials,
-    logger: false,
-    connectionTimeout: 15000,
-    socketTimeout: 20000,
-  });
+  const client = await imapClient(credentials);
   try {
     await client.connect();
     const lock = await client.getMailboxLock("INBOX");
@@ -240,17 +261,15 @@ handler(async (req, headers) => {
           );
         if (!cursor || cursor.uid_validity !== validity) {
           checked(
-            await db
-              .from("duuk_mail_cursor")
-              .upsert({
-                mailbox: "INBOX",
-                uid_validity: validity,
-                last_uid: Math.max(
-                  0,
-                  Number((client.mailbox && client.mailbox.uidNext) || 1) - 1,
-                ),
-                updated_at: new Date().toISOString(),
-              }),
+            await db.from("duuk_mail_cursor").upsert({
+              mailbox: "INBOX",
+              uid_validity: validity,
+              last_uid: Math.max(
+                0,
+                Number((client.mailbox && client.mailbox.uidNext) || 1) - 1,
+              ),
+              updated_at: new Date().toISOString(),
+            }),
           );
           return json({ initialized: true }, headers);
         }
@@ -414,21 +433,19 @@ handler(async (req, headers) => {
           throw new HttpError("Mensagem não encontrada.", 404);
         const cid = uuid(body.client_id);
         checked(
-          await db
-            .from("duuk_mail_links")
-            .upsert(
-              {
-                message_id: m.envelope.messageId,
-                client_id: cid,
-                subject: m.envelope.subject || "",
-                direction: "in",
-                sender: m.envelope.from?.[0]?.address || "",
-                recipient: email,
-                sent_at: m.envelope.date || new Date(),
-                created_by: user.id,
-              },
-              { onConflict: "message_id" },
-            ),
+          await db.from("duuk_mail_links").upsert(
+            {
+              message_id: m.envelope.messageId,
+              client_id: cid,
+              subject: m.envelope.subject || "",
+              direction: "in",
+              sender: m.envelope.from?.[0]?.address || "",
+              recipient: email,
+              sent_at: m.envelope.date || new Date(),
+              created_by: user.id,
+            },
+            { onConflict: "message_id" },
+          ),
         );
         return json({ saved: true }, headers);
       }
@@ -439,7 +456,7 @@ handler(async (req, headers) => {
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError(
-      "Não foi possível conectar à caixa GoDaddy. Confira as credenciais no servidor.",
+      "Não foi possível conectar à caixa Titan. Confira a conexão em Gerenciar conexão ou tente novamente em instantes.",
       502,
     );
   } finally {

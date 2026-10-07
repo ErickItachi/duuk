@@ -137,8 +137,7 @@ handler(async (req, headers) => {
   }
   if (body.action !== "dispatch" || !isCron)
     throw new HttpError("Ação não permitida.", 403);
-  if (Deno.env.get("DUUK_MAIL_PASSWORD"))
-    await fetch(Deno.env.get("SUPABASE_URL") + "/functions/v1/duuk-mail", {
+  await fetch(Deno.env.get("SUPABASE_URL") + "/functions/v1/duuk-mail", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-duuk-cron": cron! },
       body: JSON.stringify({ action: "poll" }),

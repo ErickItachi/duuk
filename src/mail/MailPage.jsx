@@ -11,6 +11,7 @@ import { addFollowup } from "../crm/api";
 import { checked, mailRequest, rows } from "../admin/api";
 import { ConfirmModal, Icon, Modal, RefreshButton } from "../admin/components";
 import { Field, PageTitle, QueryState } from "../admin/forms";
+import MailConnection from "./MailConnection";
 
 const templates = () => rows("duuk_mail_templates", (q) => q.order("title"));
 function TemplateEditor({ record, onClose, onSaved }) {
@@ -143,7 +144,7 @@ function Composer({ clients, models, reply, clientId, onClose, onSent }) {
   return (
     <Modal
       title={reply ? "Responder conversa" : "Novo e-mail"}
-      subtitle="contato@duukfilms.com · GoDaddy"
+      subtitle="contato@duukfilms.com · Titan / GoDaddy"
       onClose={() => !busy && onClose()}
       wide
     >
@@ -456,11 +457,12 @@ export default function MailPage({ notify }) {
     ),
     [opened, setOpened] = useState(() =>
       /^[1-9][0-9]*$/.test(params.get("mensagem") || "")
-        ? { uid: Number(params.get("mensagem")), subject: "Conversa GoDaddy" }
+        ? { uid: Number(params.get("mensagem")), subject: "Conversa Titan" }
         : null,
     ),
     [edit, setEdit] = useState(null),
-    [deleting, setDeleting] = useState(null);
+    [deleting, setDeleting] = useState(null),
+    [connecting, setConnecting] = useState(false);
   const inbox = useQuery(
     useCallback(
       () =>
@@ -479,10 +481,21 @@ export default function MailPage({ notify }) {
       >
         <RefreshButton
           onRefresh={async () => {
-            await status.reload();
-            if (status.data?.configured) await inbox.reload();
+            const result = await status.reload();
+            if (result.failed) return result;
+            if (status.data?.configured && result.configured)
+              return inbox.reload();
           }}
         />
+        {status.data?.configured && status.data.can_configure && (
+          <button
+            className="admin-button admin-button--secondary"
+            onClick={() => setConnecting(true)}
+          >
+            <Icon name="settings" />
+            Gerenciar conexão
+          </button>
+        )}
         <button
           className="admin-button"
           disabled={!status.data?.configured}
@@ -513,15 +526,27 @@ export default function MailPage({ notify }) {
               <span className="office-shortcut-icon">
                 <Icon name="mail" size={24} />
               </span>
-              <h2>Sua caixa GoDaddy, aqui.</h2>
+              <h2>Sua caixa Titan, aqui.</h2>
               <p>
-                A integração IMAP/SMTP está preparada. Para conectar a caixa
-                real de contato@duukfilms.com, falta configurar a credencial do
-                provedor com segurança no servidor.
+                Conecte contato@duukfilms.com para ler, responder e enviar
+                mensagens sem sair do administrativo.
               </p>
               <span className="office-badge is-pending">
                 Aguardando conexão
               </span>
+              {status.data.can_configure ? (
+                <button
+                  className="admin-button"
+                  onClick={() => setConnecting(true)}
+                >
+                  <Icon name="mail" />
+                  Conectar Titan
+                </button>
+              ) : (
+                <p>
+                  Peça a um super administrador para conectar a caixa da DUUK.
+                </p>
+              )}
               <a
                 className="admin-button admin-button--secondary"
                 href="https://email.godaddy.com"
@@ -640,7 +665,7 @@ export default function MailPage({ notify }) {
           reply={compose.reply}
           onClose={() => setCompose(null)}
           onSent={async () => {
-            notify("E-mail enviado pela GoDaddy.");
+            notify("E-mail enviado pelo Titan.");
             await inbox.reload();
           }}
         />
@@ -669,6 +694,19 @@ export default function MailPage({ notify }) {
           onSaved={async () => {
             await models.reload();
             notify("Modelo salvo.");
+          }}
+        />
+      )}
+      {connecting && (
+        <MailConnection
+          onClose={() => setConnecting(false)}
+          onConnected={() => {
+            setConnecting(false);
+            notify("Caixa Titan conectada.");
+            const wasConfigured = status.data?.configured;
+            status.reload().then((result) => {
+              if (wasConfigured && result.configured) inbox.reload();
+            });
           }}
         />
       )}

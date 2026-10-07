@@ -187,6 +187,7 @@
   padding: 28px;
   overflow-y: auto;
   min-height: 0;
+  min-width: 0;
 }
 .admin-modal > form {
   min-height: 0;
@@ -205,11 +206,39 @@
 .admin-form-grid > .admin-error {
   grid-column: 1/-1;
 }
-.admin-form-grid input,
+.admin-form-grid input:not([type="checkbox"]):not([type="radio"]),
 .admin-form-grid textarea,
 .admin-form-grid select {
   width: 100%;
   min-width: 0;
+}
+.admin-form-grid > * {
+  min-width: 0;
+}
+.admin-modal :is(p, small, .admin-field > span, .admin-button, .admin-check) {
+  overflow-wrap: anywhere;
+}
+.admin-modal__foot {
+  flex-wrap: wrap;
+}
+.mail-connect-form {
+  display: grid;
+  gap: 18px;
+}
+.mail-connect-form p {
+  margin: 0;
+}
+.mail-connect-form small {
+  line-height: 1.6;
+}
+.mail-connect-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--admin-accent);
+}
+.mail-connect-progress svg {
+  flex-shrink: 0;
 }
 .admin-field textarea {
   font-family: inherit;
@@ -940,9 +969,9 @@
     min-width: 0;
   }
   .crm-toolbar select {
-    flex: 1;
+    flex: 1 1 190px;
     max-width: 100%;
-    width: 120px;
+    width: auto;
   }
   .crm-report-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));

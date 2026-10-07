@@ -20,20 +20,19 @@ Contratos preservam PDFs privados, campos, links separados com validade de sete 
 
 Despesas exportam Excel/CSV conforme mês e filtro. A agenda usa horários de Brasília. Insights excluem administrativo e assinaturas; retenção de 90 dias e limpeza diária de chaves temporárias derivadas do IP permanecem ativas.
 
-## Conectar a caixa GoDaddy
+## Conectar a caixa Titan da GoDaddy
 
-A arquitetura IMAP/SMTP está implementada, mas a credencial da caixa não foi fornecida. O painel mostra “Aguardando conexão” e bloqueia envio até a configuração real. A senha do administrativo não é utilizada como senha de e-mail.
+Um super administrador abre Comercial > E-mails > Conectar Titan e informa a senha da caixa `contato@duukfilms.com`. A senha do administrativo não é utilizada como senha de e-mail. O formulário não persiste a credencial no navegador e a conexão não envia mensagens de teste.
 
-Configure exclusivamente nos segredos das Edge Functions do projeto Supabase:
+A Edge Function verifica a conta ativa, a permissão de e-mail e o acesso de super administrador, limita a cinco tentativas por 15 minutos, valida o acesso à caixa de entrada e a autenticação SMTP, e só então grava a senha criptografada no Supabase Vault. Somente `service_role` pode executar as RPCs de leitura e gravação. A reconexão substitui a credencial de forma atômica e gera auditoria sem segredo. Em uma falha de validação, a configuração anterior é preservada. “Gerenciar conexão” permite trocar a senha depois.
 
-- `DUUK_MAIL_USERNAME`: `contato@duukfilms.com` (já é o padrão).
-- `DUUK_MAIL_PASSWORD`: senha ou credencial específica da caixa GoDaddy Professional Email.
+Hosts fixos: `imap.secureserver.net:993` e `smtpout.secureserver.net:465`, ambos TLS, conforme as [instruções oficiais da GoDaddy para Titan](https://www.godaddy.com/en-in/help/manually-add-my-professional-email-powered-by-titan-to-outlook-windows-28011). O Titan vendido pela GoDaddy usa esses hosts. Se necessário, habilite acesso por outros aplicativos no webmail ou gere senha de aplicativo para uma conta com autenticação em duas etapas, conforme a [ajuda do Titan](https://support.titan.email/hc/en-us/articles/900000573066-How-to-configure-IMAP-for-Android).
 
-Hosts fixos: `imap.secureserver.net:993` e `smtpout.secureserver.net:465`, ambos TLS. A configuração corresponde ao produto Professional Email confirmado pelo MX; uma migração futura para Microsoft 365 exige adaptar o provedor.
+Para instalações anteriores, `DUUK_MAIL_USERNAME` e `DUUK_MAIL_PASSWORD` nos segredos das Edge Functions continuam como fallback quando não há credencial no Vault. A configuração pelo painel tem prioridade. Nenhum plano pago é necessário para esta integração.
 
-Depois de configurar, valide a caixa de entrada e um envio individual para um destinatário autorizado. O job existente consulta mensagens novas a cada cinco minutos; a primeira consulta cria uma linha de base para não notificar todo o histórico antigo. A busca retorna até 50 mensagens recentes. Anexos do composer somam até 5 MB, no máximo cinco arquivos. Envios têm limite de dez por usuário/hora e identificador idempotente. Se o provedor não confirmar o envio, o painel pede conferir Enviados antes de tentar uma nova mensagem.
+Depois de conectar, valide a caixa de entrada e um envio individual para um destinatário autorizado. O job existente consulta mensagens novas a cada cinco minutos; a primeira consulta cria uma linha de base para não notificar todo o histórico antigo. A busca retorna até 50 mensagens recentes. Anexos do composer somam até 5 MB, no máximo cinco arquivos. Envios têm limite de dez por usuário/hora e identificador idempotente. Se o provedor não confirmar o envio, o painel pede conferir Enviados antes de tentar uma nova mensagem.
 
-Credenciais, corpos de mensagens e conteúdo dos anexos não entram na auditoria. O banco guarda referências de mensagens e vínculos comerciais; leitura e envio usam o provedor real. Credenciais incorretas ou restrições da GoDaddy ainda precisam ser verificadas após conectar.
+Credenciais, corpos de mensagens e conteúdo dos anexos não entram na auditoria. O banco guarda referências de mensagens e vínculos comerciais; leitura e envio usam o provedor real. A caixa permanece aguardando conexão até o usuário informar a credencial correta pelo painel.
 
 ## Notificações e aplicativo
 
@@ -43,7 +42,7 @@ No iPhone/iPad compatível, instale pelo Safari > Compartilhar > Adicionar à Te
 
 VAPID privado e token do agendamento ficam criptografados no Supabase Vault. O cliente recebe somente a chave pública. O Cron dispara a função a cada cinco minutos. Preferências, permissões, deduplicação, tentativas limitadas e remoção de endpoints expirados são verificadas no backend.
 
-Eventos reais incluem compromissos de amanhã/uma hora, follow-ups, assinatura recebida, resumo financeiro do mês encerrado, e-mails novos após conectar a GoDaddy e versões publicadas. Notificações internas ficam por 180 dias. A publicação de uma versão gera um único evento por usuário e versão.
+Eventos reais incluem compromissos de amanhã/uma hora, follow-ups, assinatura recebida, resumo financeiro do mês encerrado, e-mails novos após conectar o Titan e versões publicadas. Notificações internas ficam por 180 dias. A publicação de uma versão gera um único evento por usuário e versão.
 
 ## Publicar atualizações
 
@@ -66,4 +65,8 @@ Navegador: 23 rotas, larguras 320/375/390/430/768/1024/1440, drawer, formulário
 
 Validação visual: capa e formulário de login em telas pequenas e baixas, carregamento único durante a troca do chunk inicial, atualização sem ocultar listas e recuperação de falhas. O pipeline foi exercitado com respostas interceptadas no navegador, incluindo arraste por mouse e eventos reais de toque, rolagem nas bordas, cancelamento, revisão retornada pelo servidor, falha com retorno do cartão e confirmação rápida sem interromper a animação. Esses testes visuais não gravam clientes de demonstração no banco.
 
-Limitações externas: a caixa GoDaddy aguarda sua credencial; entrega Web Push em aparelho físico exige ativação e teste no aparelho. Nenhum plano pago, provedor bancário ou integração de cobrança foi contratado.
+Limitações externas: a caixa Titan aguarda a conexão pelo painel com sua credencial; entrega Web Push em aparelho físico exige ativação e teste no aparelho. Nenhum plano pago, provedor bancário ou integração de cobrança foi contratado.
+
+Validação 1.1.0: `supabase/tests/mail-connection.sql` verifica privilégios, bloqueio de usuários sem super administração, criptografia, substituição atômica e auditoria sem segredo, com rollback de todos os dados de teste. A API real verifica status, acesso por módulo, bloqueio anônimo, senha vazia/excessiva e impossibilidade de chamar as RPCs de credenciais pelo navegador. Nenhuma tentativa de autenticação Titan é feita com senha fictícia. A validação de entrada e envio reais aguarda a credencial inserida pelo usuário.
+
+Nesta publicação, os 16 testes unitários passaram; o teste opt-in do Supabase permaneceu desativado e foi complementado pelas consultas SQL e chamadas autenticadas reais descritas acima. Lint passou com os três avisos preexistentes e o build de produção passou. A varredura abriu dez formulários de criação, calendários aninhados, biblioteca de capas e horários em dez larguras (320–1440 px), sem rolagem lateral interna. Também verificou 23 rotas administrativas em sete larguras, cinco páginas públicas em dez larguras, PDF privado em modo de leitura e exportação Excel. O novo formulário Titan passou em 11 dimensões, incluindo telas baixas e na horizontal, com erro, validação em andamento e sucesso simulados sem gravar senha real. A atualização 1.0.2 → 1.1.0 preservou formulários pendentes, outras abas e a recuperação offline, sem cache de dados privados.
