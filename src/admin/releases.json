@@ -1,0 +1,37 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-10-07",
+    "title": "O espaço oficial da equipe DUUK",
+    "new": [
+      "Comercial com clientes, pipeline, contatos, follow-ups e relatórios.",
+      "Contas individuais, perfis, grupos e permissões por módulo.",
+      "Central de notificações e ativação de Web Push por dispositivo.",
+      "DUUK Admin instalável, com novidades e atualização sob seu controle.",
+      "Integração GoDaddy preparada para conexão segura da caixa real."
+    ],
+    "improved": [
+      "Login compacto, menu lateral no celular e ícones Lucide.",
+      "Agenda, contratos, despesas e conteúdo preservados na nova navegação.",
+      "Atualização dos dados com feedback e tratamento de conexão."
+    ],
+    "fixed": [
+      "A abertura mobile tenta autoplay sem botão de play.",
+      "Separação das permissões de financeiro, contratos e conteúdo no banco."
+    ]
+  },
+  {
+    "version": "0.3.0",
+    "date": "2026-10-06",
+    "title": "Mais organização para o estúdio",
+    "new": [
+      "Agenda com compromissos e calendário mensal.",
+      "Lixeira e restauração de contratos.",
+      "Exportação de despesas em Excel e CSV."
+    ],
+    "improved": [
+      "Identidade escura da DUUK e menu desktop minimizável.",
+      "Responsividade dos módulos e PDFs."
+    ]
+  }
+]

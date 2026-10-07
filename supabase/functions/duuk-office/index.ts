@@ -3,6 +3,9 @@ import { fieldsFor, PDFDocument, renderSigned } from '../_shared/pdf.ts'
 
 handler(async(req,headers)=>{
   const db=database(),user=await admin(req,db)
+  const profile=checked(await db.from('duuk_profiles').select('name').eq('id',user.id).single())
+  const audit=async(action:string,id:string)=>checked(await db.from('duuk_audit').insert({actor_id:user.id,actor_name:profile?.name||user.email,action,entity:'duuk_contracts',entity_id:id,summary:({fields:'Campos do contrato alterados',invite:'Link de assinatura gerado',trash:'Contrato movido para a lixeira',restore:'Contrato restaurado',delete:'Contrato excluído',cancel:'Links do contrato cancelados',render:'PDF assinado atualizado',upload:'PDF de contrato enviado'} as Record<string,string>)[action]||action}))
+  const audited=async(action:string,id:string,operation:PromiseLike<{data:any,error:any}>):Promise<any>=>{const result=checked(await operation);await audit(action,id);return result}
   if(req.headers.get('content-type')?.includes('multipart/form-data')){
     if(Number(req.headers.get('content-length'))>11000000)throw new HttpError('Envie um PDF de até 10 MB.')
     const form=await new Response(await readBody(req,11000000),{headers:{'Content-Type':req.headers.get('content-type')!}}).formData(),file=form.get('file')
@@ -19,6 +22,7 @@ handler(async(req,headers)=>{
     checked(await db.storage.from('duuk-documents').upload(path,bytes,{contentType:'application/pdf',upsert:false}))
     const insert=await db.from('duuk_contracts').insert({id,title,client_name,client_email,duuk_name,original_path:path,original_sha256:await sha256(bytes),pages,created_by:user.id}).select().single()
     if(insert.error){await db.storage.from('duuk-documents').remove([path]);checked(insert)}
+    await audit('upload',id)
     return json(insert.data,headers)
   }
   const body=await readJson(req,50000),id=uuid(body.id)
@@ -29,16 +33,16 @@ handler(async(req,headers)=>{
     const invites=checked(await db.from('duuk_contract_invites').select('party,expires_at,revoked_at,signed_at').eq('contract_id',id).order('created_at',{ascending:false}))
     return json({contract,signatures,invites,original_url:await signedUrl(db,contract.original_path),signed_url:await signedUrl(db,contract.signed_path)},headers)
   }
-  if(body.action==='fields')return json(checked(await db.rpc('duuk_office_fields',{target:id,document:fieldsFor(body.fields,contract.pages),revision:body.version})),headers)
+  if(body.action==='fields')return json(await audited('fields',id,db.rpc('duuk_office_fields',{target:id,document:fieldsFor(body.fields,contract.pages),revision:body.version})),headers)
   if(body.action==='invite'){
     const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('')
-    const result=checked(await db.rpc('duuk_office_invite',{target:id,side:body.party,digest:await sha256(token),revision:body.version}))
+    const result=await audited('invite',id,db.rpc('duuk_office_invite',{target:id,side:body.party,digest:await sha256(token),revision:body.version}))
     return json({...result,url:`https://www.duukfilms.com/assinar/${token}`},headers)
   }
-  if(body.action==='cancel')return json(checked(await db.rpc('duuk_office_cancel',{target:id,revision:body.version})),headers)
-  if(body.action==='trash'||body.action==='restore')return json(checked(await db.rpc('duuk_office_trash',{target:id,revision:body.version,restore:body.action==='restore'})),headers)
+  if(body.action==='cancel')return json(await audited('cancel',id,db.rpc('duuk_office_cancel',{target:id,revision:body.version})),headers)
+  if(body.action==='trash'||body.action==='restore')return json(await audited(body.action,id,db.rpc('duuk_office_trash',{target:id,revision:body.version,restore:body.action==='restore'})),headers)
   if(body.action==='delete'){
-    const path=checked(await db.rpc('duuk_office_delete',{target:id,revision:body.version}))
+    const path=await audited('delete',id,db.rpc('duuk_office_delete',{target:id,revision:body.version}))
     checked(await db.storage.from('duuk-documents').remove([path]))
     return json({deleted:true},headers)
   }
@@ -46,6 +50,7 @@ handler(async(req,headers)=>{
     const signatures=checked(await db.from('duuk_contract_signatures').select('*').eq('contract_id',id).order('signed_at'))||[]
     if(!signatures.length)throw new HttpError('O contrato ainda não tem assinaturas.')
     const rendered=await renderSigned(db,{contract,signatures})
+    await audit('render',id)
     return json({contract:rendered,signed_url:await signedUrl(db,rendered.signed_path)},headers)
   }
   throw new HttpError('Operação inválida.')

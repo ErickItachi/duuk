@@ -1,40 +1,21 @@
+import { Activity, ArrowUpRight, Bell, BriefcaseBusiness, CalendarDays, ChartNoAxesCombined, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleHelp, Clock3, Columns3, Copy, Download, Eye, EyeOff, File, FileText, Film, House, Images, Info, LayoutDashboard, Link2, LockKeyhole, LogOut, Mail, Menu, PanelLeftClose, Pencil, Phone, Plus, RefreshCw, RotateCcw, Search, Send, Settings2, ShieldCheck, Sparkles, Trash2, Upload, UserRound, Users, Wallet, WifiOff, X } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { getImageSources, getVideoSource } from '../media'
 import { useContent } from '../content/useContent'
 import { MEDIA_PREFIX } from '../content/model'
 
-const paths = {
-  calendar: 'M4 5h16v16H4z M8 3v4 M16 3v4 M4 10h16 M8 14h.01 M12 14h.01 M16 14h.01 M8 18h.01 M12 18h.01',
-  left: 'M15 5l-7 7 7 7',
-  right: 'M9 5l7 7-7 7',
-  sidebar: 'M3 4h18v16H3z M9 4v16 M14 9l-3 3 3 3',
-  restore: 'M4 4v6h6 M4 10a8 8 0 1 1 0 6 M12 8v5l3 2',
-  download: 'M12 3v13 M7 11l5 5 5-5 M4 17v4h16v-4',
-  logout: 'M9 3H4v18h5 M9 12h12 M16 7l5 5-5 5',
-  menu: 'M4 6h16 M4 12h16 M4 18h16',
-  refresh: 'M20 7v5h-5 M4 17v-5h5 M6 6a8 8 0 0 1 13 2l1 4 M18 18A8 8 0 0 1 5 16l-1-4',
-  lock: 'M7 10V7a5 5 0 0 1 10 0v3 M5 10h14v11H5z M12 14v3',
-  document: 'M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6',
-  wallet: 'M3 6h17v15H3z M3 6V3h14v3 M20 11h-6v5h6 M16 13h.01',
-  chart: 'M3 3v18h18 M7 17v-5 M12 17V7 M17 17v-8',
-  grid: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
-  home: 'M3 10l9-7 9 7v11h-7v-7h-4v7H3z',
-  media: 'M3 5h18v14H3z M3 15l5-5 5 5 3-3 5 5 M15 8h.01',
-  plus: 'M12 5v14 M5 12h14',
-  arrow: 'M7 17L17 7 M7 7h10v10',
-  close: 'M6 6l12 12 M18 6L6 18',
-  upload: 'M12 16V3 M7 8l5-5 5 5 M4 15v6h16v-6',
-  search: 'M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
-  down: 'M6 9l6 6 6-6',
-  up: 'M6 15l6-6 6 6',
-  edit: 'M14 5l5 5 M3 21l5-1L21 7l-5-5L3 15z',
-  check: 'M5 12l4 4L19 6',
-  trash: 'M3 6h18 M9 6V3h6v3 M6 6l1 15h10l1-15 M10 10v7 M14 10v7',
-  film: 'M3 3h18v18H3z M7 3v18 M17 3v18 M3 8h4 M3 16h4 M17 8h4 M17 16h4',
+const icons = { calendar: CalendarDays, left: ChevronLeft, right: ChevronRight, sidebar: PanelLeftClose, restore: RotateCcw, download: Download, logout: LogOut, menu: Menu, refresh: RefreshCw, lock: LockKeyhole, document: FileText, wallet: Wallet, chart: ChartNoAxesCombined, grid: LayoutDashboard, home: House, media: Images, plus: Plus, arrow: ArrowUpRight, close: X, upload: Upload, search: Search, down: ChevronDown, up: ChevronUp, edit: Pencil, check: Check, trash: Trash2, film: Film, eye: Eye, eyeOff: EyeOff, users: Users, user: UserRound, shield: ShieldCheck, settings: Settings2, bell: Bell, mail: Mail, phone: Phone, pipeline: Columns3, activity: Activity, clock: Clock3, info: Info, send: Send, link: Link2, wifi: WifiOff, copy: Copy, file: File, briefcase: BriefcaseBusiness, spark: Sparkles }
+export function Icon({ name, size = 18, ...props }) {
+  const Component = icons[name] || CircleHelp
+  return <Component size={size} strokeWidth={1.6} aria-hidden="true" {...props} />
 }
 
-export function Icon({ name, size = 18 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>
+export function RefreshButton({ onRefresh, label = 'Atualizar', compact = false }) {
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState('')
+  const button = useRef(null)
+  const refresh = async () => { setBusy(true); setStatus(''); try { const result = await onRefresh(); if (result?.failed) throw new Error(result.error); setStatus('Dados atualizados agora.'); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) button.current?.closest('main')?.querySelectorAll('.admin-page-title h1,.admin-stats strong,.crm-stats strong').forEach(element => element.animate?.([{ opacity: .5, transform: 'translateY(3px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 220, easing: 'ease-out' })) } catch (error) { setStatus(error.message || 'Não foi possível atualizar.') } finally { setBusy(false) } }
+  return <span className="admin-refresh"><button ref={button} type="button" className={compact ? 'admin-icon-button' : 'admin-button admin-button--secondary'} aria-label={label} aria-busy={busy} disabled={busy} onClick={refresh}><Icon name="refresh" className={busy ? 'is-spinning' : ''} />{!compact && label}</button>{status && <small role="status">{status}</small>}</span>
 }
 
 export function Modal({ title, subtitle, children, onClose, wide = false }) {

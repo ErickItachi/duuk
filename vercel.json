@@ -41,9 +41,18 @@
     {
       "source": "/assinar/:path*",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Cache-Control", "value": "no-store" },
-        { "key": "Referrer-Policy", "value": "no-referrer" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
       ]
     },
     {
@@ -81,11 +90,41 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    },
+    {
+      "source": "/admin-sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/admin"
+        }
+      ]
+    },
+    {
+      "source": "/admin-version.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "rewrites": [
     {
-      "source": "/((?!media/|fonts/|assets/|favicon.png).*)",
+      "source": "/admin",
+      "destination": "/admin-shell.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/admin-shell.html"
+    },
+    {
+      "source": "/((?!media/|fonts/|assets/|admin-assets/|admin-sw.js|admin-version.json|admin-build.json|admin-shell.html|favicon.png).*)",
       "destination": "/index.html"
     }
   ]

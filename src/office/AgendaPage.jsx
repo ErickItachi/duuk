@@ -1,14 +1,18 @@
-import { useCallback, useState } from 'react'
-import { ConfirmModal, Icon, Modal } from '../admin/components'
+import { useUnsavedChanges } from '../admin/unsavedChanges'
+import { useCallback, useEffect, useState } from 'react'
+import { ConfirmModal, Icon, Modal, RefreshButton } from '../admin/components'
 import { deleteEvent, listEvents, saveEvent } from './api'
 import { DateField, DayGrid, MonthNavigation } from './Calendar'
 import { eventCategories, eventPayload, eventsOnDay, eventStatuses, eventTime } from './calendarModel.js'
 import { dateLabel, today } from './model'
 import { useQuery } from './useQuery'
+import { useSearchParams } from 'react-router-dom'
+
 
 function EventEditor({record,day,onClose,onSaved}) {
  const [form,setForm]=useState(()=>record?{...record,start_time:record.start_time?.slice(0,5)||'',end_time:record.end_time?.slice(0,5)||''}:{title:'',description:'',location:'',client_name:'',start_date:day,end_date:day,all_day:true,start_time:'09:00',end_time:'',category:'filming',status:'planned'})
  const [busy,setBusy]=useState(false),[error,setError]=useState('')
+ useUnsavedChanges(true)
  const update=(key,value)=>setForm(previous=>({...previous,[key]:value}))
  const save=async event=>{event.preventDefault();setError('');setBusy(true);try{await saveEvent(eventPayload(form),record);await onSaved();onClose()}catch(cause){setError(cause.message)}finally{setBusy(false)}}
  return <Modal title={record?'Editar compromisso':'Novo compromisso'} subtitle="Gravações, reuniões e entregas no horário de Brasília." onClose={()=>{if(!busy)onClose()}}><form onSubmit={save}><fieldset disabled={busy} className="office-form">
@@ -23,13 +27,15 @@ function EventEditor({record,day,onClose,onSaved}) {
 }
 
 export default function AgendaPage({notify}) {
- const current=today(),[month,setMonth]=useState(current.slice(0,7)),[selected,setSelected]=useState(current),[filter,setFilter]=useState('all'),[view,setView]=useState('calendar'),[editing,setEditing]=useState(null),[removing,setRemoving]=useState(null)
+ const [params]=useSearchParams(),requestedDay=params.get('dia'),validDay=/^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(requestedDay||'')&&!Number.isNaN(Date.parse(requestedDay)),current=today(),initial=validDay?requestedDay:current
+ const [month,setMonth]=useState(initial.slice(0,7)),[selected,setSelected]=useState(initial),[filter,setFilter]=useState('all'),[view,setView]=useState('calendar'),[editing,setEditing]=useState(null),[removing,setRemoving]=useState(null)
+ useEffect(()=>{if(validDay){const timer=setTimeout(()=>{setMonth(requestedDay.slice(0,7));setSelected(requestedDay)},0);return()=>clearTimeout(timer)}},[requestedDay,validDay])
  const query=useCallback(async()=>({month,records:await listEvents(month)}),[month])
  const {data,error,loading,reload}=useQuery(query),records=data?.month===month?data.records:[],visible=records.filter(record=>filter==='all'||record.category===filter),dayEvents=eventsOnDay(visible,selected)
  const changeMonth=value=>{setMonth(value);setSelected(value===current.slice(0,7)?current:`${value}-01`)}
  const selectDay=day=>{setSelected(day);if(!day.startsWith(month))setMonth(day.slice(0,7))}
  const eventCard=record=><article className={`office-event-card is-${record.category}${record.status==='cancelled'?' is-cancelled':''}`} key={record.id}><span className="office-event-mark" /><button type="button" className="office-record-title" onClick={()=>setEditing(record)}><span className="office-event-kicker">{eventCategories[record.category]} · {eventTime(record)}</span><strong>{record.title}</strong><small>{view==='list'?`${dateLabel(record.start_date)}${record.end_date!==record.start_date?` — ${dateLabel(record.end_date)}`:''} · `:''}{[record.client_name,record.location].filter(Boolean).join(' · ')||'Sem cliente ou local informado'}</small>{record.description&&<small>{record.description}</small>}</button><span className={`office-badge ${record.status==='done'?'is-done':record.status==='confirmed'?'is-pending':''}`}>{eventStatuses[record.status]}</span><div className="office-row-actions"><button className="admin-icon-button" aria-label={`Editar ${record.title}`} onClick={()=>setEditing(record)}><Icon name="edit" /></button><button className="admin-icon-button admin-icon-button--danger" aria-label={`Excluir ${record.title}`} onClick={()=>setRemoving(record)}><Icon name="trash" /></button></div></article>
- return <><div className="admin-page-title"><div><p className="admin-eyebrow">ADMINISTRATIVO / PRODUÇÃO</p><h1>Agenda<span>.</span></h1><p>Do primeiro encontro à última entrega.</p></div><button className="admin-button" onClick={()=>setEditing('new')}><Icon name="plus" />Novo compromisso</button></div>
+ return <><div className="admin-page-title"><div><p className="admin-eyebrow">ADMINISTRATIVO / PRODUÇÃO</p><h1>Agenda<span>.</span></h1><p>Do primeiro encontro à última entrega.</p></div><RefreshButton onRefresh={reload}/><button className="admin-button" onClick={()=>setEditing('new')}><Icon name="plus" />Novo compromisso</button></div>
   <section className="admin-panel office-agenda"><div className="office-agenda-toolbar"><MonthNavigation month={month} onChange={changeMonth} /><div className="office-agenda-controls"><button className="admin-button admin-button--secondary" onClick={()=>{setMonth(current.slice(0,7));setSelected(current)}}>Hoje</button><div className="admin-filter-tabs" aria-label="Visualização da agenda">{[['calendar','Calendário'],['list','Lista']].map(([key,label])=><button key={key} aria-pressed={view===key} className={view===key?'is-active':''} onClick={()=>setView(key)}>{label}</button>)}</div></div></div>
   <div className="office-agenda-filter"><div className="admin-filter-tabs" aria-label="Tipos de compromisso">{[['all','Todos'],...Object.entries(eventCategories)].map(([key,label])=><button key={key} aria-pressed={filter===key} className={filter===key?'is-active':''} onClick={()=>setFilter(key)}>{label}</button>)}</div><span className="office-muted">{loading?'Carregando…':`${visible.length} compromisso${visible.length===1?'':'s'}`}</span></div>
   {error&&<p className="admin-error office-agenda-error" role="alert">{error} <button className="admin-text-button" onClick={reload}>Tentar novamente</button></p>}

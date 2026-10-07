@@ -1,4 +1,6 @@
+import { useUnsavedChanges } from './unsavedChanges'
 import { useEffect, useState } from 'react'
+
 import { useContent } from '../content/useContent'
 import { youtubeId } from '../content/youtube'
 import { slugify, validateProject } from '../content/model'
@@ -21,6 +23,7 @@ export default function ProjectEditor({ project, onClose, onSaved }) {
   const [error, setError] = useState('')
   const [confirmClose, setConfirmClose] = useState(false)
   const dirty = JSON.stringify(form) !== JSON.stringify(original)
+  useUnsavedChanges(dirty || busy || uploading > 0)
   useEffect(() => {
     if (!dirty) return
     const prevent = (event) => { event.preventDefault(); event.returnValue = '' }

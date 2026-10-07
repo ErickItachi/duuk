@@ -9,28 +9,29 @@ import { readCloud, saveCloudSite, publishCloud, uploadCloud, removeCloudMedia }
 
 export function ContentProvider({ children }) {
   const auth = useAuth()
+  const canEditSite = auth.hasPermission('site')
   const [data, setData] = useState(() => ({ draft: initialContent(), published: initialContent(), media: [], urls: {}, version: 1, publishedVersion: 1, scope: 'public' }))
   const [ready, setReady] = useState(!adminEnabled)
   const [error, setError] = useState('')
   const epoch = useRef(0)
-  const scope = auth.isAdmin ? auth.user.id : 'public'
+  const scope = canEditSite ? auth.user.id : 'public'
   const invalidateRequests = useCallback(() => { epoch.current++ }, [])
   const location = useLocation()
   const queryMode = new URLSearchParams(location.search).get('preview')
-  const viewMode = queryMode === 'draft' && auth.isAdmin ? 'draft' : 'published'
+  const viewMode = queryMode === 'draft' && canEditSite ? 'draft' : 'published'
 
   const refresh = useCallback(async () => {
     if (!adminEnabled || !auth.ready) return
     const request = ++epoch.current
     try {
-      const result = await readCloud(auth.isAdmin)
+      const result = await readCloud(canEditSite)
       if (request !== epoch.current) return result
       setData({ ...result, scope }); setReady(true); setError(''); return result
     } catch (cause) {
       if (request === epoch.current) { setError(cause.message); setReady(false) }
       throw cause
     }
-  }, [auth.ready, auth.isAdmin, scope])
+  }, [auth.ready, canEditSite, scope])
 
   useEffect(() => {
     if (!adminEnabled || !auth.ready) return
@@ -45,7 +46,7 @@ export function ContentProvider({ children }) {
     return () => { invalidateRequests(); supabase.removeChannel(subscription); window.clearInterval(interval); window.removeEventListener('focus', sync); window.removeEventListener('online', sync) }
   }, [refresh, auth.ready, invalidateRequests, scope])
 
-  const checkAdmin = () => { if (!adminEnabled || !auth.isAdmin) throw new Error('Entre no painel para editar o conteúdo.') }
+  const checkAdmin = () => { if (!adminEnabled || !canEditSite) throw new Error('Entre no painel para editar o conteúdo.') }
   const saveDraft = async (content, version = data.version) => {
     checkAdmin()
     try { await saveCloudSite(content, version) } catch (cause) { await refresh().catch(() => {}); throw cause }

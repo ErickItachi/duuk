@@ -1,3 +1,4 @@
+import { dirtyForms, useUnsavedChanges } from './unsavedChanges'
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useContent } from '../content/useContent'
@@ -7,6 +8,13 @@ import { youtubeId } from '../content/youtube'
 import { validMediaUrl, MEDIA_PREFIX } from '../content/model'
 import { getImageSources } from '../media'
 import { ConfirmModal, Icon, MediaField } from './components'
+import { Avatar } from './forms'
+import { PwaProvider, AboutAdminPage, UpdateNotice, WhatsNew } from './Pwa'
+import { currentRelease } from './pwaState'
+import { NotificationProvider, NotificationBell, NotificationsPage, NotificationSettingsPage } from './Notifications'
+import { UsersPage, PermissionsPage, ProfilePage, AuditPage } from './TeamPages'
+import CommercialPage from '../crm/CommercialPages'
+import MailPage from '../mail/MailPage'
 import ProjectEditor from './ProjectEditor'
 import DashboardPage from '../office/DashboardPage'
 import ContractsPage, { ContractEditor } from '../office/ContractsPage'
@@ -16,17 +24,32 @@ import AgendaPage from '../office/AgendaPage'
 import './admin.css'
 import '../office/office.css'
 import '../office/calendar.css'
+import './platform.css'
 
 const statusLabels = { published: 'Visível', draft: 'Rascunho', archived: 'Arquivado' }
 const sections = [
   { to: '/admin', label: 'Visão geral', icon: 'grid' },
-  { to: '/admin/agenda', label: 'Agenda', icon: 'calendar' },
-  { to: '/admin/contratos', label: 'Contratos', icon: 'document' },
-  { to: '/admin/despesas', label: 'Despesas', icon: 'wallet' },
-  { to: '/admin/insights', label: 'Insights', icon: 'chart' },
-  { to: '/admin/portfolio', label: 'Portfólio', icon: 'film' },
-  { to: '/admin/inicio', label: 'Página inicial', icon: 'home' },
-  { to: '/admin/midias', label: 'Biblioteca', icon: 'media' },
+  { to: '/admin/comercial', label: 'Dashboard comercial', icon: 'chart', permission: 'crm.dashboard', group: 'Comercial' },
+  { to: '/admin/comercial/clientes', label: 'Clientes e leads', icon: 'users', permission: 'crm.clients', group: 'Comercial' },
+  { to: '/admin/comercial/pipeline', label: 'Pipeline', icon: 'pipeline', permission: 'crm.pipeline', group: 'Comercial' },
+  { to: '/admin/comercial/contatos', label: 'Contatos e atividades', icon: 'activity', permission: 'crm.activities', group: 'Comercial' },
+  { to: '/admin/comercial/follow-ups', label: 'Follow-ups', icon: 'clock', permission: 'crm.followups', group: 'Comercial' },
+  { to: '/admin/comercial/emails', label: 'E-mails', icon: 'mail', permission: 'mail', group: 'Comercial' },
+  { to: '/admin/comercial/relatorios', label: 'Relatórios', icon: 'chart', permission: 'crm.reports', group: 'Comercial' },
+  { to: '/admin/contratos', label: 'Contratos', icon: 'document', permission: 'contracts' },
+  { to: '/admin/agenda', label: 'Agenda', icon: 'calendar', permission: 'agenda' },
+  { to: '/admin/financeiro', label: 'Financeiro', icon: 'wallet', permission: 'finance' },
+  { to: '/admin/insights', label: 'Insights', icon: 'chart', permission: 'insights' },
+  { to: '/admin/portfolio', label: 'Portfólio', icon: 'film', permission: 'site', group: 'Site DUUK' },
+  { to: '/admin/inicio', label: 'Página inicial', icon: 'home', permission: 'site', group: 'Site DUUK' },
+  { to: '/admin/midias', label: 'Biblioteca', icon: 'media', permission: 'site', group: 'Site DUUK' },
+  { to: '/admin/configuracoes/usuarios', label: 'Usuários', icon: 'users', permission: 'team', group: 'Configurações' },
+  { to: '/admin/configuracoes/grupos', label: 'Grupos de acesso', icon: 'shield', permission: 'permissions', group: 'Configurações' },
+  { to: '/admin/configuracoes/permissoes', label: 'Permissões individuais', icon: 'lock', permission: 'permissions', group: 'Configurações' },
+  { to: '/admin/configuracoes/notificacoes', label: 'Preferências de notificações', icon: 'bell', group: 'Configurações' },
+  { to: '/admin/configuracoes/historico', label: 'Histórico de alterações', icon: 'activity', permission: 'audit', group: 'Configurações' },
+  { to: '/admin/configuracoes/sobre', label: 'Sobre o DUUK Admin', icon: 'info', group: 'Configurações' },
+  { to: '/admin/configuracoes/perfil', label: 'Meu perfil', icon: 'user', group: 'Configurações' },
 ]
 
 function ProjectList({ notify }) {
@@ -89,6 +112,7 @@ function HomeEditor({ notify }) {
   const [destination, setDestination] = useState(null)
   const navigate = useNavigate()
   const dirty = JSON.stringify(form) !== JSON.stringify(baseDraft.heroMedia)
+  useUnsavedChanges(dirty || busy || uploading > 0)
   const update = (key, value) => setForm((previous) => ({ ...previous, [key]: value }))
   useEffect(() => {
     if (!dirty) return
@@ -157,53 +181,73 @@ function MediaLibrary({ notify }) {
   </>
 }
 
-function AdminWorkspace() {
-  const { pathname } = useLocation()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [collapsed,setCollapsed] = useState(()=>{try{return localStorage.getItem('duuk-sidebar-collapsed')==='true'}catch{return false}})
-  const toggleSidebar=()=>setCollapsed(previous=>{const next=!previous;try{localStorage.setItem('duuk-sidebar-collapsed',String(next))}catch{}return next})
-  const section = sections.find(item => item.to !== '/admin' && (pathname === item.to || pathname.startsWith(`${item.to}/`))) || sections[0]
-  const editingSite = ['/admin/portfolio','/admin/inicio','/admin/midias'].includes(pathname)
-  const { user, signOut } = useAuth()
-  const { ready, error, refresh } = useContent()
-  const [toast, setToast] = useState(null)
-  const notify = (message, failed = false) => setToast({ message, failed })
-  useEffect(() => {
-    if (!toast) return
-    const timeout = window.setTimeout(() => setToast(null), 7000)
-    return () => window.clearTimeout(timeout)
-  }, [toast])
-  useEffect(() => {
-    document.title = 'Painel DUUK'
-    const robots = document.querySelector('meta[name="robots"]')
-    robots?.setAttribute('content', 'noindex, nofollow')
-  }, [])
-  return <div className={`admin-shell${collapsed?' is-collapsed':''}`}>
-    <aside className="admin-sidebar" onKeyDown={event => { if (event.key === 'Escape' && menuOpen) { setMenuOpen(false); event.currentTarget.querySelector('.admin-menu-toggle')?.focus() } }}>
-      <div className="admin-sidebar__head"><button type="button" className="admin-collapse-toggle" aria-expanded={!collapsed} aria-controls="admin-navigation" aria-label={collapsed?'Expandir menu':'Minimizar menu'} title={collapsed?'Expandir menu':'Minimizar menu'} onClick={toggleSidebar}><Icon name="sidebar" size={18} /></button>
-        <Link className="admin-brand" to="/admin" aria-label="DUUK — visão geral" onClick={() => setMenuOpen(false)}><img src="/media/duuk-logo-white.png" width="52" height="64" alt="DUUK" /><span>ADMINISTRATIVO<small>Seu estúdio, em um só lugar.</small></span></Link>
-        <button type="button" className="admin-menu-toggle" aria-expanded={menuOpen} aria-controls="admin-navigation" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} onClick={() => setMenuOpen(open => !open)}><Icon name={menuOpen ? 'close' : 'menu'} /><span>Menu</span></button>
-      </div>
-      <div id="admin-navigation" className={`admin-sidebar__menu${menuOpen ? ' is-open' : ''}`}>
-      <p className="admin-sidebar__label">GERENCIAR</p>
-      <nav aria-label="Painel administrativo">{sections.map(item => <NavLink key={item.to} to={item.to} end={item.to === '/admin'} title={item.label} aria-label={item.label} onClick={() => setMenuOpen(false)}><Icon name={item.icon} /><span>{item.label}</span></NavLink>)}</nav>
-      <div className="admin-sidebar__bottom"><div className="admin-demo-card"><span className="admin-demo-dot" /><div><strong>Conectado à nuvem</strong><p>{user.email}</p></div></div><button className="admin-reset" aria-label="Sair da conta" title="Sair da conta" onClick={() => signOut().catch((cause) => notify(cause.message, true))}><Icon name="logout" size={17} /><span>Sair da conta</span></button><span className="admin-sidebar__signature">DUUK® / FEITO PARA CRIAR</span></div>
-      </div>
-    </aside>
-    <div className="admin-workspace">
-      <header className="admin-topbar"><div className="admin-environment">ADMINISTRATIVO<span className="admin-topbar-divider">/</span><span className="admin-topbar-note">{section.label}</span></div><div className="admin-topbar__actions"><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16} /></Link></div></header>
-      <div className="admin-demo-banner"><span className="admin-demo-tag"><Icon name={editingSite ? 'check' : 'lock'} size={12} />{editingSite?'AO VIVO':'PRIVADO'}</span><p>{editingSite?'Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.':'Sua agenda, contratos, despesas e relatórios ficam restritos à equipe autorizada.'}</p></div>
-      <main className="admin-main">
-        {error && <div className="admin-error" role="alert">{error} <button className="admin-text-button" onClick={() => refresh().catch(() => {})}>Tentar novamente</button></div>}
-        {!ready && editingSite ? <div className="admin-empty"><p>Carregando seu conteúdo…</p></div> : <Routes><Route index element={<DashboardPage />} /><Route path="portfolio" element={<ProjectList notify={notify} />} /><Route path="inicio" element={<HomeEditor notify={notify} />} /><Route path="midias" element={<MediaLibrary notify={notify} />} /><Route path="contratos" element={<ContractsPage notify={notify} />} /><Route path="contratos/:id" element={<ContractEditor notify={notify} />} /><Route path="agenda" element={<AgendaPage notify={notify} />} /><Route path="despesas" element={<ExpensesPage notify={notify} />} /><Route path="insights" element={<InsightsPage />} /><Route path="*" element={<Navigate to="/admin" replace />} /></Routes>}
-      </main>
-      <footer className="admin-footer"><span>DUUK / SÃO PAULO</span><button className="admin-mobile-reset" onClick={() => signOut().catch((cause) => notify(cause.message, true))}>Sair da conta</button><span>Seu conteúdo. Seu ritmo.</span></footer>
-    </div>
-    {toast && <div className={`admin-toast${toast.failed ? ' admin-toast--error' : ''}`} role={toast.failed ? 'alert' : 'status'}><Icon name={toast.failed ? 'close' : 'check'} /><span>{toast.message}</span><button className="admin-icon-button" aria-label="Fechar aviso" onClick={() => setToast(null)}><Icon name="close" size={16} /></button></div>}
-  </div>
+function Allowed({ permission, children }) {
+ const auth=useAuth()
+ return auth.hasPermission(permission)?children:<section className="admin-panel admin-empty"><Icon name="lock" size={32}/><h1>Acesso restrito.</h1><p>Sua conta não tem permissão para abrir este módulo.</p><Link className="admin-button admin-button--secondary" to="/admin">Voltar à visão geral</Link></section>
 }
 
-export default function AdminPage() {
-  const auth = useAuth()
-  return auth.ready && auth.isAdmin ? <AdminWorkspace /> : <LoginPage />
+function AdminWorkspace() {
+ const {pathname}=useLocation(),auth=useAuth(),navigate=useNavigate()
+ const [destination,setDestination]=useState(null)
+ const [menuOpen,setMenuOpen]=useState(false),[narrow,setNarrow]=useState(()=>matchMedia('(max-width: 1023px)').matches)
+ const [collapsed,setCollapsed]=useState(()=>{try{return localStorage.getItem('duuk-sidebar-collapsed')==='true'}catch{return false}})
+ const [groups,setGroups]=useState({'Comercial':true})
+ const sidebar=useRef(null),menuButton=useRef(null)
+ const toggleSidebar=()=>setCollapsed(previous=>{const next=!previous;try{localStorage.setItem('duuk-sidebar-collapsed',String(next))}catch{}return next})
+ const section=[...sections].reverse().find(item=>pathname===item.to||item.to!=='/admin'&&pathname.startsWith(item.to+'/'))||sections[0]
+ const editingSite=['/admin/portfolio','/admin/inicio','/admin/midias'].includes(pathname)
+ const {ready,error,refresh}=useContent()
+ const [toast,setToast]=useState(null)
+ const notify=(message,failed=false)=>setToast({message,failed})
+ useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(null),7000);return()=>clearTimeout(timer)},[toast])
+ useEffect(()=>{const media=matchMedia('(max-width: 1023px)');const resize=()=>{setNarrow(media.matches);if(!media.matches)setMenuOpen(false)};media.addEventListener('change',resize);return()=>media.removeEventListener('change',resize)},[])
+ useEffect(()=>{if(!menuOpen||!narrow)return;const previous=document.body.style.overflow,opener=menuButton.current;document.body.style.overflow='hidden';const target=sidebar.current;target.querySelector('button')?.focus();const trap=e=>{if(e.key==='Escape'){e.preventDefault();setMenuOpen(false)}if(e.key==='Tab'){const focusable=Array.from(target.querySelectorAll('a[href],button:not([disabled]),input,select')).filter(el=>el.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};target.addEventListener('keydown',trap);return()=>{document.body.style.overflow=previous;target.removeEventListener('keydown',trap);opener?.focus()}},[menuOpen,narrow])
+ const navItem=item=><NavLink key={item.to} to={item.to} end={item.to==='/admin'||item.to==='/admin/comercial'} title={item.label} aria-label={item.label} onClick={()=>setMenuOpen(false)}><Icon name={item.icon}/><span>{item.label}</span></NavLink>
+ const visible=sections.filter(item=>auth.hasPermission(item.permission))
+ const navGroup=(name,icon)=>{const items=visible.filter(i=>i.group===name);if(!items.length)return null;const active=items.some(i=>pathname===i.to||pathname.startsWith(i.to+'/'));const open=(groups[name]??active)||collapsed&&!narrow;return <div className="admin-nav-group" key={name}><button className={active?'is-active':''} aria-expanded={open} title={name} onClick={()=>setGroups(old=>({...old,[name]:!open}))}><Icon name={icon}/><span>{name}</span><Icon name={open?'up':'down'} size={14}/></button>{open&&<div className="admin-nav-group__items">{items.map(navItem)}</div>}</div>}
+ const guarded=(key,element)=><Allowed permission={key}>{element}</Allowed>
+ const guardNavigation=event=>{const anchor=event.target.closest('a[href]');if(event.defaultPrevented||!dirtyForms.size||!anchor||anchor.target==='_blank'||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;const url=new URL(anchor.href,location.origin);if(url.origin===location.origin&&url.pathname+url.search!==location.pathname+location.search){event.preventDefault();setDestination(url.pathname+url.search)}}
+ return <div className={`admin-shell${collapsed?' is-collapsed':''}`} onClickCapture={guardNavigation}>
+  {menuOpen&&narrow&&<button type="button" className="admin-menu-overlay" onClick={()=>setMenuOpen(false)} aria-label="Fechar menu" tabIndex={-1}/>}
+  <aside ref={sidebar} className={`admin-sidebar${menuOpen?' is-open':''}`} role={narrow?'dialog':undefined} aria-modal={narrow&&menuOpen?true:undefined} aria-label="Menu DUUK Admin" aria-hidden={narrow&&!menuOpen?true:undefined} inert={narrow&&!menuOpen?true:undefined}>
+   <div className="admin-sidebar__drawer-head"><button className="admin-icon-button" aria-label="Fechar menu" onClick={()=>setMenuOpen(false)}><Icon name="close"/></button></div>
+   <div className="admin-sidebar__head"><button className="admin-collapse-toggle" aria-expanded={!collapsed} aria-controls="admin-navigation" aria-label={collapsed?'Expandir menu':'Minimizar menu'} title={collapsed?'Expandir menu':'Minimizar menu'} onClick={toggleSidebar}><Icon name="sidebar"/></button><Link className="admin-brand" to="/admin" onClick={()=>setMenuOpen(false)} aria-label="DUUK — visão geral"><img src="/media/duuk-logo-white.png" width="52" height="64" alt="DUUK"/><span>ADMIN<small>O espaço da equipe.</small></span></Link></div>
+   <div id="admin-navigation" className="admin-sidebar__menu"><nav aria-label="Painel administrativo">{visible.filter(i=>!i.group).map(navItem)}{navGroup('Comercial','briefcase')}{navGroup('Site DUUK','film')}{navGroup('Configurações','settings')}</nav><div className="admin-sidebar__bottom"><Link className="admin-sidebar-profile" to="/admin/configuracoes/perfil" onClick={()=>setMenuOpen(false)}><Avatar profile={auth.profile}/><span><strong>{auth.profile.name}</strong><small>{auth.profile.is_super_admin?'Super administrador':auth.profile.role_name}</small></span></Link><button className="admin-reset" aria-label="Sair da conta" title="Sair da conta" onClick={()=>auth.signOut().catch(cause=>notify(cause.message,true))}><Icon name="logout"/><span>Sair da conta</span></button><span className="admin-sidebar__signature">DUUK® / {currentRelease.version}</span></div></div>
+  </aside>
+  <div className="admin-workspace" inert={narrow&&menuOpen?true:undefined}>
+   <header className="admin-topbar"><div className="admin-topbar__identity"><button ref={menuButton} className="admin-mobile-toggle admin-icon-button" aria-label="Abrir menu" aria-controls="admin-navigation" aria-expanded={menuOpen} onClick={()=>setMenuOpen(true)}><Icon name="menu" size={22}/></button><img className="admin-header-logo" src="/media/duuk-logo-white.png" width="24" height="30" alt="DUUK"/><div className="admin-environment"><span className="admin-topbar-label">DUUK ADMIN</span><span className="admin-topbar-divider">/</span><span className="admin-topbar-note">{pathname==='/admin/notificacoes'?'Notificações':section.label}</span></div></div><div className="admin-topbar__actions"><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16}/></Link><NotificationBell/><Link to="/admin/configuracoes/perfil" aria-label="Meu perfil" title={auth.profile.name}><Avatar profile={auth.profile} size={34}/></Link></div></header>
+   <UpdateNotice/>
+   {editingSite&&<div className="admin-demo-banner"><span className="admin-demo-tag"><Icon name="check" size={12}/>AO VIVO</span><p>Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.</p></div>}
+   <main className="admin-main"><div className="admin-content-enter" key={pathname}>
+    {error&&editingSite&&<div className="admin-error" role="alert">{error} <button className="admin-text-button" onClick={()=>refresh().catch(()=>{})}>Tentar novamente</button></div>}
+    {!ready&&editingSite?<div className="admin-empty"><p>Carregando seu conteúdo…</p></div>:<Routes>
+     <Route index element={<DashboardPage/>}/>
+     <Route path="portfolio" element={guarded('site',<ProjectList notify={notify}/>)}/><Route path="inicio" element={guarded('site',<HomeEditor notify={notify}/>)}/><Route path="midias" element={guarded('site',<MediaLibrary notify={notify}/>)}/>
+     <Route path="contratos" element={guarded('contracts',<ContractsPage notify={notify}/>)}/><Route path="contratos/:id" element={guarded('contracts',<ContractEditor notify={notify}/>)}/><Route path="agenda" element={guarded('agenda',<AgendaPage notify={notify}/>)}/><Route path="financeiro" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="despesas" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="insights" element={guarded('insights',<InsightsPage/>)}/>
+     {[[undefined,'dashboard'],['clientes','clients'],['pipeline','pipeline'],['contatos','activities'],['follow-ups','followups'],['relatorios','reports']].map(([path,mode])=><Route key={mode} path={path?`comercial/${path}`:'comercial'} element={guarded(({dashboard:'crm.dashboard',clients:'crm.clients',pipeline:'crm.pipeline',activities:'crm.activities',followups:'crm.followups',reports:'crm.reports'})[mode],<CommercialPage mode={mode} notify={notify}/>)}/>)}
+     <Route path="comercial/emails" element={guarded('mail',<MailPage notify={notify}/>)}/>
+     <Route path="configuracoes/usuarios" element={guarded('team',<UsersPage notify={notify}/>)}/><Route path="configuracoes/grupos" element={guarded('permissions',<PermissionsPage notify={notify}/>)}/><Route path="configuracoes/permissoes" element={guarded('permissions',<PermissionsPage mode="users" notify={notify}/>)}/><Route path="configuracoes/perfil" element={<ProfilePage notify={notify}/>}/><Route path="configuracoes/historico" element={guarded('audit',<AuditPage/>)}/><Route path="configuracoes/notificacoes" element={<NotificationSettingsPage notify={notify}/>}/><Route path="configuracoes/sobre" element={<AboutAdminPage/>}/><Route path="notificacoes" element={<NotificationsPage notify={notify}/>}/><Route path="*" element={<Navigate to="/admin" replace/>}/>
+    </Routes>}
+   </div></main><footer className="admin-footer"><span>DUUK / SÃO PAULO</span><span>Seu estúdio. Seu ritmo.</span><Link to="/admin/configuracoes/sobre">v{currentRelease.version}</Link></footer>
+  </div>
+  <WhatsNew/>
+  {destination&&<ConfirmModal title="Sair sem salvar?" message="Existem alterações pendentes nesta página. Salve antes de continuar ou descarte ao sair." action="Sair sem salvar" onClose={()=>setDestination(null)} onConfirm={()=>navigate(destination)}/>}
+  {toast&&<div className={`admin-toast${toast.failed?' admin-toast--error':''}`} role={toast.failed?'alert':'status'}><Icon name={toast.failed?'close':'check'}/><span>{toast.message}</span><button className="admin-icon-button" aria-label="Fechar aviso" onClick={()=>setToast(null)}><Icon name="close" size={16}/></button></div>}
+ </div>
 }
+function AdminExperience() {
+ const auth=useAuth(),[minimum,setMinimum]=useState(false)
+ useEffect(()=>{const timer=setTimeout(()=>setMinimum(true),1300);return()=>clearTimeout(timer)},[])
+ useEffect(()=>{
+  document.title='DUUK Admin'
+  const existing=Array.from(document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"],link[rel="manifest"]'))
+  const publicIcons=existing.filter(node=>!node.href.includes('/admin-assets/'))
+  existing.forEach(node=>node.remove())
+  const tags=[['icon','/admin-assets/favicon.ico'],['icon','/admin-assets/icon-32.png'],['apple-touch-icon','/admin-assets/icon-180.png'],['manifest','/admin-assets/manifest.webmanifest']].map(([rel,href])=>{const link=document.createElement('link');link.rel=rel;link.href=href;if(href.endsWith('.png'))link.type='image/png';document.head.append(link);return link})
+  const theme=document.createElement('meta');theme.name='theme-color';theme.content='#080808';document.head.append(theme)
+  return()=>{tags.forEach(tag=>tag.remove());theme.remove();if(publicIcons.length)publicIcons.forEach(node=>document.head.append(node));else{const link=document.createElement('link');link.rel='icon';link.type='image/png';link.href='/favicon.png';document.head.append(link)}}
+ },[])
+ if(!minimum||!auth.ready)return <div className="admin-splash" role="status"><img src="/media/duuk-logo-white.png" alt="DUUK"/><span/><p>Preparando seu espaço</p></div>
+ return auth.isAdmin?<NotificationProvider><AdminWorkspace/></NotificationProvider>:<LoginPage/>
+}
+export default function AdminPage() {return <PwaProvider><AdminExperience/></PwaProvider>}

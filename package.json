@@ -5,16 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/build-admin-worker.mjs",
     "media:optimize": "node scripts/optimize-media.mjs",
     "lint": "oxlint",
     "test": "node --test tests/*.test.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "admin:icons": "node scripts/admin-icons.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",
     "fflate": "0.8.3",
     "hls.js": "^1.7.3",
+    "lucide-react": "1.52.0",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "6.4.299",
     "react": "^19.2.8",

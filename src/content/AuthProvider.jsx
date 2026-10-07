@@ -1,48 +1,59 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AuthContext } from './AuthContext'
 import { supabase } from './supabase'
+import { teamRequest, notificationRequest } from '../admin/api'
 
+const empty = { ready: !supabase, user: null, profile: null, permissions: {}, isAdmin: false, error: '' }
 export function AuthProvider({ children }) {
-  const [state, setState] = useState({ ready: !supabase, user: null, isAdmin: false, error: '' })
+  const [state, setState] = useState(empty)
+  const revision = useRef(0)
+  const active = useRef(true)
+  const refreshAccess = useCallback(async () => {
+    const current = ++revision.current
+    if (!supabase) return
+    if (navigator.onLine === false) { if (active.current && current === revision.current) setState(previous => previous.isAdmin ? { ...previous, ready: true } : { ...empty, ready: true, error: 'Conecte-se para verificar seu acesso.' }); return }
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) throw sessionError
+      if (!session) { if (active.current && current === revision.current) setState({ ...empty, ready: true }); return }
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error) throw error
+      try {
+        const context = await teamRequest({ action: 'context' })
+        if (active.current && current === revision.current) setState({ ready: true, user, ...context, isAdmin: true, error: '' })
+      } catch (cause) {
+        if (active.current && current === revision.current) setState(previous => navigator.onLine === false && previous.isAdmin ? { ...previous, ready: true } : { ...empty, ready: true, user, error: cause.message })
+      }
+    } catch {
+      if (active.current && current === revision.current) setState(previous => navigator.onLine === false && previous.isAdmin ? { ...previous, ready: true } : { ...empty, ready: true, error: 'Não foi possível verificar o acesso. Confira a conexão e tente novamente.' })
+    }
+  }, [])
+  const cancelPending = useCallback(() => { active.current = false; revision.current++ }, [])
   useEffect(() => {
     if (!supabase) return
-    let active = true
-    let revision = 0
-    const validate = async () => {
-      const current = ++revision
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) throw sessionError
-        if (!session) {
-          if (active && current === revision) setState({ ready: true, user: null, isAdmin: false, error: '' })
-          return
-        }
-        const { data: { user }, error } = await supabase.auth.getUser()
-        if (error) throw error
-        const { data: member, error: membershipError } = await supabase.from('duuk_admins').select('user_id').eq('user_id', user.id).maybeSingle()
-        if (membershipError) throw membershipError
-        if (active && current === revision) setState({ ready: true, user, isAdmin: Boolean(member), error: member ? '' : 'Esta conta não tem acesso ao painel.' })
-      } catch {
-        if (active && current === revision) setState({ ready: true, user: null, isAdmin: false, error: 'Não foi possível verificar o acesso. Confira a conexão e tente novamente.' })
-      }
-    }
-    validate()
-    // Do not await client requests inside an auth callback; it holds the auth lock.
+    active.current = true
+    const initial = window.setTimeout(refreshAccess, 0)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        revision++
-        setState({ ready: true, user: null, isAdmin: false, error: '' })
-      } else if (event !== 'INITIAL_SESSION') window.setTimeout(() => { if (active) validate() }, 0)
+      if (event === 'SIGNED_OUT') { revision.current++; setState({ ...empty, ready: true }) }
+      else if (event !== 'INITIAL_SESSION') window.setTimeout(() => { if (active.current) refreshAccess() }, 0)
     })
-    return () => { active = false; revision++; subscription.unsubscribe() }
-  }, [])
+    const focus = () => { if (document.visibilityState === 'visible' && navigator.onLine) refreshAccess() }
+    window.addEventListener('focus', focus); window.addEventListener('online', focus)
+    const interval = setInterval(focus, 60000)
+    return () => { window.clearTimeout(initial); cancelPending(); subscription.unsubscribe(); window.removeEventListener('focus', focus); window.removeEventListener('online', focus); clearInterval(interval) }
+  }, [refreshAccess, cancelPending])
   const signIn = async (email, password) => {
+    if (navigator.onLine === false) throw new Error('Reconecte para entrar no painel.')
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
     if (error) throw new Error(error.status === 400 ? 'E-mail ou senha inválidos.' : 'Não foi possível entrar. Tente novamente em instantes.')
+    await refreshAccess()
   }
   const signOut = async () => {
+    // Remove only this device before ending this browser session.
+    try { if ('serviceWorker' in navigator) { const registration = await navigator.serviceWorker.getRegistration('/admin/'); const subscription = await registration?.pushManager?.getSubscription(); if (subscription) { await notificationRequest({ action: 'unsubscribe', endpoint: subscription.endpoint }); await subscription.unsubscribe() } } } catch {}
     const { error } = await supabase.auth.signOut({ scope: 'local' })
     if (error) throw new Error('Não foi possível encerrar a sessão. Tente novamente.')
   }
-  return <AuthContext.Provider value={{ ...state, signIn, signOut }}>{children}</AuthContext.Provider>
+  const hasPermission = useCallback((key) => state.isAdmin && (!key || state.profile?.is_super_admin || (state.permissions[key] === true && (!key.startsWith('crm.') || state.permissions.crm === true))), [state.isAdmin, state.profile?.is_super_admin, state.permissions])
+  return <AuthContext.Provider value={{ ...state, hasPermission, refreshAccess, signIn, signOut }}>{children}</AuthContext.Provider>
 }

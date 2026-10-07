@@ -81,7 +81,7 @@ function AppRoutes() {
       <Suspense fallback={<IntroLoader visible animate={false} />}>
         <div
           className="route-view"
-          key={location.pathname}
+          key={location.pathname.startsWith('/admin') ? 'admin' : location.pathname}
           onPointerOver={prefetchRoute}
           onPointerDown={prefetchRoute}
           onFocus={prefetchRoute}

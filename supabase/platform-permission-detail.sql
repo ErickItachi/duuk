@@ -1,0 +1,40 @@
+insert into public.duuk_permission_keys(key,label) values ('crm.dashboard','Dashboard comercial'),('crm.clients','Clientes e leads'),('crm.pipeline','Pipeline comercial'),('crm.activities','Contatos e atividades'),('crm.followups','Follow-ups'),('crm.reports','Relatórios comerciais');
+insert into public.duuk_role_permissions(role_id,permission,allowed) select p.role_id,k.key,true from public.duuk_role_permissions p cross join public.duuk_permission_keys k where p.permission='crm' and p.allowed and k.key like 'crm.%';
+create or replace function duuk_private.member_permission(actor uuid,requested text) returns boolean language sql stable security definer set search_path='' as $$ select coalesce((select p.active and (requested is null or p.is_super_admin or ((requested not like 'crm.%' or duuk_private.member_permission(actor,'crm')) and coalesce((select x.allowed from public.duuk_user_permissions x where x.user_id=p.id and x.permission=requested),(select x.allowed from public.duuk_role_permissions x where x.role_id=p.role_id and x.permission=requested),false))) from public.duuk_profiles p where p.id=actor),false); $$;
+create function duuk_private.crm_read() returns boolean language sql stable security invoker set search_path='' as $$ select duuk_private.has_permission('crm.dashboard') or duuk_private.has_permission('crm.clients') or duuk_private.has_permission('crm.pipeline') or duuk_private.has_permission('crm.activities') or duuk_private.has_permission('crm.followups') or duuk_private.has_permission('crm.reports'); $$;
+revoke all on function duuk_private.crm_read() from public,anon;
+grant execute on function duuk_private.crm_read() to authenticated,service_role;
+drop policy crm_clients on public.duuk_clients;
+create policy crm_clients_read on public.duuk_clients for select to authenticated using((select duuk_private.crm_read()));
+create policy crm_clients_insert on public.duuk_clients for insert to authenticated with check((select duuk_private.has_permission('crm.clients')));
+create policy crm_clients_update on public.duuk_clients for update to authenticated using((select duuk_private.has_permission('crm.clients'))) with check((select duuk_private.has_permission('crm.clients')));
+create policy crm_clients_delete on public.duuk_clients for delete to authenticated using((select duuk_private.has_permission('crm.clients')));
+drop policy crm_activities on public.duuk_activities;
+create policy crm_activities_read on public.duuk_activities for select to authenticated using((select duuk_private.crm_read()));
+create policy crm_activities_insert on public.duuk_activities for insert to authenticated with check((select duuk_private.has_permission('crm.activities')));
+drop policy crm_followups on public.duuk_follow_ups;
+create policy crm_followups_read on public.duuk_follow_ups for select to authenticated using((select duuk_private.crm_read()));
+create policy crm_followups_insert on public.duuk_follow_ups for insert to authenticated with check((select duuk_private.has_permission('crm.followups')));
+create policy crm_followups_update on public.duuk_follow_ups for update to authenticated using((select duuk_private.has_permission('crm.followups'))) with check((select duuk_private.has_permission('crm.followups')));
+create policy crm_followups_delete on public.duuk_follow_ups for delete to authenticated using((select duuk_private.has_permission('crm.followups')));
+drop policy crm_history on public.duuk_client_history;
+create policy crm_history on public.duuk_client_history for select to authenticated using((select duuk_private.crm_read()));
+-- Authenticated entrypoints are invoker wrappers around private, authorized operations.
+alter function public.duuk_directory() set schema duuk_private;
+create function public.duuk_directory() returns table(id uuid,name text,job_title text) language sql stable security invoker set search_path='' as $$ select * from duuk_private.duuk_directory(); $$;
+revoke all on function public.duuk_directory() from public,anon;
+grant execute on function public.duuk_directory() to authenticated;
+alter function public.duuk_complete_followup(uuid,bigint,text,timestamptz,text) set schema duuk_private;
+create function public.duuk_complete_followup(target uuid,revision bigint,outcome text,next_due timestamptz default null,new_stage text default null) returns jsonb language plpgsql security invoker set search_path='' as $$ begin if not duuk_private.has_permission('crm.followups') then raise exception 'Sem acesso aos follow-ups.' using errcode='PT403';end if;return duuk_private.duuk_complete_followup(target,revision,outcome,next_due,new_stage);end; $$;
+revoke all on function public.duuk_complete_followup(uuid,bigint,text,timestamptz,text) from public,anon;
+grant execute on function public.duuk_complete_followup(uuid,bigint,text,timestamptz,text) to authenticated;
+-- Also tighten the private body; PostgREST never exposes private schemas.
+revoke all on function duuk_private.duuk_complete_followup(uuid,bigint,text,timestamptz,text) from public,anon;
+create function duuk_private.move_pipeline(target uuid,revision bigint,next_stage text) returns jsonb language plpgsql security definer set search_path='' as $$ declare c public.duuk_clients;begin
+ if not duuk_private.has_permission('crm.pipeline') then raise exception 'Sem acesso ao pipeline.' using errcode='PT403';end if;
+ select * into c from public.duuk_clients where id=target for update;if not found then raise exception 'Cliente não encontrado.' using errcode='PT404';end if;if c.version<>revision then raise exception 'O cliente mudou. Atualize o pipeline.' using errcode='PT409';end if;
+ update public.duuk_clients set stage=next_stage where id=target returning * into c;return to_jsonb(c);
+end; $$;
+create function public.duuk_move_pipeline(target uuid,revision bigint,next_stage text) returns jsonb language sql security invoker set search_path='' as $$ select duuk_private.move_pipeline(target,revision,next_stage); $$;
+revoke all on function duuk_private.move_pipeline(uuid,bigint,text),public.duuk_move_pipeline(uuid,bigint,text) from public,anon;
+grant execute on function duuk_private.move_pipeline(uuid,bigint,text),public.duuk_move_pipeline(uuid,bigint,text) to authenticated;

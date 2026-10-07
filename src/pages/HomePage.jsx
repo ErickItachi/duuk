@@ -43,6 +43,15 @@ export default function HomePage() {
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
   const hero = heroVideo(heroMedia, narrow)
 
+  useEffect(() => {
+    if (!autoplayBlocked || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    // A blocked browser keeps the poster. Retry within the first ordinary gesture.
+    const resume = () => { heroVideoRef.current?.play()?.catch(() => {}) }
+    document.addEventListener('pointerdown', resume, { once: true })
+    document.addEventListener('keydown', resume, { once: true })
+    return () => { document.removeEventListener('pointerdown', resume); document.removeEventListener('keydown', resume) }
+  }, [autoplayBlocked])
+
   return (
     <>
       <PageMeta title={t.siteTitle} description={t.siteDescription} />
@@ -69,15 +78,6 @@ export default function HomePage() {
             <Logo className="home-hero__logo" priority />
             <HomeNavigation />
           </div>
-          {autoplayBlocked && (
-            <button
-              type="button"
-              className="home-hero__play"
-              onClick={() => heroVideoRef.current?.play().catch(() => setAutoplayBlocked(true))}
-            >
-              {t.playFilm}
-            </button>
-          )}
         </section>
 
         <ProjectIndex projects={featuredProjects} label={t.nav.portfolio} eagerFirst />

@@ -339,3 +339,47 @@ body:has(.admin-modal[open]) { overflow: hidden; }
   .admin-login__visual h1 { font-size: 38px; }
 }
 @media (prefers-reduced-motion: reduce) { .admin-shell *, .admin-modal * { transition: none !important; } }
+/* DUUK application shell */
+.admin-login { height: 100svh; height: 100dvh; min-height: 0; overflow: hidden; background: radial-gradient(ellipse at 90% 0, #eb4b3f0a, transparent 50%), #080808; }
+.admin-login__visual { min-height: 0; height: 100%; padding: clamp(24px, 4vw, 64px); gap: 24px; }
+.admin-login__visual h1 { font-size: clamp(40px, 5vw, 72px); }
+.admin-login__form { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 32px 40px; }
+.admin-login__form h2 { font-size: 32px; margin: 18px 0 10px; }
+.admin-login__form > p { margin-bottom: 24px; }
+.admin-login__form form { gap: 18px; }
+.admin-login__mobile-logo { display: none; }
+.admin-password { position: relative; display: flex; align-items: center; }
+.admin-password input { width: 100%; padding-right: 48px; }
+.admin-password > button { position: absolute; right: 5px; }
+.admin-check { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--admin-muted); }
+.admin-check input { width: 16px; height: 16px; accent-color: var(--admin-accent); flex: 0 0 auto; }
+.admin-refresh { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.admin-refresh small { font-size: 11px; color: var(--admin-muted); }
+.is-spinning { animation: admin-spin .8s linear infinite; }
+.admin-splash { position: fixed; z-index: 1000; inset: 0; background: #080808; display: grid; place-content: center; gap: 28px; justify-items: center; color: #b8aea7; font-size: 10px; letter-spacing: .24em; }
+.admin-splash img { width: 58px; height: auto; animation: admin-breathe 1.3s ease-in-out infinite alternate; }
+.admin-splash span { width: 44px; height: 2px; background: var(--gradient); }
+.admin-sidebar__drawer-head, .admin-mobile-header, .admin-menu-overlay { display: none; }
+.admin-content-enter { animation: admin-enter 220ms ease-out both; }
+@keyframes admin-spin { to { transform: rotate(360deg); } }
+@keyframes admin-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes admin-breathe { from { opacity: .65; } to { opacity: 1; } }
+@media (max-width: 1023px) {
+ .admin-login { grid-template-columns: 1fr; }
+ .admin-login__visual { display: none; }
+ .admin-login__form { width: min(100%, 420px); padding: 24px; }
+ .admin-login__mobile-logo { display: block; object-fit: contain; margin-bottom: 28px; }
+ .admin-login__form h2 { font-size: 28px; }
+ .admin-mobile-header { display: flex; align-items: center; justify-content: space-between; min-height: 68px; padding: 12px 20px; border-bottom: 1px solid var(--admin-line); background: #080808; }
+ .admin-mobile-header img { width: 28px; height: 35px; object-fit: contain; }
+ .admin-sidebar { position: fixed; top: 0; bottom: 0; left: 0; height: 100dvh; width: min(310px, 86vw); padding: 24px 18px; transform: translateX(-105%); transition: transform 220ms ease; z-index: 400; }
+ .admin-sidebar.is-open { transform: translateX(0); }
+ .admin-sidebar__head .admin-menu-toggle { display: none; }
+ .admin-sidebar__drawer-head { display: flex; justify-content: flex-end; margin: -8px -4px 18px; }
+ .admin-sidebar__menu, .admin-sidebar__menu.is-open { display: flex; padding-top: 28px; max-height: none; }
+ .admin-sidebar nav { grid-template-columns: 1fr; gap: 4px; }
+ .admin-sidebar nav a { min-height: 44px; font-size: 13px; }
+ .admin-menu-overlay { display: block; position: fixed; z-index: 390; inset: 0; background: #0009; border: 0; backdrop-filter: blur(3px); }
+}
+@media (max-height: 540px) { .admin-login__form { padding-block: 18px; } .admin-login__mobile-logo, .admin-login__tag, .admin-login__foot { display: none; } .admin-login__form h2 { margin-top: 0; } .admin-login__form > p { margin-bottom: 14px; } .admin-login__form form { gap: 12px; } }
+@media (prefers-reduced-motion: reduce) { .admin-content-enter, .admin-splash img, .is-spinning { animation: none; } .admin-sidebar { transition: none; } }
