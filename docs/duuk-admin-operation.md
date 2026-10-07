@@ -1,4 +1,4 @@
-# DUUK Admin 1.0.0
+# Operação do DUUK Admin
 
 ## Acesso e autorização
 
@@ -51,6 +51,8 @@ Eventos reais incluem compromissos de amanhã/uma hora, follow-ups, assinatura r
 4. Após confirmar o domínio atualizado, um super administrador pode chamar `duuk-notifications` autenticado com `{ "action": "publish-release", "version": "<versão>" }`. A operação é idempotente. Não publique o evento antes do frontend estar disponível.
 
 O worker controla somente a área administrativa. Cache Storage contém shell genérico, JS/CSS/fontes e ícones; não armazena respostas de API, dados de CRM, PDFs ou assinaturas. Uma nova versão aguarda “Atualizar app”; formulários pendentes impedem a atualização. Somente a aba que solicitou a instalação recarrega. Caches necessários a outras abas abertas são preservados.
+
+O aviso de novidades fecha imediatamente, sem depender da gravação na API. Um marcador de versão por usuário na sessão evita reabertura caso falte conexão; a gravação é tentada novamente ao reconectar. Os upserts de novidades vistas e preferências incluem a chave `user_id`: o privilégio de atualização dessa coluna é necessário ao PostgREST, e as policies `USING`/`WITH CHECK` continuam impedindo acesso ou transferência para outro usuário. `supabase/tests/notification-settings.sql` verifica os dois upserts e essas restrições numa transação com rollback.
 
 Sem internet, o aplicativo abre o shell e informa a desconexão. Não grava alterações offline. No primeiro carregamento sem conexão, solicita reconexão para validar o acesso, sem persistir perfis ou dados privados em cache.
 

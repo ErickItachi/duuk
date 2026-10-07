@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../content/AuthContext";
 import { supabase } from "../content/supabase";
-import { checked } from "./api";
 import { PageTitle } from "./forms";
 import { Icon, Modal } from "./components";
 import releases from "./releases.json";
@@ -363,55 +362,73 @@ export function UpdateNotice() {
     </>
   );
 }
+async function acknowledgeRelease(userId) {
+  // A nonessential acknowledgement must never prevent access to the workspace.
+  try {
+    await supabase
+      .from("duuk_release_seen")
+      .upsert({
+        user_id: userId,
+        version: currentRelease.version,
+        seen_at: new Date().toISOString(),
+      })
+      .abortSignal(AbortSignal.timeout(10000));
+  } catch {
+    // The session marker keeps the notice closed; retry when connectivity returns.
+  }
+}
+function dismissedRelease(key) {
+  try {
+    return sessionStorage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+}
 export function WhatsNew() {
   const auth = useAuth(),
-    [show, setShow] = useState(false),
-    [error, setError] = useState("");
+    [show, setShow] = useState(false);
+  const seenKey = `duuk-release-seen:${auth.user.id}:${currentRelease.version}`;
   useEffect(() => {
     let active = true;
-    supabase
-      .from("duuk_release_seen")
-      .select("version")
-      .eq("user_id", auth.user.id)
-      .maybeSingle()
-      .then((result) => {
-        if (
-          active &&
-          !result.error &&
-          result.data?.version !== currentRelease.version
-        )
-          setShow(true);
-      });
+    const retry = () => {
+      if (dismissedRelease(seenKey)) void acknowledgeRelease(auth.user.id);
+    };
+    window.addEventListener("online", retry);
+    if (dismissedRelease(seenKey)) retry();
+    else
+      supabase
+        .from("duuk_release_seen")
+        .select("version")
+        .eq("user_id", auth.user.id)
+        .maybeSingle()
+        .then((result) => {
+          if (
+            active &&
+            !dismissedRelease(seenKey) &&
+            !result.error &&
+            result.data?.version !== currentRelease.version
+          )
+            setShow(true);
+        });
     return () => {
       active = false;
+      window.removeEventListener("online", retry);
     };
-  }, [auth.user.id]);
-  const close = async () => {
+  }, [auth.user.id, seenKey]);
+  const close = () => {
+    setShow(false);
     try {
-      checked(
-        await supabase
-          .from("duuk_release_seen")
-          .upsert({
-            user_id: auth.user.id,
-            version: currentRelease.version,
-            seen_at: new Date().toISOString(),
-          }),
-      );
-      setShow(false);
-    } catch (cause) {
-      setError(cause.message);
+      sessionStorage.setItem(seenKey, "1");
+    } catch {
+      /* Restricted storage still permits dismissal. */
     }
+    void acknowledgeRelease(auth.user.id);
   };
   if (!show) return null;
   return (
     <Modal title="O que há de novo na DUUK" onClose={close}>
       <div className="admin-modal__body">
         <ReleaseNotes release={currentRelease} />
-        {error && (
-          <p className="admin-error" role="alert">
-            {error}
-          </p>
-        )}
       </div>
       <div className="admin-modal__foot">
         <Link

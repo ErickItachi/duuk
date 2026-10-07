@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.0.1",
+    "date": "2026-10-07",
+    "title": "Acesso livre para continuar criando",
+    "fixed": [
+      "O aviso de novidades fecha imediatamente, inclusive se o registro falhar ou a conexão cair.",
+      "Registro de novidades vistas e preferências de notificações corrigidos, mantendo a proteção por usuário."
+    ]
+  },
+  {
     "version": "1.0.0",
     "date": "2026-10-07",
     "title": "O espaço oficial da equipe DUUK",
