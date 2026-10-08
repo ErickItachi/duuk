@@ -1,4 +1,5 @@
 import { useUnsavedChanges } from "./unsavedChanges";
+import { Link } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../content/supabase";
 import { useAuth } from "../content/AuthContext";
@@ -672,7 +673,7 @@ export function ProfilePage({ notify }) {
       <PageTitle
         title="Meu perfil"
         description="Seu nome e sua presença na equipe."
-      />
+      ><Link className="admin-button admin-button--secondary" to="/admin/configuracoes/integracoes"><Icon name="link"/>Integrações</Link></PageTitle>
       <div className="platform-profile-grid">
         <form className="admin-panel platform-form" onSubmit={save}>
           <div className="platform-profile-photo">

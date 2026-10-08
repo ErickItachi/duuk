@@ -45,6 +45,50 @@
 .admin-sidebar__menu {
   padding-top: 28px;
 }
+.admin-sidebar__control { display: flex; align-items: center; justify-content: space-between; min-height: 40px; margin-top: 22px; border-bottom: 1px solid var(--admin-line); padding-bottom: 8px; }
+.admin-sidebar__control > span { color: #80766e; font-size: 8px; letter-spacing: .16em; padding-left: 12px; }
+.admin-sidebar__control + .admin-sidebar__menu { padding-top: 14px; }
+.admin-sidebar__control .admin-collapse-toggle { width: 30px; height: 30px; border: 0; border-radius: 6px; color: #998d83; transition: background 180ms, color 180ms, transform 180ms; }
+.admin-sidebar__control .admin-collapse-toggle:hover { background: #ffffff0a; color: #ffac88; }
+.admin-sidebar__control .admin-collapse-toggle:active { transform: scale(.92); }
+.calendar-integration { padding: clamp(20px, 4vw, 36px); max-width: 840px; }
+.calendar-integration__heading { display: flex; gap: 18px; align-items: flex-start; }
+.calendar-integration__heading > div { min-width: 0; }
+.calendar-integration__heading h2 { font: 500 clamp(22px, 3vw, 30px) 'Inter Tight',sans-serif; letter-spacing: -.03em; margin-bottom: 10px; }
+.calendar-integration__heading p:not(.admin-eyebrow) { color: var(--admin-muted); font-size: 13px; line-height: 1.7; }
+.calendar-integration__icon { display: grid; place-items: center; width: 52px; height: 52px; flex-shrink: 0; border: 1px solid #eb4b3f33; background: #eb4b3f0a; color: #ffac88; border-radius: 12px; }
+.calendar-integration__status { display: flex; align-items: center; gap: 9px; margin: 26px 0 18px; font-size: 12px; }
+.calendar-integration__status i { width: 6px; height: 6px; border-radius: 50%; background: #a59990; }
+.calendar-integration__status.is-connected i { background: #92b79d; box-shadow: 0 0 0 4px #92b79d10; }
+.calendar-integration__details { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px; padding: 22px 0; border-block: 1px solid var(--admin-line); }
+.calendar-integration__details dt { color: var(--admin-muted); font-size: 11px; margin-bottom: 8px; }
+.calendar-integration__details dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.calendar-integration__privacy { display: flex; gap: 10px; align-items: flex-start; color: var(--admin-muted); font-size: 12px; line-height: 1.8; margin: 24px 0 16px; }
+.calendar-integration__privacy svg { flex-shrink: 0; color: #ffac88; margin-top: 3px; }
+.calendar-integration__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 26px; }
+.calendar-integration__actions .admin-button { white-space: normal; }
+.notification-category { display: flex; gap: 8px; align-items: center; color: var(--admin-muted); font-size: 10px; margin-bottom: 8px; }
+.notification-category > i { width: 5px; height: 5px; border-radius: 50%; background: var(--admin-accent); }
+.notification-row time { display: block; font-size: 10px; color: var(--admin-muted); margin-top: 10px; }
+.notification-notice { margin-bottom: 24px; }
+@media (min-width: 1024px) {
+ .admin-sidebar { transition: width 280ms cubic-bezier(.22,1,.36,1), flex-basis 280ms cubic-bezier(.22,1,.36,1), padding 280ms cubic-bezier(.22,1,.36,1); }
+ .admin-shell.is-collapsed .admin-sidebar__head { min-height: 54px; }
+ .admin-shell.is-collapsed .admin-sidebar__control { justify-content: center; }
+ .admin-shell.is-collapsed .admin-sidebar__control > span { display: none; }
+ .admin-shell.is-collapsed .admin-nav-group > button { display: none; }
+ .admin-shell.is-collapsed .admin-nav-group { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--admin-line); }
+ .admin-sidebar nav a { transition: background 180ms, color 180ms, padding 280ms; }
+}
+@media (max-width: 1023px) { .admin-sidebar__control { display: none; } }
+@media (max-width: 480px) {
+ .calendar-integration__heading { gap: 12px; }
+ .calendar-integration__icon { width: 40px; height: 40px; }
+ .calendar-integration__details { grid-template-columns: minmax(0,1fr); gap: 18px; }
+ .calendar-integration__actions { align-items: stretch; gap: 12px; }
+ .calendar-integration__actions .admin-button { width: 100%; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { .admin-sidebar, .admin-sidebar nav a, .admin-collapse-toggle { transition: none !important; } }
 .admin-sidebar nav {
   gap: 4px;
 }

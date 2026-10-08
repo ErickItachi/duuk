@@ -8,6 +8,7 @@ import {
   member,
   readJson,
   text,
+  uuid,
 } from "../_shared/http.ts";
 import {
   subscriptionOf,
@@ -96,6 +97,11 @@ handler(async (req, headers) => {
       headers,
     );
   }
+  if(body.action==='admin-notice'&&user){
+    if(!checked(await db.rpc('duuk_action_limit',{actor:user.id,action_name:'admin-notice',maximum:5,window_seconds:3600})))throw new HttpError('Limite de cinco avisos por hora. Aguarde antes de enviar outro.',429);
+    checked(await db.rpc('duuk_admin_notice',{actor:user.id,heading:text(body.title,'o título',120),message:text(body.body,'a mensagem',500),request_id:uuid(body.request_id)}));
+    return json({sent:true},headers);
+  }
   if (body.action === "publish-release" && user) {
     const p = checked(
       await db
@@ -121,6 +127,7 @@ handler(async (req, headers) => {
     signal: AbortSignal.timeout(20000),
   }).catch(() => {});
   checked(await db.rpc("duuk_generate_notifications"));
+  checked(await db.rpc("duuk_generate_action_reminders"));
   const notifications = checked(await db.rpc("duuk_claim_push")) || [];
   let delivered = 0,
     failed = 0;

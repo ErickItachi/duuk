@@ -29,3 +29,9 @@ O usuário autorizou publicar o painel administrativo em produção e aplicar as
 - A conexão IMAP usa TLS nativo do Deno com certificado validado e ImapFlow 2.2.6 fixado. Preserve o isolamento da fábrica de sockets e execute o fixture TLS antes de atualizar a biblioteca. Erros de transporte não devem ser apresentados como senha incorreta.
 - Notificações são ativadas separadamente em cada aparelho. Confirme permissão, subscription local e cadastro remoto do endpoint antes de mostrar conexão ativa. O teste deve enviar somente ao dispositivo selecionado da conta autenticada; nunca dispare testes para outros usuários. No iPhone, a permissão precisa ser solicitada diretamente no toque dentro da PWA instalada.
 - Consulte `docs/duuk-admin-operation.md` para operação, limites, configurações externas e validação.
+
+## Google Calendar e notificações — 1.3.0
+
+- A integração é exclusivamente DUUK → Google, por conta individual, usando um calendário criado pelo aplicativo e o escopo `calendar.app.created`. Nunca importe compromissos pessoais nem implemente sincronização inversa. Tokens ficam no Vault e as RPCs de integração são exclusivas do servidor; as tabelas sem policies abertas são intencionais.
+- Credenciais Google Cloud ainda precisam ser configuradas conforme `docs/google-calendar-setup.md`. Não apresente OAuth e entrega externa como validados antes do consentimento e teste com duas contas reais. A fila conserva alterações durante bloqueios de permissão, mas o worker confere autorização antes de cada envio.
+- Notificações correspondem às ações reais existentes e respeitam permissões e preferências. O portfólio ainda não possui responsável, prazo de produção ou conclusão; não fabrique alertas desses campos. Preserve a remoção do histórico de versões e as atualizações explícitas da PWA.

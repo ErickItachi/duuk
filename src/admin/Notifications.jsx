@@ -3,21 +3,24 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../content/supabase";
 import { useAuth } from "../content/AuthContext";
 import { useQuery } from "../office/useQuery";
-import { checked } from "./api";
-import { Icon, RefreshButton } from "./components";
-import { PageTitle, QueryState } from "./forms";
+import { checked, notificationRequest } from "./api";
+import { Icon, Modal, RefreshButton } from "./components";
+import { Field, PageTitle, QueryState } from "./forms";
 import PushDevice from "./PushDevice";
 import { fmtTime } from "../crm/model";
+import { useUnsavedChanges } from "./unsavedChanges";
 
 const NotificationContext = createContext(null);
 const categories = [
   ["agenda", "Agenda", "calendar"],
+  ["projects", "Projetos", "film"],
   ["contracts", "Contratos", "document"],
   ["finance", "Financeiro", "wallet"],
   ["commercial", "Comercial", "users"],
@@ -25,6 +28,7 @@ const categories = [
 ];
 const defaults = {
   agenda: true,
+  projects: true,
   contracts: true,
   finance: true,
   commercial: true,
@@ -35,9 +39,9 @@ export function NotificationProvider({ children }) {
     userId = auth.user.id;
   const query = useQuery(
     useCallback(
-      async () =>
-        checked(
-          await supabase
+      async () => {
+        const [items, count] = await Promise.all([
+          supabase
             .from("duuk_notifications")
             .select(
               "id,category,title,body,link,required_permission,read_at,created_at",
@@ -45,11 +49,20 @@ export function NotificationProvider({ children }) {
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
             .limit(100),
-        ) || [],
+          supabase.from("duuk_notifications").select("id", {count: "exact", head: true}).eq("user_id",userId).is("read_at",null),
+        ]);
+        checked(count);
+        return {items:checked(items)||[],unread:count.count||0};
+      },
       [userId],
     ),
   );
   const reload = query.reload;
+  useEffect(() => {
+    let timer;
+    const channel=supabase.channel(`notifications:${userId}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"duuk_notifications",filter:`user_id=eq.${userId}`},()=>{clearTimeout(timer);timer=setTimeout(reload,250)}).on("postgres_changes",{event:"UPDATE",schema:"public",table:"duuk_notifications",filter:`user_id=eq.${userId}`},()=>{clearTimeout(timer);timer=setTimeout(reload,250)}).subscribe();
+    return ()=>{clearTimeout(timer);supabase.removeChannel(channel)};
+  },[userId,reload]);
   useEffect(() => {
     const tick = () => {
       if (document.visibilityState === "visible" && navigator.onLine) reload();
@@ -63,7 +76,7 @@ export function NotificationProvider({ children }) {
       window.removeEventListener("online", tick);
     };
   }, [reload]);
-  const notifications = (query.data || []).filter((n) =>
+  const notifications = (query.data?.items || []).filter((n) =>
     auth.hasPermission(n.required_permission),
   );
   const mark = async (id) => {
@@ -91,7 +104,7 @@ export function NotificationProvider({ children }) {
       value={{
         ...query,
         notifications,
-        unread: notifications.filter((n) => !n.read_at).length,
+        unread: query.data?.unread || 0,
         mark,
         markAll,
       }}
@@ -114,9 +127,9 @@ export function NotificationBell() {
   );
 }
 export function NotificationsPage({ notify }) {
-  const context = useContext(NotificationContext),
+  const auth=useAuth(),context = useContext(NotificationContext),
     [filter, setFilter] = useState("all"),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),[notice,setNotice]=useState(false);
   const items = context.notifications.filter(
     (n) =>
       filter === "all" ||
@@ -130,6 +143,7 @@ export function NotificationsPage({ notify }) {
         description="O que precisa da sua atenção, em um só lugar."
       >
         <RefreshButton onRefresh={context.reload} />
+        {auth.profile.is_super_admin&&<button className="admin-button" onClick={()=>setNotice(true)}><Icon name="plus"/>Novo aviso</button>}
         <button
           className="admin-button admin-button--secondary"
           disabled={!context.unread || busy}
@@ -158,6 +172,7 @@ export function NotificationsPage({ notify }) {
           <button
             key={k}
             className={filter === k ? "is-active" : ""}
+            aria-pressed={filter === k}
             onClick={() => setFilter(k)}
           >
             {l}
@@ -186,9 +201,10 @@ export function NotificationsPage({ notify }) {
                       .catch((cause) => notify(cause.message, true));
                 }}
               >
+                <span className="notification-category">{categories.find(c=>c[0]===n.category)?.[1]||"Sistema"}{!n.read_at&&<><i/>Não lida</>}</span>
                 <h2>{n.title}</h2>
                 <p>{n.body}</p>
-                <small>{fmtTime(n.created_at)}</small>
+                <time dateTime={n.created_at}>{fmtTime(n.created_at)}</time>
               </Link>
               {!n.read_at && (
                 <button
@@ -214,8 +230,15 @@ export function NotificationsPage({ notify }) {
           )}
         </section>
       </QueryState>
+      {notice&&<NoticeEditor onClose={()=>setNotice(false)} onSaved={async()=>{await context.reload();notify("Aviso enviado à equipe.")}}/>}
     </>
   );
+}
+function NoticeEditor({onClose,onSaved}) {
+ const [title,setTitle]=useState(''),[body,setBody]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const attempt=useRef(null);useUnsavedChanges(!!title||!!body);
+ const submit=async event=>{event.preventDefault();setBusy(true);setError('');if(!attempt.current||attempt.current.title!==title||attempt.current.body!==body)attempt.current={request_id:crypto.randomUUID(),title,body};try{await notificationRequest({action:'admin-notice',...attempt.current});await onSaved();onClose()}catch(cause){setError(cause.message)}finally{setBusy(false)}};
+ return <Modal title="Novo aviso administrativo" subtitle="Enviado às pessoas ativas que permitem notificações de Sistema." onClose={()=>!busy&&onClose()}><form onSubmit={submit}><div className="admin-modal__body admin-form-grid"><Field label="Título" value={title} onChange={setTitle} required maxLength={120}/><Field label="Mensagem"><textarea value={body} onChange={e=>setBody(e.target.value)} required maxLength={500} rows={4}/></Field>{error&&<p className="admin-error" role="alert">{error}</p>}</div><div className="admin-modal__foot"><button type="button" className="admin-button admin-button--secondary" disabled={busy} onClick={onClose}>Cancelar</button><button className="admin-button" disabled={busy}>{busy?'Enviando…':'Enviar aviso'}</button></div></form></Modal>;
 }
 export function NotificationSettingsPage({ notify }) {
   const auth = useAuth(),

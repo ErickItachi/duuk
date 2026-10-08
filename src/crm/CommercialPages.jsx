@@ -1,5 +1,5 @@
 import { useUnsavedChanges } from "../admin/unsavedChanges";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../content/AuthContext";
 import { useQuery } from "../office/useQuery";
@@ -779,6 +779,8 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
     followups: [],
     people: [],
   };
+  const requestedClient=params.get('cliente'),openedClient=useRef('');
+  useEffect(()=>{const client=data.clients.find(item=>item.id===requestedClient);if(!client||openedClient.current===requestedClient)return;const timer=setTimeout(()=>{openedClient.current=requestedClient;setDetail(client)},0);return()=>clearTimeout(timer)},[data.clients,requestedClient]);
   const filtered = useMemo(
     () =>
       data.clients

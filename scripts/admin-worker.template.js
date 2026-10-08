@@ -88,6 +88,7 @@ self.addEventListener("push", (event) => {
   const url = String(payload.url || "/admin/");
   event.waitUntil(
     self.registration.showNotification(payload.title, {
+      lang: "pt-BR",
       body: payload.body || "",
       icon: "/admin-assets/icon-192.png",
       badge: "/admin-assets/icon-64.png",

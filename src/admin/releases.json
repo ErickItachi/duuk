@@ -1,5 +1,19 @@
 [
   {
+    "version": "1.3.0",
+    "date": "2026-10-07",
+    "title": "Agenda conectada e avisos da equipe",
+    "new": [
+      "Integração oficial DUUK → Google Calendar, disponível após configurar as credenciais OAuth do Google Cloud.",
+      "Notificações de mudanças na agenda, responsáveis, clientes, contatos, pipeline e projetos do portfólio.",
+      "Avisos administrativos enviados por super administradores."
+    ],
+    "improved": [
+      "Menu recolhido com ícones, controle discreto e preferência salva por usuário.",
+      "Central de notificações em tempo real, categorias, data e horário e contador completo de não lidas."
+    ]
+  },
+  {
     "version": "1.2.2",
     "date": "2026-10-07",
     "title": "Responsáveis na agenda",

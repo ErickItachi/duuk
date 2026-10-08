@@ -4,14 +4,27 @@ export const privacyPolicy = {
     en: 'How DUUK handles data from people who visit the site and get in touch.',
   },
   updated: {
-    pt: 'Atualizada em 6 de outubro de 2026.',
-    en: 'Updated on October 6, 2026.',
+    pt: 'Atualizada em 7 de outubro de 2026.',
+    en: 'Updated on October 7, 2026.',
   },
   lead: {
     pt: 'Esta página explica como a DUUK trata dados pessoais de quem visita este site e de quem fala com o estúdio.',
     en: 'This page explains how DUUK handles personal data from people who visit this site and people who talk to the studio.',
   },
   sections: [
+    {
+      title: { pt: 'Conexão opcional com Google Calendar', en: 'Optional Google Calendar connection' },
+      paragraphs: [
+        {
+          pt: 'Membros autorizados da equipe podem conectar uma conta Google para receber os compromissos da DUUK em um calendário separado, criado pelo aplicativo. Usamos o identificador e o e-mail confirmados pelo Google para identificar a conexão. A integração envia e atualiza compromissos de trabalho; não importa nem lê eventos de calendários pessoais.',
+          en: 'Authorized team members can connect a Google account to receive DUUK appointments in a separate calendar created by the application. We use the identifier and email verified by Google to identify the connection. The integration sends and updates work appointments; it does not import or read events from personal calendars.',
+        },
+        {
+          pt: 'As credenciais OAuth ficam criptografadas no servidor e são usadas apenas para manter essa conexão. Não vendemos os dados recebidos do Google, não os usamos para anúncios ou treinamento de modelos de inteligência artificial e não os compartilhamos para outras finalidades. Ao desconectar, removemos as credenciais guardadas. Os compromissos originais da DUUK e as cópias já enviadas ao Google permanecem; novas atualizações deixam de ser enviadas. Você também pode revogar o acesso nas configurações da sua conta Google.',
+          en: 'OAuth credentials are encrypted on the server and used only to maintain this connection. We do not sell data received from Google, use it for advertising or AI model training, or share it for other purposes. Disconnecting removes the stored credentials. Original DUUK appointments and copies already sent to Google remain; new updates stop being sent. You can also revoke access in your Google account settings.',
+        },
+      ],
+    },
     {
       title: { pt: 'Quem é a DUUK', en: 'Who DUUK is' },
       paragraphs: [
