@@ -43,6 +43,7 @@ export default function IntegrationsPage({notify}) {
     </div>
    </>}</QueryState>
   </section>
+  {auth.hasPermission('ai')&&<section className="admin-panel calendar-integration"><div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="gemini"/></span><div><p className="admin-eyebrow">CRIAÇÃO / INTEGRAÇÕES</p><h2>DUUK AI · Google Gemini</h2><p>Roteiros, conceitos, apoio comercial e ajuda para utilizar o painel.</p></div></div><p className="platform-muted">Um super administrador conecta um projeto Gemini sem faturamento. A chave permanece protegida no servidor.</p><Link className="admin-button admin-button--secondary" to="/admin/ai"><Icon name="arrow"/>Abrir DUUK AI</Link></section>}
   {auth.profile?.is_super_admin&&<DriveIntegration callback={driveCallback} notify={notify}/>}
   {disconnect&&<ConfirmModal title="Desconectar Google Calendar?" message="Os eventos continuam na Agenda DUUK. As cópias já enviadas ao Google permanecem lá, sem receber novas atualizações até você reconectar a mesma conta." action="Desconectar conta" onClose={()=>setDisconnect(false)} onConfirm={()=>act('disconnect')}/>}
  </>

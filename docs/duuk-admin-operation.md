@@ -1,5 +1,9 @@
 # Operação do DUUK Admin
 
+## DUUK AI — 1.7.0
+
+O módulo `/admin/ai` acrescenta criação de roteiros, conceitos, apoio comercial e ajuda contextual. Conversas ficam privadas; documentos têm versões, PDF com a marca original e compartilhamento explícito por projeto. A Edge Function `duuk-ai` usa o SDK oficial Gemini, Supabase Auth, permissões ativas, Vault e limites por membro, sem modelos pagos ou repetição automática após erro. O assistente não consulta automaticamente registros de clientes nem executa ações nos módulos. A instalação e o roteiro de validação estão em [duuk-ai-setup.md](duuk-ai-setup.md). A geração real aguarda a chave conectada por um super administrador em **DUUK AI → Configurar Gemini**, usando um projeto sem faturamento. Fixtures não comprovam a geração real. A versão usa o mecanismo existente de atualização do aplicativo.
+
 ## Google Drive — 1.6.0
 
 Contratos originais, contratos assinados e propostas comerciais são guardados no Google Drive da conta central da DUUK, por uma fila no banco processada a cada minuto pela Edge Function `duuk-drive`. Configuração, estrutura de pastas, regras de repetição e roteiro de validação com conta real estão em [google-drive-setup.md](google-drive-setup.md). A migração, o deploy da função, a Google Drive API, o escopo `drive.file`, o cliente Web DUUK Drive e os segredos `DUUK_DRIVE_GOOGLE_*` foram configurados. A conta central `duukfilms@gmail.com` está conectada; o original pendente foi enviado ao Drive com confirmação real HTTP 200, sem falhas. A biblioteca `/admin/drive` oferece busca, categorias, upload privado até 20 MB, visualização e download; sua permissão não concede acesso a Contratos ou CRM. As correções de fila mantêm o `safeupdate` das sessões da API. Instale também as migrações incrementais de fila, biblioteca e atualizações com filtro.

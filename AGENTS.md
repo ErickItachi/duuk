@@ -1,5 +1,11 @@
 # Fluxo de trabalho da DUUK
 
+## DUUK AI — 1.7.0
+
+- `/admin/ai` e ajuda contextual exigem a permissão `ai`. As conversas são privadas; documentos só são compartilhados por autorização explícita e pelas permissões atuais do projeto. Não enviar automaticamente registros comerciais, contratos, agenda, financeiro, credenciais ou valores de formulários ao modelo.
+- A Edge Function `duuk-ai` verifica Supabase Auth e permissões no servidor. Usa Gemini oficial (`@google/genai` fixado), Vault e cotas por membro. Não ativar faturamento, contratar planos ou trocar para modelos pagos. Sem retry automático após erro de geração; manter reservas para consumo desconhecido após interrupção.
+- A chave ainda precisa ser conectada por um super administrador no próprio painel, em projeto Google sem billing. Nunca pedir a chave pelo chat. A geração real e sua qualidade só podem ser aprovadas após esse passo. Instruções e limitações: `docs/duuk-ai-setup.md`. Preserve o prompt mestre integral e o manual versionado nos arquivos `_shared/duuk-ai-*.mjs`.
+
 ## Site e painel publicados
 
 O usuário autorizou publicar o painel administrativo em produção e aplicar as alterações ao site público ao salvar.

@@ -1,5 +1,5 @@
 import { dirtyForms, useUnsavedChanges } from './unsavedChanges'
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useContent } from '../content/useContent'
 import { useAuth } from '../content/AuthContext'
@@ -8,7 +8,7 @@ import BrandLoader from '../components/BrandLoader'
 import { youtubeId } from '../content/youtube'
 import { validMediaUrl, MEDIA_PREFIX } from '../content/model'
 import { getImageSources } from '../media'
-import { ConfirmModal, Icon, MediaField } from './components'
+import { ConfirmModal, Icon, MediaField, Modal } from './components'
 import { Avatar } from './forms'
 import { PwaProvider, AboutAdminPage, UpdateNotice } from './Pwa'
 import { currentRelease } from './pwaState'
@@ -31,6 +31,9 @@ import './admin.css'
 import '../office/office.css'
 import '../office/calendar.css'
 import './platform.css'
+import './ai-entry.css'
+const AiPage = lazy(() => import('../ai/AiPage'))
+const aiLoading = <p className="platform-muted" role="status">Abrindo DUUK AI…</p>
 
 const statusLabels = { published: 'Visível', draft: 'Rascunho', archived: 'Arquivado' }
 const sections = [
@@ -58,6 +61,7 @@ const sections = [
   { to: '/admin/configuracoes/historico', label: 'Histórico de alterações', icon: 'activity', permission: 'audit', group: 'Configurações' },
   { to: '/admin/configuracoes/sobre', label: 'Sobre o DUUK Admin', icon: 'info', group: 'Configurações' },
   { to: '/admin/configuracoes/perfil', label: 'Meu perfil', icon: 'user', group: 'Configurações' },
+  { to: '/admin/ai', label: 'DUUK AI', icon: 'spark', permission: 'ai' },
   { to: '/admin/drive', label: 'Google Drive', icon: 'drive', permission: 'drive', last: true },
 ]
 
@@ -200,6 +204,8 @@ function Allowed({ permission, children }) {
 function AdminWorkspace() {
  const {pathname}=useLocation(),auth=useAuth(),navigate=useNavigate()
  const [destination,setDestination]=useState(null)
+ const [aiOpen,setAiOpen]=useState(false),[aiDirty,setAiDirty]=useState(false),[aiDiscard,setAiDiscard]=useState(false)
+ const closeAi=()=>{if(aiDirty)setAiDiscard(true);else setAiOpen(false)}
  const [menuOpen,setMenuOpen]=useState(false),[narrow,setNarrow]=useState(()=>matchMedia('(max-width: 1023px)').matches)
  const sidebarKey=`duuk-sidebar-collapsed:${auth.user.id}`
  const [collapsed,setCollapsed]=useState(()=>{try{return localStorage.getItem(sidebarKey)==='true'||localStorage.getItem(sidebarKey)===null&&localStorage.getItem('duuk-sidebar-collapsed')==='true'}catch{return false}})
@@ -235,6 +241,7 @@ function AdminWorkspace() {
     {error&&editingSite&&<div className="admin-error" role="alert">{error} <button className="admin-text-button" onClick={()=>refresh().catch(()=>{})}>Tentar novamente</button></div>}
     {!ready&&editingSite?<div className="admin-empty"><p>Carregando seu conteúdo…</p></div>:<Routes>
      <Route index element={<DashboardPage/>}/>
+     <Route path="ai" element={guarded('ai',<Suspense fallback={aiLoading}><AiPage notify={notify}/></Suspense>)}/>
      <Route path="drive" element={guarded('drive',<DrivePage notify={notify}/>)}/>
      <Route path="portfolio" element={guarded('site',<ProjectList notify={notify}/>)}/><Route path="inicio" element={guarded('site',<HomeEditor notify={notify}/>)}/><Route path="midias" element={guarded('site',<MediaLibrary notify={notify}/>)}/>
      <Route path="contratos" element={guarded('contracts',<ContractsPage notify={notify}/>)}/><Route path="contratos/:id" element={guarded('contracts',<ContractEditor notify={notify}/>)}/><Route path="agenda" element={guarded('agenda',<AgendaPage notify={notify}/>)}/><Route path="financeiro" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="despesas" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="insights" element={guarded('insights',<InsightsPage/>)}/>
@@ -245,6 +252,9 @@ function AdminWorkspace() {
     </Routes>}
    </div></main><footer className="admin-footer"><span>DUUK / SÃO PAULO</span><span>Seu estúdio. Seu ritmo.</span><Link to="/admin/configuracoes/sobre">v{currentRelease.version}</Link></footer>
   </div>
+  {auth.hasPermission('ai')&&pathname!=='/admin/ai'&&<button type="button" className="duuk-ai-help admin-button admin-button--secondary" aria-label="Ajuda com DUUK AI" title="Ajuda com DUUK AI" onClick={()=>setAiOpen(true)}><Icon name="spark"/><span>DUUK AI</span></button>}
+  {aiOpen&&auth.hasPermission('ai')&&<Modal title="DUUK AI" subtitle="AJUDA / CRIAÇÃO" wide onClose={closeAi}><Suspense fallback={aiLoading}><AiPage embedded context={pathname} notify={notify} onDirtyChange={setAiDirty}/></Suspense></Modal>}
+  {aiDiscard&&<ConfirmModal title="Fechar DUUK AI?" message="Há um texto ainda não enviado ou uma resposta em andamento. O histórico já salvo será preservado." action="Fechar" onConfirm={async()=>{setAiOpen(false);setAiDiscard(false);setAiDirty(false)}} onClose={()=>setAiDiscard(false)}/>}
   {destination&&<ConfirmModal title="Sair sem salvar?" message="Existem alterações pendentes nesta página. Salve antes de continuar ou descarte ao sair." action="Sair sem salvar" onClose={()=>setDestination(null)} onConfirm={()=>navigate(destination)}/>}
   {toast&&<div className={`admin-toast${toast.failed?' admin-toast--error':''}`} role={toast.failed?'alert':'status'}><Icon name={toast.failed?'close':'check'}/><span>{toast.message}</span><button className="admin-icon-button" aria-label="Fechar aviso" onClick={()=>setToast(null)}><Icon name="close" size={16}/></button></div>}
  </div>

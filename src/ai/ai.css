@@ -1,0 +1,195 @@
+.duuk-ai { --ai-coral: #ee5845; --ai-peach: #ffad7f; min-width: 0; border: 1px solid var(--admin-line); border-radius: 16px; background: var(--admin-surface); overflow: hidden; color: var(--admin-ink); }
+.duuk-ai button, .duuk-ai textarea { font: inherit; }
+.duuk-ai button:disabled { opacity: .4; cursor: not-allowed; }
+.duuk-ai-header { min-height: 89px; padding: 20px 26px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--admin-line); }
+.duuk-ai-brand, .duuk-ai-header__actions { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.duuk-ai-brand__mark { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid #844c3c; border-radius: 12px; color: var(--ai-peach); background: linear-gradient(130deg,#ee584518,#ffad7f08); }
+.duuk-ai-brand .admin-eyebrow { margin: 0 0 4px; font-size: 8px; }
+.duuk-ai-brand h1 { font-size: 25px; letter-spacing: -.06em; font-weight: 550; line-height: 1; }
+.duuk-ai-brand h1 span { color: var(--ai-peach); font-weight: 400; }
+.duuk-ai-private { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--admin-muted); }
+.duuk-ai-history-toggle { display: none; }
+.duuk-ai-workspace { display: grid; grid-template-columns: 222px minmax(0, 1fr); height: min(850px, calc(100dvh - 235px)); min-height: 620px; }
+.duuk-ai-sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 20px 14px 15px; background: #10100e; border-right: 1px solid var(--admin-line); }
+.duuk-ai-new { width: 100%; min-height: 43px; font-size: 11px; justify-content: flex-start; }
+.duuk-ai-sidebar__tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--admin-line); margin-top: 17px; }
+.duuk-ai-sidebar__tabs button { min-height: 42px; color: var(--admin-muted); font-size: 11px; border-bottom: 2px solid transparent; }
+.duuk-ai-sidebar__tabs button[aria-selected=true] { color: var(--ai-peach); border-color: var(--ai-coral); }
+.duuk-ai-sidebar__list { min-height: 0; overflow-y: auto; flex: 1; padding-block: 13px; scrollbar-width: thin; }
+.duuk-ai-history-item { display: flex; align-items: center; min-width: 0; margin-bottom: 4px; border-radius: 8px; border: 1px solid transparent; }
+.duuk-ai-history-item:hover, .duuk-ai-history-item.is-active { background: var(--admin-raised); border-color: var(--admin-line); }
+.duuk-ai-history-item > button { flex: 1; min-width: 0; padding: 12px 8px; text-align: left; }
+.duuk-ai-history-item > button span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 1.4; }
+.duuk-ai-history-item small { display: block; margin-top: 6px; font-size: 9px; color: var(--admin-muted); }
+.duuk-ai-history-item > div { display: flex; flex-shrink: 0; }
+.duuk-ai-history-item > div button { display: grid; place-items: center; width: 27px; height: 36px; color: var(--admin-muted); border-radius: 6px; }
+.duuk-ai-history-item > div button:hover { color: var(--ai-peach); background: #080808; }
+.duuk-ai-sidebar__empty { padding: 14px 8px; color: var(--admin-muted); font-size: 11px; line-height: 1.8; }
+.duuk-ai-sidebar__note { display: flex; gap: 7px; padding: 12px 5px 0; border-top: 1px solid var(--admin-line); font-size: 9px; line-height: 1.7; color: var(--admin-muted); }
+.duuk-ai-sidebar__note svg { flex-shrink: 0; margin-top: 2px; color: var(--ai-peach); }
+.duuk-ai-create-document { display: flex; align-items: center; gap: 8px; min-height: 40px; width: 100%; padding: 5px 8px; color: var(--ai-peach); font-size: 11px !important; text-align: left; }
+.duuk-ai-document-item { width: 100%; display: flex; align-items: flex-start; gap: 9px; text-align: left; padding: 12px 8px; border-radius: 8px; }
+.duuk-ai-document-item:hover { background: var(--admin-raised); }
+.duuk-ai-document-item svg { flex-shrink: 0; color: var(--ai-peach); }
+.duuk-ai-document-item span { min-width: 0; overflow-wrap: anywhere; font-size: 11px; line-height: 1.5; }
+.duuk-ai-document-item small { display: block; margin-top: 6px; color: var(--admin-muted); font-size: 9px; }
+.duuk-ai-chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: radial-gradient(ellipse at 65% 0, #ee584506, transparent 60%); }
+.duuk-ai-chat__top { min-height: 49px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 24px; border-bottom: 1px solid #302a2677; }
+.duuk-ai-chat__top > span { font-size: 11px; color: var(--admin-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.duuk-ai-chat__top .admin-icon-button { width: 33px; height: 33px; }
+.duuk-ai-messages { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 26px clamp(18px, 3.5vw, 55px); scrollbar-width: thin; }
+.duuk-ai-welcome { width: min(100%, 660px); padding-block: 20px 8px; margin: auto; }
+.duuk-ai-welcome__label { color: var(--ai-peach); font-size: 9px; letter-spacing: .16em; }
+.duuk-ai-welcome h2 { margin-top: 19px; font-size: clamp(26px, 3.2vw, 43px); line-height: 1.12; letter-spacing: -.055em; font-weight: 500; }
+.duuk-ai-welcome h2 span { color: #b9aaa0; }
+.duuk-ai-welcome > p { max-width: 490px; color: var(--admin-muted); margin-top: 17px; font-size: 12px; line-height: 1.8; }
+.duuk-ai-suggestions { margin-top: 27px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.duuk-ai-suggestions button { position: relative; display: grid; gap: 8px; min-width: 0; padding: 17px; text-align: left; border: 1px solid var(--admin-line); border-radius: 11px; background: #141311; transition: border-color .2s, background .2s, transform .2s; }
+.duuk-ai-suggestions button:hover { border-color: #885042; background: #231a16; transform: translateY(-2px); }
+.duuk-ai-suggestions button > svg:first-child { color: var(--ai-peach); margin-bottom: 3px; }
+.duuk-ai-suggestions button > svg:last-child { position: absolute; top: 18px; right: 15px; color: #78685d; }
+.duuk-ai-suggestions strong { font-size: 12px; font-weight: 500; }
+.duuk-ai-suggestions span { font-size: 10px; color: var(--admin-muted); line-height: 1.65; }
+.duuk-ai-message { max-width: 780px; margin: 0 auto 27px; min-width: 0; animation: duuk-ai-appear .22s ease-out; }
+.duuk-ai-message--user { border: 1px solid #443329; border-radius: 12px; padding: 18px 20px; background: #201a16; }
+.duuk-ai-message--assistant { padding: 3px 0 16px; }
+.duuk-ai-message__who { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--ai-peach); font-size: 10px; font-weight: 500; }
+.duuk-ai-message--user .duuk-ai-message__who { color: var(--admin-muted); }
+.duuk-ai-message__who small { margin-left: auto; color: var(--admin-muted); font-weight: 400; font-size: 9px; }
+.duuk-ai-message__empty { color: var(--admin-muted); font-size: 12px; }
+.duuk-ai-markdown { font-size: 13px; line-height: 1.9; overflow-wrap: anywhere; }
+.duuk-ai-markdown p + p, .duuk-ai-markdown p + ul, .duuk-ai-markdown p + ol { margin-top: 13px; }
+.duuk-ai-markdown h3 { margin-block: 22px 9px; font-size: 16px; font-weight: 550; line-height: 1.45; letter-spacing: -.02em; }
+.duuk-ai-markdown h3:first-child { margin-top: 0; }
+.duuk-ai-markdown .duuk-ai-markdown__h1 { font-size: 22px; }
+.duuk-ai-markdown .duuk-ai-markdown__h2 { font-size: 18px; }
+.duuk-ai-markdown ul, .duuk-ai-markdown ol { padding-left: 23px; margin-block: 10px; }
+.duuk-ai-markdown ul { list-style: disc; }
+.duuk-ai-markdown ol { list-style: decimal; }
+.duuk-ai-markdown li + li { margin-top: 6px; }
+.duuk-ai-markdown code { padding: 2px 5px; border-radius: 4px; background: #080808; color: #f6b89a; font-size: .9em; }
+.duuk-ai-markdown pre { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: #080808; border: 1px solid var(--admin-line); border-radius: 8px; margin-block: 12px; }
+.duuk-ai-markdown pre code { padding: 0; }
+.duuk-ai-markdown blockquote { margin-block: 12px; padding-left: 15px; border-left: 2px solid var(--ai-coral); color: var(--admin-muted); }
+.duuk-ai-markdown a { color: var(--ai-peach); text-decoration: underline; text-underline-offset: 3px; }
+.duuk-ai-markdown hr { border: 0; height: 1px; background: var(--admin-line); margin-block: 20px; }
+.duuk-ai-message__actions { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 16px; }
+.duuk-ai-message__actions button { display: flex; align-items: center; gap: 6px; min-height: 33px; padding: 5px 0; font-size: 10px; color: var(--admin-muted); }
+.duuk-ai-message__actions button:hover { color: var(--ai-peach); }
+.duuk-ai-compose-area { flex-shrink: 0; padding: 12px clamp(16px, 3vw, 40px) 17px; border-top: 1px solid #302a2655; background: #141311; }
+.duuk-ai-mode-picker { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 10px; }
+.duuk-ai-mode-picker button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 5px 9px; color: var(--admin-muted); border: 1px solid transparent; border-radius: 6px; font-size: 10px; }
+.duuk-ai-mode-picker button:hover { background: var(--admin-raised); }
+.duuk-ai-mode-picker button[aria-pressed=true] { background: #38221a; border-color: #644032; color: var(--ai-peach); }
+.duuk-ai-composer { border: 1px solid #514137; border-radius: 12px; background: #1b1815; overflow: hidden; transition: border-color .2s; }
+.duuk-ai-composer:focus-within { border-color: #b76b4e; }
+.duuk-ai-composer textarea { display: block; resize: vertical; width: 100%; min-width: 0; min-height: 76px; max-height: 220px; border: 0; border-radius: 0; outline: 0; background: transparent; padding: 15px 17px 4px; color: var(--admin-ink); font-size: 12px; line-height: 1.8; }
+.duuk-ai-composer textarea::placeholder { color: #8e8077; }
+.duuk-ai-composer__bottom { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 10px 10px 17px; }
+.duuk-ai-composer__bottom > span { font-size: 9px; color: #9a8b80; }
+.duuk-ai-send { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 39px; padding: 9px 15px; border-radius: 8px; background: linear-gradient(115deg, var(--ai-coral), #f9935e); color: #160b07; font-size: 11px !important; font-weight: 550 !important; }
+.duuk-ai-send--stop { background: #34251d; color: var(--ai-peach); border: 1px solid #724630; }
+.duuk-ai-send--stop > span { width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+.duuk-ai-consent { display: flex; align-items: flex-start; gap: 8px; margin-top: 11px; cursor: pointer; }
+.duuk-ai-consent input { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; accent-color: var(--ai-coral); }
+.duuk-ai-consent > span { color: var(--admin-muted); font-size: 10px; line-height: 1.65; }
+.duuk-ai-consent a { color: var(--ai-peach); text-decoration: underline; }
+.duuk-ai-disclaimer { font-size: 8px; line-height: 1.6; color: #95877d; margin-top: 8px; text-align: center; }
+.duuk-ai-usage { font-size: 8px; line-height: 1.5; color: #95877d; margin-top: 4px; text-align: center; }
+.duuk-ai-error, .duuk-ai-unavailable { display: flex; align-items: flex-start; gap: 9px; padding: 11px 12px; margin-bottom: 11px; border: 1px solid #794332; background: #3b201666; border-radius: 8px; font-size: 11px; color: #ffb597; }
+.duuk-ai-error p, .duuk-ai-unavailable p { flex: 1; min-width: 0; line-height: 1.7; overflow-wrap: anywhere; }
+.duuk-ai-unavailable > svg { flex-shrink: 0; margin-top: 2px; }
+.duuk-ai-error > button:not(.admin-icon-button) { display: flex; align-items: center; gap: 5px; flex-shrink: 0; min-height: 30px; text-decoration: underline; font-size: 10px; }
+.duuk-ai-error .admin-icon-button { width: 25px; height: 27px; color: #ffb597; }
+.duuk-ai-editing { display: flex; align-items: center; gap: 7px; padding-bottom: 10px; color: var(--ai-peach); font-size: 10px; }
+.duuk-ai-editing span { flex: 1; }
+.duuk-ai-editing button { flex-shrink: 0; }
+.duuk-ai-loading { min-height: 250px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-content: center; color: var(--admin-muted); }
+.duuk-ai-loading span, .duuk-ai-thinking i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--ai-peach); animation: duuk-ai-pulse 1.2s ease-in-out infinite; }
+.duuk-ai-loading span:nth-child(2), .duuk-ai-thinking i:nth-child(2) { animation-delay: .15s; }
+.duuk-ai-loading span:nth-child(3), .duuk-ai-thinking i:nth-child(3) { animation-delay: .3s; }
+.duuk-ai-loading p { flex-basis: 100%; text-align: center; margin-top: 10px; font-size: 11px; }
+.duuk-ai-thinking { display: flex; gap: 5px; padding: 13px 0; }
+.duuk-ai-writing { animation: duuk-ai-pulse 1.2s ease-in-out infinite; }
+.duuk-ai-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.duuk-ai-document__fields, .duuk-ai-rename { padding: 25px 28px; }
+.duuk-ai-configuration { padding: 25px 28px; display: grid; gap: 20px; }
+.duuk-ai-configuration > p { font-size: 12px; color: var(--admin-muted); line-height: 1.8; }
+.duuk-ai-configuration a { color: #ffad7f; text-decoration: underline; }
+.duuk-ai-configuration .admin-checkbox { font-size: 12px; line-height: 1.7; }
+.duuk-ai-document__fields { display: grid; gap: 19px; }
+.duuk-ai-document__selects { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; align-items: start; }
+.duuk-ai-document textarea { resize: vertical; min-height: 260px; font-size: 13px; line-height: 1.8; }
+.duuk-ai-document__sharing { font-size: 12px; line-height: 1.7; }
+.duuk-ai-document .admin-text-button { display: flex; align-items: center; gap: 6px; justify-self: start; }
+.duuk-ai-versions { border: 1px solid var(--admin-line); border-radius: 8px; padding: 10px; }
+.duuk-ai-versions > button { display: flex; align-items: center; gap: 12px; min-height: 42px; width: 100%; text-align: left; padding: 8px; font-size: 12px; border-radius: 5px; }
+.duuk-ai-versions > button:hover { background: var(--admin-raised); }
+.duuk-ai-versions > button small { color: var(--admin-muted); }
+.duuk-ai-versions > button span:last-child { margin-left: auto; color: var(--ai-peach); font-size: 10px; }
+.duuk-ai-versions > small, .duuk-ai-versions > p { display: block; margin: 8px; font-size: 10px; line-height: 1.7; color: var(--admin-muted); }
+.duuk-ai--embedded { height: 100%; border: 0; border-radius: 0; }
+.duuk-ai--embedded .duuk-ai-header { min-height: 77px; padding: 17px 20px; }
+.duuk-ai--embedded .duuk-ai-private { display: none; }
+.duuk-ai--embedded .duuk-ai-workspace { position: relative; display: flex; height: calc(100% - 77px); min-height: 0; }
+.duuk-ai--embedded .duuk-ai-chat { width: 100%; }
+.duuk-ai--embedded .duuk-ai-history-toggle { display: inline-flex; }
+.duuk-ai--embedded .duuk-ai-sidebar { display: none; }
+.duuk-ai--embedded .duuk-ai-sidebar.is-open { display: flex; position: absolute; inset: 0; width: 100%; z-index: 4; border: 0; }
+.duuk-ai--embedded .duuk-ai-welcome h2 { font-size: 30px; }
+.duuk-ai--embedded .duuk-ai-messages { padding: 20px; }
+.duuk-ai--embedded .duuk-ai-compose-area { padding: 10px 17px 13px; }
+.duuk-ai--embedded .duuk-ai-suggestions { margin-top: 22px; gap: 7px; }
+.duuk-ai--embedded .duuk-ai-suggestions button { padding: 13px; }
+.duuk-ai--embedded .duuk-ai-suggestions span { font-size: 9px; }
+.duuk-ai--embedded .duuk-ai-welcome { padding-block: 6px; }
+@keyframes duuk-ai-pulse { 0%,100% { opacity: .4; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-2px); } }
+@keyframes duuk-ai-appear { from { opacity: .4; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 1100px) { .duuk-ai-workspace { grid-template-columns: 195px minmax(0,1fr); } .duuk-ai-private { display: none; } .duuk-ai-messages { padding: 22px; } .duuk-ai-compose-area { padding-inline: 18px; } .duuk-ai-history-item > div { flex-direction: column; } .duuk-ai-history-item > div button { height: 26px; } }
+@media (max-width: 760px) {
+  .duuk-ai { border-radius: 12px; }
+  .duuk-ai-header { padding: 17px; min-height: 78px; }
+  .duuk-ai-brand__mark { width: 38px; height: 38px; border-radius: 10px; }
+  .duuk-ai-brand h1 { font-size: 23px; }
+  .duuk-ai-brand .admin-eyebrow { font-size: 7px; }
+  .duuk-ai-header__actions { gap: 2px; }
+  .duuk-ai-header__actions .admin-icon-button { width: 38px; height: 38px; }
+  .duuk-ai-history-toggle { display: inline-flex; }
+  .duuk-ai-workspace { position: relative; display: flex; height: calc(100dvh - 195px); min-height: 610px; }
+  .duuk-ai-chat { width: 100%; }
+  .duuk-ai-sidebar { display: none; }
+  .duuk-ai-sidebar.is-open { position: absolute; display: flex; inset: 0; width: 100%; z-index: 4; border: 0; padding: 20px; }
+  .duuk-ai-history-item > div { flex-direction: row; }
+  .duuk-ai-history-item > div button { width: 38px; height: 38px; }
+  .duuk-ai-history-item > button span { font-size: 13px; }
+  .duuk-ai-chat__top { padding-inline: 17px; }
+  .duuk-ai-messages { padding: 20px 17px; }
+  .duuk-ai-welcome { padding-top: 8px; }
+  .duuk-ai-welcome h2 { font-size: 32px; }
+  .duuk-ai-welcome > p { font-size: 11px; }
+  .duuk-ai-suggestions { margin-top: 22px; gap: 8px; }
+  .duuk-ai-suggestions button { padding: 14px 12px; }
+  .duuk-ai-suggestions strong { font-size: 11px; }
+  .duuk-ai-suggestions span { font-size: 9px; }
+  .duuk-ai-compose-area { padding: 9px 12px 13px; }
+  .duuk-ai-composer textarea { font-size: 16px; line-height: 1.5; min-height: 76px; padding: 11px 12px 4px; }
+  .duuk-ai-mode-picker { gap: 1px; padding-bottom: 7px; }
+  .duuk-ai-mode-picker button { padding: 5px 7px; font-size: 9px; }
+  .duuk-ai-message--user { padding: 15px; }
+  .duuk-ai-markdown { font-size: 13px; line-height: 1.8; }
+  .duuk-ai-consent > span { font-size: 9.5px; }
+  .duuk-ai-disclaimer { font-size: 8px; }
+  .duuk-ai-error { flex-wrap: wrap; gap: 6px; }
+  .duuk-ai-error p { flex-basis: calc(100% - 35px); }
+  .duuk-ai-error > button:not(.admin-icon-button) { order: 2; }
+  .duuk-ai-document__fields, .duuk-ai-rename { padding: 22px 18px; }
+  .duuk-ai-configuration { padding: 22px 18px; }
+  .duuk-ai-configuration input[type=password] { font-size: 16px; }
+  .duuk-ai-document__selects { grid-template-columns: 1fr; }
+  .duuk-ai-document .admin-modal__foot { flex-wrap: wrap; padding-inline: 18px; }
+  .duuk-ai-document .admin-modal__foot .admin-button { flex: 1; padding-inline: 10px; font-size: 11px; }
+  .duuk-ai-document input, .duuk-ai-document textarea, .duuk-ai-document select, .duuk-ai-rename input { font-size: 16px; }
+  .duuk-ai--embedded .duuk-ai-workspace { min-height: 0; height: calc(100% - 77px); }
+}
+@media (max-width: 360px) { .duuk-ai-header { padding: 13px 11px; } .duuk-ai-brand { gap: 7px; } .duuk-ai-brand__mark { width: 30px; height: 34px; } .duuk-ai-brand h1 { font-size: 21px; } .duuk-ai-brand .admin-eyebrow { font-size: 6px; } .duuk-ai-header__actions .admin-icon-button { width: 31px; height: 36px; } .duuk-ai-mode-picker button { padding-inline: 5px; } .duuk-ai-mode-picker button svg { width: 11px; } .duuk-ai-suggestions { gap: 6px; } .duuk-ai-composer__bottom > span { font-size: 8px; } }
+@media (prefers-reduced-motion: reduce) { .duuk-ai *, .duuk-ai *::before, .duuk-ai *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

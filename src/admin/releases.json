@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.7.0",
+    "date": "2026-10-08",
+    "title": "Novo: DUUK AI",
+    "new": ["Conheça o novo assistente inteligente da DUUK. Crie roteiros audiovisuais, desenvolva conceitos criativos, prepare propostas comerciais e encontre ajuda para utilizar a plataforma.", "Conversas privadas, documentos com versões e exportação em PDF."],
+    "improved": ["Ajuda contextual nas telas do painel e conexão segura ao Gemini pelo próprio administrativo."]
+  },
+  {
     "version": "1.6.0",
     "date": "2026-10-08",
     "title": "Google Drive: pastas e organização",
