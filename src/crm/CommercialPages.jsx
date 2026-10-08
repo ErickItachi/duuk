@@ -28,6 +28,7 @@ import {
 } from "./model";
 
 import PipelineBoard from "./PipelineBoard";
+import { ClientProposals } from "../office/DriveDocuments";
 
 const initialClient = {
   name: "",
@@ -471,6 +472,8 @@ function ClientDetail({
   onActivity,
   onFollowup,
   onEmail,
+  canProposals,
+  notify,
 }) {
   const query = useQuery(
     useCallback(() => clientHistory(client.id), [client.id]),
@@ -511,6 +514,7 @@ function ClientDetail({
           ))}
         </div>
         {client.notes && <p className="crm-notes">{client.notes}</p>}
+        {canProposals && <ClientProposals client={client} notify={notify} />}
         <h3 className="platform-subheading">Histórico do cliente</h3>
         <QueryState query={query}>
           <div className="platform-timeline">
@@ -1181,6 +1185,8 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
       {detail && (
         <ClientDetail
           onEmail={auth.hasPermission("mail")}
+          canProposals={auth.hasPermission("crm.clients")}
+          notify={notify}
           client={detail}
           people={data.people}
           onClose={() => setDetail(null)}

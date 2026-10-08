@@ -185,3 +185,33 @@ button.office-pdf-field { touch-action: none; cursor: move; }
   .office-toolbar .admin-field, .office-toolbar .admin-button { width: 100%; }
   .office-signing-brand small { display: none; }
 }
+
+/* Google Drive: indicadores de armazenamento e documentos sincronizados. */
+.drive-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 8px; border: 1px solid var(--admin-line); border-radius: 5px; color: var(--admin-muted); font-size: 10px; line-height: 1.6; white-space: nowrap; }
+.drive-chip.is-synced { color: #92b79d; background: #92b79d10; border-color: #92b79d33; }
+.drive-chip.is-pending { color: #ffac88; background: #eb4b3f1a; border-color: #eb4b3f26; }
+.drive-chip.is-error { color: #ff8b76; background: #ff5a4d14; border-color: #ff5a4d44; }
+.drive-panel { display: grid; gap: 14px; }
+.drive-panel + .drive-panel { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--admin-line); }
+.drive-panel__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.drive-panel__head h3 { display: inline-flex; align-items: center; gap: 9px; margin: 0; font-size: 16px; font-weight: 500; letter-spacing: -.02em; }
+.drive-panel__head h3 svg { color: #ffac88; }
+.drive-panel .drive-chip { margin-top: 0; }
+.drive-documents { display: grid; gap: 12px; }
+.drive-document { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--admin-line); border-radius: 8px; background: var(--admin-surface); }
+.drive-document__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.drive-document__head > div { flex: 1 1 160px; min-width: 0; }
+.drive-document__head strong { display: block; font-size: 13px; font-weight: 500; }
+.drive-document__head small { display: block; margin-top: 5px; color: var(--admin-muted); font-size: 11px; overflow-wrap: anywhere; }
+.drive-document .drive-chip { margin-top: 0; }
+.drive-document__note { margin: 0; color: var(--admin-muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.drive-document__actions { display: flex; flex-wrap: wrap; gap: 4px; margin-left: -8px; }
+.drive-document__actions a.admin-icon-button { text-decoration: none; }
+.drive-feedback { margin: 0; color: var(--admin-muted); font-size: 12px; line-height: 1.6; }
+.drive-feedback.is-error { color: #ff8b76; }
+.drive-file-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.drive-panel > .admin-button { justify-self: start; }
+@media (max-width: 560px) {
+  .drive-panel > .admin-button { justify-self: stretch; }
+  .drive-document { padding: 12px; }
+}

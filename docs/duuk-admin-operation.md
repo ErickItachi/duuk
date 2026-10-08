@@ -1,5 +1,9 @@
 # Operação do DUUK Admin
 
+## Google Drive — 1.4.0
+
+Contratos originais, contratos assinados e propostas comerciais são guardados no Google Drive da conta central da DUUK, por uma fila no banco processada a cada minuto pela Edge Function `duuk-drive`. Configuração, estrutura de pastas, regras de repetição e roteiro de validação com conta real estão em [google-drive-setup.md](google-drive-setup.md). A validação real ainda está pendente: migração `supabase/google-drive.sql`, deploy da função, Google Drive API, escopo `drive.file` e conexão por um super administrador.
+
 ## Agenda Google, navegação e notificações — 1.3.0
 
 Configuração externa e roteiro de validação estão em [google-calendar-setup.md](google-calendar-setup.md). Em 7 de outubro de 2026, o projeto Google Cloud `duuk-511001` recebeu o cliente Web DUUK Agenda, com OAuth externo em produção e os três escopos não confidenciais mínimos. As duas credenciais foram salvas nos Secrets das Edge Functions. A conta `filmzerick@gmail.com` concluiu OAuth real, com retorno correto e código removido da URL; um compromisso existente foi exportado sem erro e a fila ficou zerada. Múltiplas contas, edição, exclusão e desconexão externas ainda não foram validadas em contas reais. A marca Google continua sem verificação e o consentimento pode apresentar o domínio duukfilms.com. A integração usa state/PKCE vinculado à sessão DUUK, tokens criptografados no Vault e exportação exclusivamente DUUK → Google. O painel informa **Aguardando configuração** se as credenciais forem removidas. O worker `duuk-calendar` valida usuários por Supabase Auth e o dispatch por segredo Cron; não habilite a verificação legada JWT do gateway sem adaptar a autenticação.

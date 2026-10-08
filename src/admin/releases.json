@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.4.0",
+    "date": "2026-10-08",
+    "title": "Integração com Google Drive",
+    "new": [
+      "Agora os contratos e documentos da DUUK podem ser armazenados automaticamente no Google Drive, incluindo contratos finalizados pelo sistema de assinatura eletrônica.",
+      "Em Configurações > Integrações, um super administrador conecta a conta central, acompanha o espaço usado e a última sincronização, reconecta ou desconecta.",
+      "Contratos originais e assinados, e propostas em PDF anexadas aos clientes, são organizados em pastas por cliente, sem duplicar arquivos."
+    ],
+    "improved": [
+      "Indicadores de sincronização, visualização, download e nova tentativa nos contratos, com avisos para falhas, reconexão e espaço quase esgotado."
+    ]
+  },
+  {
     "version": "1.3.2",
     "date": "2026-10-07",
     "title": "Presença ajustada no celular",

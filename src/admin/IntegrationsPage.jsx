@@ -6,11 +6,13 @@ import { platformRequest } from './api'
 import { ConfirmModal, Icon, RefreshButton } from './components'
 import { PageTitle, QueryState } from './forms'
 import { fmtTime } from '../crm/model'
+import DriveIntegration from './DriveIntegration'
 
 const request=body=>platformRequest('duuk-calendar',body)
 export default function IntegrationsPage({notify}) {
  const auth=useAuth(),[params,setParams]=useSearchParams(),[busy,setBusy]=useState(''),[disconnect,setDisconnect]=useState(false),[callbackError,setCallbackError]=useState('')
- const callback=useRef(params.has('state')?{state:params.get('state'),code:params.get('code'),denied:params.has('error')}:null),started=useRef(false)
+ const returned=params.has('state')?{state:params.get('state'),code:params.get('code'),denied:params.has('error')}:null,forDrive=Boolean(returned?.state?.startsWith('drv.'))
+ const callback=useRef(returned&&!forDrive?returned:null),started=useRef(false),[driveCallback]=useState(()=>returned&&forDrive?returned:null)
  const query=useQuery(useCallback(()=>request({action:'status'}),[])),reload=query.reload
  useEffect(()=>{
   if(!callback.current||started.current)return
@@ -40,6 +42,7 @@ export default function IntegrationsPage({notify}) {
     </div>
    </>}</QueryState>
   </section>
+  {auth.profile?.is_super_admin&&<DriveIntegration callback={driveCallback} notify={notify}/>}
   {disconnect&&<ConfirmModal title="Desconectar Google Calendar?" message="Os eventos continuam na Agenda DUUK. As cópias já enviadas ao Google permanecem lá, sem receber novas atualizações até você reconectar a mesma conta." action="Desconectar conta" onClose={()=>setDisconnect(false)} onConfirm={()=>act('disconnect')}/>}
  </>
 }

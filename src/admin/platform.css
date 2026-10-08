@@ -1222,3 +1222,8 @@
 .platform-push-actions > * { max-width: 100%; }
 .platform-push-actions button { white-space: normal; }
 @media (max-width: 600px) { .platform-push-actions > * { flex: 1 1 100%; } .platform-push-actions button { width: 100%; justify-content: center; } .platform-push-actions .admin-refresh small { left: 0; right: auto; } }
+
+.drive-meter { display: block; width: min(260px, 100%); height: 4px; margin-top: 10px; border-radius: 4px; background: var(--admin-line); overflow: hidden; }
+.drive-meter i { display: block; height: 100%; border-radius: 4px; background: #92b79d; }
+.drive-meter.is-high i { background: #ff8b76; }
+.drive-integration { margin-top: 28px; }
