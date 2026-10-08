@@ -39,7 +39,7 @@ function fakeDrive() {
         const session = `session${next++}`
         ids.resumable++
         sessions.set(session, JSON.parse(options.body))
-        assert.equal(options.headers['X-Upload-Content-Type'], 'application/pdf')
+        assert.equal(options.headers['X-Upload-Content-Type'], JSON.parse(options.body).mimeType)
         return new Response(null, { status: 200, headers: { Location: `https://www.googleapis.com/upload-session/${session}` } })
       }
       assert.equal(type, 'multipart')
@@ -157,6 +157,28 @@ test('PDF acima de 5 MB usa sessão resumível oficial', async () => {
   assert.equal(drive.ids.upload, 1)
   assert.equal(drive.files.get(result.drive_file_id).bytes.length, bytes.length)
   assert(drive.calls.some(([, path, search]) => path === '/upload/drive/v3/files' && search.includes('uploadType=resumable')))
+})
+
+test('biblioteca envia arquivo interno com MIME original e repetir não duplica', async () => {
+ const drive = fakeDrive(), ctx = context(drive), bytes = new TextEncoder().encode('Briefing da DUUK')
+ const doc = { ...contract, kind: 'file', client_key: 'internal', client_name: 'Internos', file_name: 'Briefing.txt', mime_type: 'text/plain', source_sha256: await sha(bytes) }
+ const first = await syncDocument(ctx, doc, bytes), second = await syncDocument(context(drive, ctx.store), doc, bytes)
+ assert.equal(first.drive_file_id, second.drive_file_id)
+ assert.equal(drive.ids.upload, 1)
+ const file = drive.files.get(first.drive_file_id)
+ assert.equal(file.mimeType, 'text/plain')
+ assert.match(new TextDecoder().decode(file.bytes), /Content-Type: text\/plain/)
+ assert.equal(pathOf(drive, first.drive_folder_id), 'DUUK/Documentos/Internos')
+})
+
+test('vídeo da biblioteca usa upload resumível preservando MIME e tamanho', async () => {
+ const drive = fakeDrive(), bytes = new Uint8Array(5 * 1024 * 1024 + 1)
+ bytes.set(new TextEncoder().encode('ftyp'), 4)
+ const doc = { ...contract, kind: 'file', file_name: 'Cena.mp4', mime_type: 'video/mp4', source_sha256: await sha(bytes) }
+ const result = await syncDocument(context(drive), doc, bytes)
+ assert.equal(drive.ids.resumable, 1)
+ assert.equal(drive.files.get(result.drive_file_id).mimeType, 'video/mp4')
+ assert.equal(drive.files.get(result.drive_file_id).bytes.length, bytes.length)
 })
 
 test('nova tentativa depois de resposta perdida adota o arquivo existente sem duplicar', async () => {

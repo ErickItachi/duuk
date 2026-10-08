@@ -1,8 +1,8 @@
 # Operação do DUUK Admin
 
-## Google Drive — 1.5.0
+## Google Drive — 1.5.1
 
-Contratos originais, contratos assinados e propostas comerciais são guardados no Google Drive da conta central da DUUK, por uma fila no banco processada a cada minuto pela Edge Function `duuk-drive`. Configuração, estrutura de pastas, regras de repetição e roteiro de validação com conta real estão em [google-drive-setup.md](google-drive-setup.md). A migração, o deploy da função, a Google Drive API, o escopo `drive.file`, o cliente Web DUUK Drive e os segredos `DUUK_DRIVE_GOOGLE_*` foram configurados. A API autenticada confirma configuração pronta; consentimento da conta central e transferências reais ainda aguardam validação.
+Contratos originais, contratos assinados e propostas comerciais são guardados no Google Drive da conta central da DUUK, por uma fila no banco processada a cada minuto pela Edge Function `duuk-drive`. Configuração, estrutura de pastas, regras de repetição e roteiro de validação com conta real estão em [google-drive-setup.md](google-drive-setup.md). A migração, o deploy da função, a Google Drive API, o escopo `drive.file`, o cliente Web DUUK Drive e os segredos `DUUK_DRIVE_GOOGLE_*` foram configurados. A conta central `duukfilms@gmail.com` está conectada; o original pendente foi enviado ao Drive com confirmação real HTTP 200, sem falhas. A biblioteca `/admin/drive` oferece busca, categorias, upload privado até 20 MB, visualização e download; sua permissão não concede acesso a Contratos ou CRM. As correções de fila mantêm o `safeupdate` das sessões da API. Instale também as migrações incrementais de fila, biblioteca e atualizações com filtro.
 
 ## Agenda Google, navegação e notificações — 1.3.0
 

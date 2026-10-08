@@ -12,6 +12,7 @@ export const sections = {
  contract_signed: { section: 'contracts', label: 'Contratos', child: 'signed', childLabel: 'Contratos Assinados' },
  proposal: { section: 'proposals', label: 'Propostas Comerciais' },
  document: { section: 'documents', label: 'Documentos' },
+ file: { section: 'documents', label: 'Documentos' },
 }
 
 const reasons = {
@@ -112,9 +113,9 @@ export async function ensurePath(ctx, doc) {
  return ensureFolder(ctx, { key: `client:${layout.section}:${doc.client_key}:${layout.child}`, name: layout.childLabel, parent: client })
 }
 
-export function multipartBody(metadata, bytes, boundary) {
+export function multipartBody(metadata, bytes, boundary, mimeType = 'application/pdf') {
  const encoder = new TextEncoder()
- const head = encoder.encode(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/pdf\r\n\r\n`)
+ const head = encoder.encode(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`)
  const tail = encoder.encode(`\r\n--${boundary}--`)
  const output = new Uint8Array(head.length + bytes.length + tail.length)
  output.set(head, 0); output.set(bytes, head.length); output.set(tail, head.length + bytes.length)
@@ -133,14 +134,15 @@ export async function findDocumentFile(ctx, doc) {
 }
 export async function uploadDocument(ctx, doc, folder, bytes) {
  await ctx.checkDocument?.(doc)
- const metadata = { name: doc.file_name, mimeType: 'application/pdf', parents: [folder.id], description: 'Enviado automaticamente pelo DUUK Admin.', appProperties: { duuk_document: doc.id, duuk_kind: doc.kind, duuk_sha256: doc.source_sha256 } }
+ const mimeType = doc.kind === 'file' ? doc.mime_type : 'application/pdf'
+ const metadata = { name: doc.file_name, mimeType, parents: [folder.id], description: 'Enviado pelo DUUK Admin.', appProperties: { duuk_document: doc.id, duuk_kind: doc.kind, duuk_sha256: doc.source_sha256 } }
  if (bytes.length <= multipartLimit) {
   const boundary = `duuk-${crypto.randomUUID()}`
-  return driveRequest(`${uploadApi}?${new URLSearchParams({ uploadType: 'multipart', fields: fileFields })}`, { method: 'POST', headers: { ...authorized(ctx.token), 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipartBody(metadata, bytes, boundary) }, ctx.request, 60000)
+  return driveRequest(`${uploadApi}?${new URLSearchParams({ uploadType: 'multipart', fields: fileFields })}`, { method: 'POST', headers: { ...authorized(ctx.token), 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipartBody(metadata, bytes, boundary, mimeType) }, ctx.request, 60000)
  }
  const started = await ctx.request(`${uploadApi}?${new URLSearchParams({ uploadType: 'resumable', fields: fileFields })}`, {
   method: 'POST',
-  headers: { ...authorized(ctx.token), 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': 'application/pdf', 'X-Upload-Content-Length': String(bytes.length) },
+  headers: { ...authorized(ctx.token), 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': mimeType, 'X-Upload-Content-Length': String(bytes.length) },
   body: JSON.stringify(metadata),
   redirect: 'error',
   signal: AbortSignal.timeout(30000),
@@ -154,11 +156,11 @@ export async function uploadDocument(ctx, doc, folder, bytes) {
  try { session = new URL(location) } catch { throw new DriveError(500) }
  if (session.protocol !== 'https:' || session.username || session.password || session.port || !(session.hostname === 'www.googleapis.com' || session.hostname.endsWith('.googleapis.com'))) throw new DriveError(500)
  await ctx.checkDocument?.(doc)
- return driveRequest(session.href, { method: 'PUT', headers: { ...authorized(ctx.token), 'Content-Type': 'application/pdf' }, body: bytes }, ctx.request, 120000)
+ return driveRequest(session.href, { method: 'PUT', headers: { ...authorized(ctx.token), 'Content-Type': mimeType }, body: bytes }, ctx.request, 120000)
 }
 
 export async function syncDocument(ctx, doc, bytes) {
- if (!bytes?.length || String.fromCharCode(...bytes.slice(0, 5)) !== '%PDF-') throw new SourceError('O PDF de origem está indisponível ou inválido.')
+ if (!bytes?.length || doc.kind !== 'file' && String.fromCharCode(...bytes.slice(0, 5)) !== '%PDF-') throw new SourceError('O PDF de origem está indisponível ou inválido.')
  const digest = await crypto.subtle.digest('SHA-256', bytes)
  const actual = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')
  if (doc.source_sha256 && doc.source_sha256 !== actual) throw new SourceError('O PDF de origem não confere com o registro. Nada foi enviado.')

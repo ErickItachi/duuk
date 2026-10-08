@@ -1,8 +1,8 @@
-# Google Drive da DUUK — 1.5.0
+# Google Drive da DUUK — 1.5.1
 
 Integração oficial OAuth 2.0 + Google Drive API v3, usada somente pelo DUUK Admin. O site institucional não é afetado. A conta central esperada é `duukfilms@gmail.com`; um super administrador a conecta uma única vez em **Configurações → Integrações → Google Drive**. Membros comuns não conectam nada.
 
-**Estado em 8 de outubro de 2026: backend instalado e configuração do Google Cloud concluída.** A migração está aplicada, a função `duuk-drive` está ativa, o Cron roda a cada minuto e os dois segredos dedicados estão configurados. Google Drive API foi ativada no projeto `duuk-511001`, com cliente Web **DUUK Drive**, redirect autorizado e escopo não confidencial `drive.file`, preservando os escopos anteriores do Calendar. A API autenticada retornou `configured: true`, conta esperada `duukfilms@gmail.com` e um PDF original pendente. O consentimento da conta central e os uploads reais ainda serão validados; testes simulados não comprovam essa etapa.
+**Estado em 8 de outubro de 2026: conta central conectada e envio real validado.** A migração inicial, as três correções incrementais e a função `duuk-drive` v3 estão instaladas. O Cron roda a cada minuto. Google Drive API, cliente Web **DUUK Drive**, redirect, escopo `drive.file` e segredos dedicados estão configurados no projeto `duuk-511001`, preservando o Calendar. A conta `duukfilms@gmail.com` concluiu OAuth. O contrato original que estava pendente foi enviado de verdade: a API retornou HTTP 200, um documento processado, zero falhas, ID do Google registrado e estado `synced`. O Google informou cota de 15 GB. Nenhuma configuração adicional do Google Cloud é necessária para esse fluxo. A transferência de um contrato final após duas assinaturas foi validada em testes de banco/protocolo, sem criar assinaturas ou contratos reais apenas para o teste.
 
 ## O que é guardado e como
 
@@ -12,6 +12,7 @@ DUUK/
   Contratos/<Cliente>/Contratos Assinados/Contrato <Cliente> - Assinado.pdf
   Propostas Comerciais/<Cliente>/Proposta Comercial <Cliente>.pdf
   Documentos/<Cliente>/
+  Documentos/Internos/<Arquivo>
 ```
 
 - Contrato criado ou PDF enviado: o PDF original entra na fila e vai para **Contratos Gerados**. Só PDFs que já existem no DUUK Admin são enviados; a assinatura eletrônica não muda.
@@ -21,6 +22,14 @@ DUUK/
 - Os IDs das pastas ficam em `duuk_drive_folders`; pastas e arquivos recebem `appProperties` próprias, então tentativas repetidas adotam o que já existe em vez de duplicar.
 - Nada é apagado no Drive: excluir contrato preserva as referências dos documentos já enviados e só remove pendências que nunca chegaram ao Google.
 - Nenhum link público ou permissão compartilhada é criado. Visualizar/baixar passa pelo backend autenticado, que entrega o PDF a partir do armazenamento privado do Supabase; "Abrir no Drive" só aparece para quem tem permissão e só aponta para `drive.google.com`.
+
+## Biblioteca de arquivos — 1.5.1
+
+O menu **Google Drive** abre `/admin/drive`: busca por arquivo/cliente, categorias, paginação, estado da fila, nova tentativa, visualização e download autenticados. PDFs usam o visualizador canvas existente, com seletor de páginas; imagens e vídeos têm prévia; Office, ZIP e texto podem ser baixados para abrir no aplicativo correspondente. As logos Google são oficiais, guardadas localmente e sem alteração.
+
+**Enviar arquivo** aceita PDF, JPG/PNG/WebP, DOCX/XLSX/PPTX, TXT/CSV, ZIP e MP4/MOV até 20 MB. Validação confere extensão, assinatura do formato, tamanho e hash; PDFs devem estar sem senha. Use a pasta **Internos** ou selecione um cliente com acesso ao CRM. Os arquivos ficam no bucket privado `duuk-drive-files`, sem policy pública e sem acesso direto do navegador, e seguem a fila existente para o Drive. Os limites gratuitos do Supabase e da conta Google continuam aplicáveis.
+
+A permissão **Google Drive** pode ser atribuída aos grupos e membros. Ela permite arquivos gerais; contratos ainda exigem **Contratos**, e propostas/documentos de cliente exigem **Clientes e leads**. A biblioteca não mostra arquivos pessoais anteriores da conta Google: o escopo permanece `drive.file`.
 
 ## Fila e tentativas
 
@@ -39,7 +48,7 @@ Respeitam permissões e preferências, com deduplicação: contrato finalizado s
 
 ## Configurar o Supabase
 
-1. Aplique `supabase/google-drive.sql` uma única vez, no SQL Editor (como as demais migrações, não é reexecutável). Ele cria tabelas, RLS, funções, triggers, o backfill dos contratos existentes e o Cron. Contratos já existentes entram na fila; a migração não chama o Google.
+1. Aplique `supabase/google-drive.sql` e depois `google-drive-queue-fix.sql`, `google-drive-library.sql` e `google-drive-safeupdate.sql`, nessa ordem e uma única vez cada, no SQL Editor (como as demais migrações, não é reexecutável). Ele cria tabelas, RLS, funções, triggers, o backfill dos contratos existentes e o Cron. Contratos já existentes entram na fila; a migração não chama o Google.
 2. Faça o deploy da Edge Function `duuk-drive` (`supabase/functions/duuk-drive`), com a mesma configuração das demais (a função valida usuários e o segredo Cron; não ative a verificação JWT legada do gateway).
 3. Cadastre `DUUK_DRIVE_GOOGLE_CLIENT_ID` e `DUUK_DRIVE_GOOGLE_CLIENT_SECRET` com as credenciais do cliente Web **DUUK Drive**. Não copie as credenciais `DUUK_GOOGLE_*` do Calendar. Opcional: `DUUK_DRIVE_ACCOUNT_EMAIL` para trocar a conta esperada (padrão `duukfilms@gmail.com`).
 4. Nenhuma variável nova na Vercel. Nada de credencial no navegador ou no repositório.
@@ -51,6 +60,8 @@ Se a migração ou a função ficarem indisponíveis, as telas ocultam os indica
 
 - `supabase/tests/google-drive.sql` (com rollback): fila transacional, nomes, homônimos, nomes inseguros, assinatura parcial, render obsoleto, isolamento de falhas, OAuth restrito a super admin e consumo único do state, Vault, lease único, pastas sem duplicação, idempotência e proteção do assinado, notificações sem cliente, separação dos caminhos de contratos/propostas no Storage, permissões, exclusão de contratos e privilégios de coluna do navegador.
 - `tests/google-drive.test.mjs`: protocolo com Drive simulado (pastas, multipart até 5 MB, upload resumível acima de 5 MB, adoção de arquivo existente, repetição sem duplicar, renovação de token, erros sem segredos, cota).
+- As fixtures verificam consultas com `WHERE` para a proteção `safeupdate` do PostgREST. O provedor não permite `LOAD` dessa biblioteca pela ferramenta SQL; a validação da proteção real foi feita pelo dispatch HTTP com upload confirmado, sem desativar a proteção.
+- `supabase/tests/google-drive-library.sql`: biblioteca, tipos, tamanho, paths por ator, notificações e permissões.
 - `deno check` das Edge Functions, `npm run lint`, `npm run build` e `npm test`.
 - UI com sessão e APIs simuladas em 320, 390, 768 e 1440 px: cartão em Integrações, indicadores na lista de contratos, painel no contrato e propostas no cliente, sem overflow horizontal.
 

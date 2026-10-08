@@ -1,5 +1,6 @@
 import { checked, database, handler, HttpError, json, member, readBody, readJson, sha256, text, uuid } from '../_shared/http.ts'
 import { PDFDocument } from '../_shared/pdf.ts'
+import { libraryFileType, libraryLimit } from '../_shared/drive-files.mjs'
 import { authorizationUrl, defaultDriveAccount, DriveError, driveRedirect, driveScope, driveStatePrefix, ensureFolder, exchangeToken, identityOf, SourceError, storageQuota, syncDocument } from '../_shared/google-drive.mjs'
 
 const configuration = () => ({ id: Deno.env.get('DUUK_DRIVE_GOOGLE_CLIENT_ID') || '', secret: Deno.env.get('DUUK_DRIVE_GOOGLE_CLIENT_SECRET') || '', account: (Deno.env.get('DUUK_DRIVE_ACCOUNT_EMAIL') || defaultDriveAccount).trim().toLowerCase() })
@@ -8,8 +9,13 @@ const tokensOf = (token: any, previous: any = {}) => ({ access_token: token.acce
 const authorizationFailure = (cause: any) => cause instanceof DriveError && cause.authorization
 
 type Options = { limit?: number, budget?: number, document_id?: string }
+async function backend(db: ReturnType<typeof database>, operation: string, payload: any = {}) {
+  const result = await db.rpc('duuk_drive_backend', { operation, payload })
+  if (result.error) console.error(JSON.stringify({ source: 'drive-rpc', operation, code: result.error.code }))
+  return checked(result)
+}
 export async function dispatch(db: ReturnType<typeof database>, config: ReturnType<typeof configuration>, options: Options = {}) {
-  const rpc = async (operation: string, payload: any = {}) => checked(await db.rpc('duuk_drive_backend', { operation, payload }))
+  const rpc = (operation: string, payload: any = {}) => backend(db, operation, payload)
   const started = Date.now(), budget = options.budget ?? 45000
   let processed = 0, failed = 0
   await rpc('reconcile')
@@ -45,7 +51,7 @@ export async function dispatch(db: ReturnType<typeof database>, config: ReturnTy
       let error: string | null = null, result: any = {}, retryable = true
       try {
         await ctx.checkDocument(job)
-        const download = await db.storage.from('duuk-documents').download(job.source_path)
+        const download = await db.storage.from(job.source_bucket || 'duuk-documents').download(job.source_path)
         if (download.error || !download.data) {
           const missing = (download.error as any)?.status === 404 || String((download.error as any)?.statusCode) === '404' || /not found/i.test(String(download.error?.message || ''))
           throw missing ? new SourceError('O PDF de origem não está mais disponível no DUUK Admin.') : new Error('storage')
@@ -78,13 +84,32 @@ export async function dispatch(db: ReturnType<typeof database>, config: ReturnTy
 
 handler(async (req, headers) => {
   const db = database(), config = configuration(), configured = !!config.id && !!config.secret
-  const rpc = async (operation: string, payload: any = {}) => checked(await db.rpc('duuk_drive_backend', { operation, payload }))
+  const rpc = (operation: string, payload: any = {}) => backend(db, operation, payload)
   const limit = async (actor: string, name: string, maximum: number) => { if (!checked(await db.rpc('duuk_action_limit', { actor, action_name: name, maximum, window_seconds: 600 }))) throw new HttpError('Aguarde alguns minutos antes de tentar novamente.', 429) }
 
   if (req.headers.get('content-type')?.includes('multipart/form-data')) {
-    const user = await member(req, db, 'crm.clients'), scope = { user_id: user.id }
+    const library = new URL(req.url).searchParams.get('library') === '1'
+    const user = await member(req, db, library ? 'drive' : 'crm.clients'), scope = { user_id: user.id }
     await limit(user.id, 'drive-proposal', 20)
-    const form = await new Response(await readBody(req, 11000000), { headers: { 'Content-Type': req.headers.get('content-type')! } }).formData(), file = form.get('file')
+    const form = await new Response(await readBody(req, library ? libraryLimit + 100000 : 11000000), { headers: { 'Content-Type': req.headers.get('content-type')! } }).formData(), file = form.get('file')
+    if (library) {
+      if (!(file instanceof File)) throw new HttpError('Escolha um arquivo.')
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      let mime: string
+      try { mime = libraryFileType(file.name, bytes) } catch (cause) { throw new HttpError((cause as Error).message) }
+      if (mime === 'application/pdf') try { await PDFDocument.load(bytes) } catch { throw new HttpError('Use um PDF válido, sem senha.') }
+      const path = `files/${user.id}/${crypto.randomUUID()}`, title = text(form.get('title'), 'o título', 160, false)
+      checked(await db.storage.from('duuk-drive-files').upload(path, bytes, { contentType: mime, upsert: false }))
+      let saved
+      try { saved = await rpc('add_file', { ...scope, file_name: file.name, title, client_id: form.get('client_id') ? uuid(form.get('client_id')) : undefined, source_path: path, sha256: await sha256(bytes), mime_type: mime, byte_size: bytes.length }) }
+      catch (cause) {
+        const linked = await db.from('duuk_drive_documents').select('id').eq('source_path', path).maybeSingle()
+        if (!linked.error && !linked.data) await db.storage.from('duuk-drive-files').remove([path])
+        throw cause
+      }
+      if (configured) await dispatch(db, config, { limit: 1, budget: 25000, document_id: saved.id }).catch(() => {})
+      return json(saved, headers)
+    }
     if (!(file instanceof File) || file.size > 10485760 || !file.size) throw new HttpError('Envie um PDF de até 10 MB.')
     const bytes = new Uint8Array(await file.arrayBuffer())
     try { await PDFDocument.load(bytes) } catch { throw new HttpError('Use um PDF válido, sem senha.') }
@@ -111,20 +136,23 @@ handler(async (req, headers) => {
 
   const user = await member(req, db), scope = { user_id: user.id }
   if (body.action === 'status') return json({ configured, expected_account: config.account, ...await rpc('status', scope) }, headers)
+  if (body.action === 'library') return json(await rpc('library', { ...scope, kind: text(body.kind, 'a categoria', 30, false), search: text(body.search, 'a busca', 120, false), offset: Math.max(0, Math.min(100000, Number(body.offset) || 0)) }), headers)
   if (body.action === 'documents') return json({ documents: await rpc('documents', { ...scope, kind: body.kind, contract_id: body.contract_id ? uuid(body.contract_id) : undefined, client_id: body.client_id ? uuid(body.client_id) : undefined }) }, headers)
   if (body.action === 'file') {
     const found = await rpc('file', { ...scope, document_id: uuid(body.id) })
     if (!found.source_path) throw new HttpError('Este arquivo está disponível somente no Google Drive.', 404)
-    const signed = checked(await db.storage.from('duuk-documents').createSignedUrl(found.source_path, 120, body.disposition === 'download' ? { download: found.file_name } : undefined))
+    const signed = checked(await db.storage.from(found.source_bucket || 'duuk-documents').createSignedUrl(found.source_path, 120, body.disposition === 'download' ? { download: found.file_name } : undefined))
     if (!signed) throw new HttpError('Arquivo indisponível.', 500)
-    return json({ url: signed.signedUrl, file_name: found.file_name }, headers)
+    return json({ url: signed.signedUrl, file_name: found.file_name, mime_type: found.mime_type }, headers)
   }
   if (body.action === 'retry') {
     await limit(user.id, 'drive-retry', 30)
+    const connection = checked(await db.from('duuk_drive_connection').select('status').maybeSingle())
+    if (!configured || connection?.status !== 'connected') throw new HttpError('Conecte o Google Drive em Configurações → Integrações antes de sincronizar.', 409)
     const documentId = body.id ? uuid(body.id) : undefined
     const queued = await rpc('retry', { ...scope, document_id: documentId })
-    if (configured) await dispatch(db, config, { budget: 25000, limit: documentId ? 1 : 3, document_id: documentId }).catch(() => {})
-    return json(queued, headers)
+    const result = await dispatch(db, config, { budget: 25000, limit: documentId ? 1 : 3, document_id: documentId })
+    return json({ ...queued, ...result }, headers)
   }
   if (body.action === 'disconnect') {
     // Revogar no Google remove os grants de todo o projeto, inclusive da Agenda e de uma reconexão.

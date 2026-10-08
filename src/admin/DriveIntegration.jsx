@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import AppLogo from './AppLogo'
 import { fmtTime } from '../crm/model'
 import { driveRequest } from '../office/api'
 import { useQuery } from '../office/useQuery'
@@ -41,7 +42,7 @@ export default function DriveIntegration({ callback, notify }) {
   }
   const status = busy === 'callback' ? 'Concluindo conexão…' : !query.data?.configured ? 'Aguardando configuração' : !connected ? 'Nenhuma conta conectada' : connection.status === 'error' ? 'Reconexão necessária' : counts.error ? 'Conectado · documentos com erro' : counts.pending ? `Conectado · ${counts.pending} aguardando envio` : 'Conectado'
   return <section className="admin-panel calendar-integration drive-integration" aria-labelledby="drive-integration-title">
-    <div className="calendar-integration__heading"><span className="calendar-integration__icon"><Icon name="drive" size={26} /></span><div><p className="admin-eyebrow">DOCUMENTOS / INTEGRAÇÕES</p><h2 id="drive-integration-title">Google Drive</h2><p>Contratos e propostas da DUUK guardados e organizados automaticamente em uma conta central.</p></div></div>
+    <div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="drive" /></span><div><p className="admin-eyebrow">DOCUMENTOS / INTEGRAÇÕES</p><h2 id="drive-integration-title">Google Drive</h2><p>Contratos e arquivos da DUUK guardados e organizados automaticamente em uma conta central.</p></div></div>
     <div className="drive-integration__refresh"><RefreshButton onRefresh={reload} disabled={!!busy} label="Atualizar Google Drive" /></div>
     {callbackError && <p className="admin-error" role="alert">{callbackError}</p>}
     <QueryState query={query}>{query.data && <>
@@ -56,6 +57,7 @@ export default function DriveIntegration({ callback, notify }) {
       <p className="calendar-integration__privacy"><Icon name="shield" size={17} /><span>Os arquivos ficam em pastas privadas da conta {account}. O DUUK Admin só acessa o que ele mesmo criou, nunca cria links públicos e guarda as credenciais criptografadas no servidor.</span></p>
       {!query.data.configured && <p className="platform-muted">A administração precisa concluir a configuração do aplicativo no Google Cloud e ativar a Google Drive API. A conexão ficará disponível aqui assim que estiver pronta.</p>}
       <div className="calendar-integration__actions">
+        <Link className="admin-button admin-button--secondary" to="/admin/drive"><Icon name="file" />Abrir arquivos</Link>
         <button className={`admin-button${connected && connection.status === 'connected' ? ' admin-button--secondary' : ''}`} disabled={!!busy || !query.data.configured} onClick={() => act('start')}><Icon name="link" />{busy === 'start' ? 'Abrindo Google…' : connected ? 'Reconectar conta' : 'Conectar Google Drive'}</button>
         {connected && connection.status === 'connected' && (counts.pending > 0 || counts.error > 0) && <button className="admin-button admin-button--secondary" disabled={!!busy} onClick={() => act('retry')}><Icon name="refresh" />{busy === 'retry' ? 'Enviando…' : 'Sincronizar pendências'}</button>}
         {connected && <button className="admin-text-button" disabled={!!busy} onClick={() => setDisconnect(true)}>Desconectar conta</button>}

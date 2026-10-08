@@ -15,6 +15,7 @@ import { currentRelease } from './pwaState'
 import { NotificationProvider, NotificationBell, NotificationsPage, NotificationSettingsPage } from './Notifications'
 import { UsersPage, PermissionsPage, ProfilePage, AuditPage } from './TeamPages'
 import IntegrationsPage from './IntegrationsPage'
+import DrivePage from './DrivePage'
 import TeamPresence from './TeamPresence'
 import CommercialPage from '../crm/CommercialPages'
 import MessageTemplatesPage from '../crm/WhatsAppMessages'
@@ -42,6 +43,7 @@ const sections = [
   { to: '/admin/comercial/emails', label: 'E-mails', icon: 'mail', permission: 'mail', group: 'Comercial' },
   { to: '/admin/comercial/relatorios', label: 'Relatórios', icon: 'chart', permission: 'crm.reports', group: 'Comercial' },
   { to: '/admin/contratos', label: 'Contratos', icon: 'document', permission: 'contracts' },
+  { to: '/admin/drive', label: 'Google Drive', icon: 'drive', permission: 'drive' },
   { to: '/admin/agenda', label: 'Agenda', icon: 'calendar', permission: 'agenda' },
   { to: '/admin/financeiro', label: 'Financeiro', icon: 'wallet', permission: 'finance' },
   { to: '/admin/insights', label: 'Insights', icon: 'chart', permission: 'insights' },
@@ -232,6 +234,7 @@ function AdminWorkspace() {
     {error&&editingSite&&<div className="admin-error" role="alert">{error} <button className="admin-text-button" onClick={()=>refresh().catch(()=>{})}>Tentar novamente</button></div>}
     {!ready&&editingSite?<div className="admin-empty"><p>Carregando seu conteúdo…</p></div>:<Routes>
      <Route index element={<DashboardPage/>}/>
+     <Route path="drive" element={guarded('drive',<DrivePage notify={notify}/>)}/>
      <Route path="portfolio" element={guarded('site',<ProjectList notify={notify}/>)}/><Route path="inicio" element={guarded('site',<HomeEditor notify={notify}/>)}/><Route path="midias" element={guarded('site',<MediaLibrary notify={notify}/>)}/>
      <Route path="contratos" element={guarded('contracts',<ContractsPage notify={notify}/>)}/><Route path="contratos/:id" element={guarded('contracts',<ContractEditor notify={notify}/>)}/><Route path="agenda" element={guarded('agenda',<AgendaPage notify={notify}/>)}/><Route path="financeiro" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="despesas" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="insights" element={guarded('insights',<InsightsPage/>)}/>
      {[[undefined,'dashboard'],['clientes','clients'],['pipeline','pipeline'],['contatos','activities'],['follow-ups','followups'],['relatorios','reports']].map(([path,mode])=><Route key={mode} path={path?`comercial/${path}`:'comercial'} element={guarded(({dashboard:'crm.dashboard',clients:'crm.clients',pipeline:'crm.pipeline',activities:'crm.activities',followups:'crm.followups',reports:'crm.reports'})[mode],<CommercialPage mode={mode} notify={notify}/>)}/>)}

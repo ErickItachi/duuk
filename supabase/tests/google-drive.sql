@@ -3,17 +3,25 @@
 -- O estado do Drive é isolado SOMENTE nesta transação para não misturar a fila real com fixtures.
 -- Os registros anteriores, conexões e pastas retornam integralmente no ROLLBACK final.
 begin;
-delete from public.duuk_drive_documents;
-delete from public.duuk_drive_folders;
-delete from duuk_private.drive_oauth_states;
-delete from public.duuk_drive_connection;
+-- O PostgREST carrega safeupdate automaticamente. Em um banco local com permissão:
+-- load 'safeupdate';
+-- O provedor bloqueia LOAD por MCP; valide também as RPCs pela API REST real.
+delete from public.duuk_drive_documents where id is not null;
+delete from public.duuk_drive_folders where key is not null;
+delete from duuk_private.drive_oauth_states where state_hash is not null;
+delete from public.duuk_drive_connection where singleton = true;
 do $$
 declare admin_id uuid:=gen_random_uuid(); staff uuid:=gen_random_uuid(); outsider uuid:=gen_random_uuid(); sales uuid:=gen_random_uuid();
  admin_role uuid:=gen_random_uuid(); staff_role uuid:=gen_random_uuid(); outsider_role uuid:=gen_random_uuid(); sales_role uuid:=gen_random_uuid();
- crm_client uuid:=gen_random_uuid(); first_contract uuid:=gen_random_uuid(); second_contract uuid:=gen_random_uuid(); third_contract uuid:=gen_random_uuid(); other_contract uuid:=gen_random_uuid();
+ crm_client uuid:=gen_random_uuid(); first_contract uuid:=gen_random_uuid(); second_contract uuid:=gen_random_uuid(); third_contract uuid:=gen_random_uuid(); other_contract uuid:=gen_random_uuid(); forced_contract uuid:=gen_random_uuid();
  invite_a uuid:=gen_random_uuid(); invite_b uuid:=gen_random_uuid();
- state text; lease jsonb; scope jsonb; old_scope jsonb; jobs jsonb; job jsonb; proposal jsonb; total integer; revision bigint; folder_name text; sha text:=repeat('a',64); client_label text:='Apollo Grill '||gen_random_uuid(); client_email text:=gen_random_uuid()||'@apollo.test';
+ state text; lease jsonb; scope jsonb; old_scope jsonb; jobs jsonb; job jsonb; proposal jsonb; preserved_original jsonb; total integer; revision bigint; folder_name text; sha text:=repeat('a',64); client_label text:='Apollo Grill '||gen_random_uuid(); client_email text:=gen_random_uuid()||'@apollo.test';
 begin
+ -- Detecta a regressão que só se manifestava nas sessões protegidas do PostgREST.
+ if exists(select 1 from regexp_split_to_table(pg_get_functiondef('duuk_private.drive_backend(text,jsonb)'::regprocedure),E'\n') source_line
+  where lower(source_line) like '%update public.duuk_drive_connection set %' and source_line !~* '\mwhere\M') then
+  raise exception 'Atualização da conexão sem filtro falharia no pg-safeupdate';
+ end if;
  insert into public.duuk_roles(id,name) values(admin_role,'Teste Drive A '||admin_role),(staff_role,'Teste Drive B '||staff_role),(outsider_role,'Teste Drive C '||outsider_role),(sales_role,'Teste Drive D '||sales_role);
  insert into public.duuk_role_permissions(role_id,permission,allowed) values(staff_role,'contracts',true),(sales_role,'crm',true),(sales_role,'crm.clients',true);
  insert into auth.users(id,email) values(admin_id,admin_id||'@test.invalid'),(staff,staff||'@test.invalid'),(outsider,outsider||'@test.invalid'),(sales,sales||'@test.invalid');
@@ -60,7 +68,7 @@ begin
  -- Falha no gatilho jamais interrompe o contrato: força um erro e confirma que o insert continua válido.
  alter table public.duuk_drive_documents add constraint test_force_failure check (file_name <> 'Contrato Forçado.pdf');
  insert into public.duuk_contracts(id,title,client_name,client_email,duuk_name,original_path,original_sha256,pages,created_by)
- values(gen_random_uuid(),'Contrato','Forçado','','Representante DUUK','original/x/'||gen_random_uuid()||'.pdf',repeat('7',64),'[{"width":595,"height":842,"rotation":0}]',admin_id);
+ values(forced_contract,'Contrato','Forçado','','Representante DUUK','original/'||forced_contract||'/'||gen_random_uuid()||'.pdf',repeat('7',64),'[{"width":595,"height":842,"rotation":0}]',admin_id);
  if not exists(select 1 from public.duuk_contracts where client_name='Forçado') then raise exception 'Falha do Drive interrompeu o contrato'; end if;
  alter table public.duuk_drive_documents drop constraint test_force_failure;
 
@@ -96,7 +104,7 @@ begin
  scope:=jsonb_build_object('generation',lease->>'generation','lease_id',lease->>'lease_id');
  begin perform public.duuk_drive_backend('jobs',scope||jsonb_build_object('generation',gen_random_uuid()));raise exception 'Geração inválida foi aceita';exception when sqlstate 'PT409' then null;end;
  old_scope:=scope;
- update public.duuk_drive_connection set lease_until=now()-interval '1 second';
+ update public.duuk_drive_connection set lease_until=now()-interval '1 second' where singleton = true;
  begin perform public.duuk_drive_backend('jobs',old_scope);raise exception 'Lease expirado foi aceito';exception when sqlstate 'PT409' then null;end;
  lease:=public.duuk_drive_backend('claim');
  scope:=jsonb_build_object('generation',lease->>'generation','lease_id',lease->>'lease_id');
@@ -205,6 +213,34 @@ begin
  if not exists(select 1 from public.duuk_drive_documents where drive_file_id='drv-file-signed') then raise exception 'Desconexão apagou referências'; end if;
  if public.duuk_drive_backend('claim') is not null then raise exception 'Conexão desconectada continuou processando'; end if;
 
+ -- O dispatch sempre passa por reconcile: executar esta operação detecta ambiguidades PL/pgSQL
+ -- mesmo quando todos os uploads isolados funcionam. Duas lacunas independentes simulam
+ -- falha do gatilho no original e perda da referência do PDF final já renderizado.
+ -- Datas mínimas garantem prioridade destas fixtures no lote de dez, sem depender dos contratos reais.
+ update public.duuk_contracts set created_at='-infinity'::timestamptz where id in(first_contract,forced_contract);
+ select to_jsonb(d) into preserved_original from public.duuk_drive_documents d where contract_id=first_contract and kind='contract_original';
+ delete from public.duuk_drive_documents where contract_id=first_contract and kind='contract_signed';
+ if exists(select 1 from public.duuk_drive_documents where contract_id=forced_contract) then raise exception 'Fixture de falha já tinha sido enfileirada'; end if;
+ alter table public.duuk_drive_documents add constraint test_reconcile_failure check (file_name <> 'Contrato Forçado.pdf');
+ perform public.duuk_drive_backend('reconcile');
+ if not exists(select 1 from public.duuk_drive_documents d join public.duuk_contracts source_contract on source_contract.id=d.contract_id
+  where d.contract_id=first_contract and d.kind='contract_signed' and d.status='pending' and d.source_path=source_contract.signed_path and d.source_sha256=source_contract.signed_sha256) then
+  raise exception 'Reconcile não recuperou o PDF final atual após falha de outra pendência';
+ end if;
+ if exists(select 1 from public.duuk_drive_documents where contract_id=forced_contract) then raise exception 'Reconcile ignorou a falha forçada da fixture'; end if;
+ alter table public.duuk_drive_documents drop constraint test_reconcile_failure;
+ perform public.duuk_drive_backend('reconcile');
+ if (select count(*) from public.duuk_drive_documents where contract_id=forced_contract and kind='contract_original' and status='pending' and source_sha256=repeat('7',64))<>1 then
+  raise exception 'Reconcile não recuperou o original cuja inclusão no gatilho falhou';
+ end if;
+ perform public.duuk_drive_backend('reconcile');
+ if (select count(*) from public.duuk_drive_documents where contract_id=first_contract)<>2
+  or (select count(*) from public.duuk_drive_documents where contract_id=forced_contract)<>1 then raise exception 'Reconcile repetido duplicou os documentos recuperados'; end if;
+ if (select to_jsonb(d) from public.duuk_drive_documents d where contract_id=first_contract and kind='contract_original') is distinct from preserved_original then
+  raise exception 'Reconcile alterou um documento original já sincronizado';
+ end if;
+ if exists(select 1 from public.duuk_drive_documents where contract_id=other_contract and kind='contract_signed') then raise exception 'Reconcile fabricou PDF final para contrato sem todas as assinaturas'; end if;
+
  -- Leitura pelo navegador respeita permissão, inclusive no bucket compartilhado, e não vê IDs do Drive.
  insert into storage.objects(bucket_id,name) values
   ('duuk-documents','original/'||first_contract||'/'||gen_random_uuid()||'.pdf'),
@@ -228,4 +264,4 @@ begin
 end $$;
 reset role;
 rollback;
-select 'PASS: fila transacional, nomes, clientes homônimos, pastas sem duplicação, assinatura final, falhas, retry, notificações, propostas, permissões e credenciais no Vault' as result;
+select 'PASS: fila transacional, reconciliação de originais e assinados com isolamento de falhas e idempotência, nomes, clientes homônimos, pastas sem duplicação, assinatura final, retry, notificações, propostas, permissões e credenciais no Vault' as result;

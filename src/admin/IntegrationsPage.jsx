@@ -7,6 +7,7 @@ import { ConfirmModal, Icon, RefreshButton } from './components'
 import { PageTitle, QueryState } from './forms'
 import { fmtTime } from '../crm/model'
 import DriveIntegration from './DriveIntegration'
+import AppLogo from './AppLogo'
 
 const request=body=>platformRequest('duuk-calendar',body)
 export default function IntegrationsPage({notify}) {
@@ -26,7 +27,7 @@ export default function IntegrationsPage({notify}) {
   <PageTitle title="Integrações" description="Suas ferramentas, conectadas ao dia a dia da DUUK."><RefreshButton onRefresh={reload}/></PageTitle>
   {callbackError&&<p className="admin-error" role="alert">{callbackError}</p>}
   <section className="admin-panel calendar-integration">
-   <div className="calendar-integration__heading"><span className="calendar-integration__icon"><Icon name="calendar" size={26}/></span><div><p className="admin-eyebrow">AGENDA / INTEGRAÇÕES</p><h2>Google Calendar</h2><p>Leve os compromissos da equipe para um calendário DUUK na sua conta.</p></div></div>
+   <div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="calendar"/></span><div><p className="admin-eyebrow">AGENDA / INTEGRAÇÕES</p><h2>Google Calendar</h2><p>Leve os compromissos da equipe para um calendário DUUK na sua conta.</p></div></div>
    <QueryState query={query}>{query.data&&<>
     <div className={`calendar-integration__status${connected&&connection.status==='connected'?' is-connected':''}`}><i/><span>{busy==='callback'?'Concluindo conexão…':!query.data.configured?'Aguardando configuração':connected?(connection.status==='error'?'Conexão precisa de atenção':connection.pending?'Sincronização em andamento':'Conta conectada'):'Nenhuma conta conectada'}</span></div>
     {connected&&<dl className="calendar-integration__details"><div><dt>Conta Google</dt><dd>{connection.account_email}</dd></div><div><dt>Última sincronização</dt><dd>{connection.last_synced_at?fmtTime(connection.last_synced_at):'Aguardando o primeiro envio'}</dd></div><div><dt>Compromissos pendentes</dt><dd>{connection.pending}</dd></div></dl>}

@@ -15,6 +15,6 @@ export function safeDriveLink(value) {
 export function safeDocumentUrl(value, storageOrigin) {
   try {
     const url = new URL(value), origin = new URL(storageOrigin)
-    return url.origin === origin.origin && !url.username && !url.password && url.pathname.startsWith('/storage/v1/object/sign/duuk-documents/') ? url.href : ''
+    return url.origin === origin.origin && !url.username && !url.password && ['/storage/v1/object/sign/duuk-documents/', '/storage/v1/object/sign/duuk-drive-files/'].some(prefix => url.pathname.startsWith(prefix)) ? url.href : ''
   } catch { return '' }
 }

@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.5.1",
+    "date": "2026-10-08",
+    "title": "Google Drive: arquivos no painel",
+    "new": [
+      "Módulo Google Drive com busca, categorias, visualização, download e envio de arquivos privados de até 20 MB.",
+      "Arquivos internos ou vinculados ao cliente, com acesso definido nas permissões da equipe."
+    ],
+    "improved": [
+      "Logos oficiais do Google Drive e Google Calendar em Integrações."
+    ],
+    "fixed": [
+      "Fila de sincronização de contratos corrigida, com falhas visíveis e novas tentativas."
+    ]
+  },
+  {
     "version": "1.5.0",
     "date": "2026-10-08",
     "title": "Integração com Google Drive",
