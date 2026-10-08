@@ -72,8 +72,8 @@ export function LoadingPanel({ label = "Carregando seu espaço…" }) {
     </div>
   );
 }
-export function Avatar({ profile, size = 36 }) {
-  return (
+export function Avatar({ profile, size = 36, online = false }) {
+  const avatar = (
     <span className="admin-avatar" style={{ width: size, height: size }}>
       {profile?.avatar_url ? (
         <img src={profile.avatar_url} alt="" />
@@ -88,4 +88,10 @@ export function Avatar({ profile, size = 36 }) {
       )}
     </span>
   );
+  return online ? (
+    <span className="admin-avatar-presence" title="Online agora">
+      {avatar}
+      <i aria-hidden="true" />
+    </span>
+  ) : avatar;
 }

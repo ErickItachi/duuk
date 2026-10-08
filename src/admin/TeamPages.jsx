@@ -264,7 +264,7 @@ export function UsersPage({ notify }) {
                 )
                 .map((u) => (
                   <article key={u.id} className="platform-row">
-                    <Avatar profile={u} />
+                    <Avatar profile={u} online={auth.presenceReady && auth.isOnline(u.id)} />
                     <div className="platform-row__main">
                       <h2>{u.name}</h2>
                       <p>{u.email}</p>
@@ -277,11 +277,19 @@ export function UsersPage({ notify }) {
                         Último acesso: {date(u.last_sign_in_at)}
                       </small>
                     </div>
-                    <span
-                      className={`admin-status admin-status--${u.active ? "published" : "archived"}`}
-                    >
-                      {u.active ? "Ativo" : "Inativo"}
-                    </span>
+                    <div className="platform-user-status">
+                      {u.active && (
+                        <span className={`admin-status admin-status--presence${auth.presenceReady && auth.isOnline(u.id) ? " is-online" : ""}`}>
+                          <i />
+                          {auth.presenceReady ? (auth.isOnline(u.id) ? "Online agora" : "Offline") : "Verificando…"}
+                        </span>
+                      )}
+                      <span
+                        className={`admin-status admin-status--${u.active ? "published" : "archived"}`}
+                      >
+                        {u.active ? "Ativo" : "Inativo"}
+                      </span>
+                    </div>
                     <div className="admin-row-actions">
                       <button
                         className="admin-icon-button"

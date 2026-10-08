@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.3.1",
+    "date": "2026-10-07",
+    "title": "Equipe online, em tempo real",
+    "new": [
+      "Indicador privado de presença no topo do painel, com a lista das pessoas conectadas naquele momento.",
+      "Estado online ou offline visível em Nossa equipe, sem contar duas vezes quem usa mais de uma aba ou aparelho."
+    ],
+    "improved": [
+      "Presença responsiva no computador e no celular, mantendo a conexão enquanto o aplicativo continua ativo em primeiro ou segundo plano."
+    ]
+  },
+  {
     "version": "1.3.0",
     "date": "2026-10-07",
     "title": "Agenda conectada e avisos da equipe",

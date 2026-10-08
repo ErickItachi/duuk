@@ -56,6 +56,8 @@ No iPhone/iPad compatível, instale pelo Safari > Compartilhar > Adicionar à Te
 
 VAPID privado e token do agendamento ficam criptografados no Supabase Vault. O cliente recebe somente a chave pública. O Cron dispara a função a cada cinco minutos. Preferências, permissões, deduplicação, tentativas limitadas e remoção de endpoints expirados são verificadas no backend.
 
+O topo do painel mostra os membros conectados pelo tópico privado de Realtime Presence `duuk:team:presence`; a lista de usuários mostra online ou offline. A contagem reúne várias abas e aparelhos da mesma pessoa. A presença permanece enquanto ao menos uma conexão do painel ou do site autenticado está ativa, inclusive em segundo plano quando o navegador a mantém. Ao fechar tudo ou quando iOS/Android suspendem a PWA, a pessoa fica offline após o Supabase detectar a queda. Esse estado é informativo e não participa da autorização.
+
 Eventos reais incluem compromissos de amanhã/uma hora, follow-ups, assinatura recebida, resumo financeiro do mês encerrado e e-mails novos após conectar o Titan. Notificações internas ficam por 180 dias. O histórico de versões e os avisos de novidades foram removidos da interface a pedido do usuário; não publique novos eventos de versão.
 
 ## Publicar atualizações
