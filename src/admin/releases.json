@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.5.0",
+    "date": "2026-10-08",
+    "title": "Integração com Google Drive",
+    "new": [
+      "Agora a DUUK conta com integração ao Google Drive para armazenamento e organização de contratos, documentos e arquivos assinados.",
+      "Em Configurações > Integrações, um super administrador conecta a conta central, acompanha o espaço usado e a última sincronização, reconecta ou desconecta.",
+      "Contratos originais e assinados, propostas e documentos em PDF anexados aos clientes, são organizados em pastas por cliente, sem duplicar arquivos."
+    ],
+    "improved": [
+      "Indicadores de sincronização, visualização, download e nova tentativa nos contratos, com avisos para falhas, reconexão e espaço quase esgotado."
+    ]
+  },
+  {
     "version": "1.4.0",
     "date": "2026-10-08",
     "title": "WhatsApp no ritmo do Comercial",

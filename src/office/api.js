@@ -1,5 +1,5 @@
 import { supabase } from "../content/supabase";
-import { teamRequest } from "../admin/api";
+import { platformRequest, teamRequest } from "../admin/api";
 import { monthRange } from "./model";
 
 export async function officeRequest(body) {
@@ -15,6 +15,16 @@ export async function officeRequest(body) {
     throw new Error(message);
   }
   return data;
+}
+export const driveRequest = (body) => platformRequest("duuk-drive", body);
+export async function listDriveStatuses(kinds) {
+  const { data, error } = await supabase
+    .from("duuk_drive_documents")
+    .select("id,kind,contract_id,status")
+    .in("kind", kinds)
+    .not("contract_id", "is", null)
+    .limit(2000);
+  return error ? [] : data;
 }
 export async function signRequest(body) {
   const response = await fetch(

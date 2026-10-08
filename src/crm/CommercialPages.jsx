@@ -32,6 +32,8 @@ import PipelineBoard from "./PipelineBoard";
 import { WhatsAppComposer } from './WhatsAppMessages';
 import { whatsappPhone } from './whatsapp';
 
+import { ClientProposals, ClientDocuments } from "../office/DriveDocuments";
+
 const initialClient = {
   name: "",
   company: "",
@@ -505,6 +507,9 @@ function ClientDetail({
   onFollowup,
   onEmail,
   onWhatsApp,
+
+  canProposals,
+  notify,
 }) {
   const query = useQuery(
     useCallback(() => clientHistory(client.id), [client.id]),
@@ -547,6 +552,7 @@ function ClientDetail({
           ))}
         </div>
         {client.notes && <p className="crm-notes">{client.notes}</p>}
+        {canProposals && <><ClientProposals client={client} notify={notify} /><ClientDocuments client={client} notify={notify} /></>}
         <h3 className="platform-subheading">Histórico do cliente</h3>
         <QueryState query={query}>
           <div className="platform-timeline">
@@ -574,7 +580,7 @@ function ClientDetail({
           </div>
         </QueryState>
       </div>
-      <div className="admin-modal__foot">
+      <div className="admin-modal__foot crm-client-actions">
         <button className="admin-button admin-button--secondary" onClick={onWhatsApp}><Icon name="message" />Conversar no WhatsApp</button>
         {onEmail && (
           <Link
@@ -1231,6 +1237,9 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
         <ClientDetail
           onEmail={auth.hasPermission("mail")}
           onWhatsApp={() => { setWhatsApp(detail); setDetail(null); }}
+
+          canProposals={auth.hasPermission("crm.clients")}
+          notify={notify}
           client={detail}
           people={data.people}
           onClose={() => setDetail(null)}

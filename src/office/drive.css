@@ -1,0 +1,20 @@
+.drive-panel, .drive-document, .drive-documents { min-width: 0; }
+.drive-panel__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.drive-panel__tools .admin-refresh { margin: 0; }
+.drive-upload { display: grid; gap: 12px; min-width: 0; padding-top: 16px; border-top: 1px solid var(--admin-line); }
+.drive-upload .admin-field { min-width: 0; margin: 0; }
+.drive-upload .admin-field small { color: var(--admin-muted); font-weight: 400; }
+.drive-upload .admin-button { justify-self: start; max-width: 100%; white-space: normal; }
+.drive-upload > small { font-size: 11px; line-height: 1.7; }
+.drive-integration__refresh { display: flex; justify-content: flex-end; margin-top: 18px; }
+.drive-integration__quota-note { margin: 7px 0 0; color: var(--admin-muted); font-size: 10px; line-height: 1.6; }
+.drive-integration .calendar-integration__status > i { flex-shrink: 0; }
+.drive-integration .calendar-integration__status > span { overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .drive-panel__head { align-items: flex-start; }
+  .drive-panel__tools { margin-left: auto; }
+  .drive-upload .admin-button { justify-self: stretch; justify-content: center; width: 100%; }
+  .crm-client-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crm-client-actions .admin-button { min-width: 0; padding-inline: 10px; line-height: 1.4; overflow-wrap: normal; word-break: normal; white-space: normal; justify-content: center; }
+  .crm-client-actions > .admin-button:last-child { grid-column: 1 / -1; }
+}
