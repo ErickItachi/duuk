@@ -56,7 +56,7 @@ export default function TeamPresence() {
             {online.length ? online.map((person) => (
               <div key={person.id}>
                 <Avatar profile={person} size={34} />
-                <span>
+                <span className="team-presence__person">
                   <strong>{person.name}{person.id === auth.user.id ? ' · você' : ''}</strong>
                   <small>{person.job_title || 'Equipe DUUK'}</small>
                 </span>

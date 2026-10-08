@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.3.2",
+    "date": "2026-10-07",
+    "title": "Presença ajustada no celular",
+    "fixed": [
+      "Foto de perfil circular e no tamanho correto dentro da lista de pessoas online."
+    ]
+  },
+  {
     "version": "1.3.1",
     "date": "2026-10-07",
     "title": "Equipe online, em tempo real",
