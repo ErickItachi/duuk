@@ -34,14 +34,14 @@ Respeitam permissões e preferências, com deduplicação: contrato finalizado s
 
 1. Em **APIs e serviços → Biblioteca**, ative **Google Drive API**. Mantenha o faturamento desativado; o uso fica nas cotas gratuitas.
 2. Em **Google Auth Platform → Data Access**, adicione o escopo `https://www.googleapis.com/auth/drive.file` (além de `openid` e `email` já existentes). `drive.file` só dá acesso a arquivos criados pelo próprio aplicativo; não adicione `drive`, `drive.readonly` nem outros.
-3. Reutilize o cliente Web **DUUK Agenda** e o redirect URI já cadastrado, `https://www.duukfilms.com/admin/configuracoes/integracoes`. O estado OAuth do Drive usa o prefixo `drv.` para a tela distinguir o retorno do Calendar.
-4. Se o consentimento já estiver em produção, não é preciso mais nada. `drive.file` é um escopo não sensível. Em modo Testing, inclua `duukfilms@gmail.com` como usuário de teste (autorização offline expira em 7 dias nesse modo).
+3. Crie outro cliente OAuth do tipo **Web application**, com o nome **DUUK Drive**, e cadastre o redirect URI `https://www.duukfilms.com/admin/configuracoes/integracoes`. Não reutilize o cliente **DUUK Agenda**: revogar ou reconectar o armazenamento não pode invalidar as agendas dos membros. O estado OAuth do Drive usa o prefixo `drv.` para a tela distinguir os dois retornos.
+4. Se o consentimento já estiver em produção, não é preciso mudar a audiência. `drive.file` é um escopo não sensível. Em modo Testing, inclua `duukfilms@gmail.com` como usuário de teste (a autorização offline expira em 7 dias nesse modo).
 
 ## Configurar o Supabase
 
 1. Aplique `supabase/google-drive.sql` uma única vez, no SQL Editor (como as demais migrações, não é reexecutável). Ele cria tabelas, RLS, funções, triggers, o backfill dos contratos existentes e o Cron. Contratos já existentes entram na fila; a migração não chama o Google.
 2. Faça o deploy da Edge Function `duuk-drive` (`supabase/functions/duuk-drive`), com a mesma configuração das demais (a função valida usuários e o segredo Cron; não ative a verificação JWT legada do gateway).
-3. Segredos já existentes e reutilizados: `DUUK_GOOGLE_CLIENT_ID` e `DUUK_GOOGLE_CLIENT_SECRET`. Opcional: `DUUK_DRIVE_ACCOUNT_EMAIL` para trocar a conta esperada (padrão `duukfilms@gmail.com`).
+3. Cadastre `DUUK_DRIVE_GOOGLE_CLIENT_ID` e `DUUK_DRIVE_GOOGLE_CLIENT_SECRET` com as credenciais do cliente Web **DUUK Drive**. Não copie as credenciais `DUUK_GOOGLE_*` do Calendar. Opcional: `DUUK_DRIVE_ACCOUNT_EMAIL` para trocar a conta esperada (padrão `duukfilms@gmail.com`).
 4. Nenhuma variável nova na Vercel. Nada de credencial no navegador ou no repositório.
 5. Um super administrador abre **Configurações → Integrações → Google Drive**, toca em **Conectar Google Drive** e entra com `duukfilms@gmail.com`. O backend só aceita o retorno se o e-mail verificado for o esperado, o escopo concedido incluir `drive.file` e houver refresh token; caso contrário, revoga a autorização. O refresh token fica criptografado no Vault; as RPCs são exclusivas de `service_role`. Ao reconectar, a credencial anterior é retirada do Vault e sua revogação no Google é tentada sem expô-la ao navegador.
 
@@ -49,8 +49,8 @@ Enquanto a migração ou a função não estiverem no ar, as telas ocultam os in
 
 ## Validação
 
-- `supabase/tests/google-drive.sql` (com rollback): fila transacional, nomes, homônimos, nomes inseguros, assinatura parcial, render obsoleto, isolamento de falhas, OAuth restrito a super admin e consumo único do state, Vault, lease único, pastas sem duplicação, idempotência e proteção do assinado, notificações, permissões, propostas, exclusão de contratos e privilégios de coluna do navegador.
-- `tests/google-drive.test.mjs`: protocolo com Drive simulado (pastas, multipart, adoção de arquivo existente, repetição sem duplicar, renovação de token, erros sem segredos, cota).
+- `supabase/tests/google-drive.sql` (com rollback): fila transacional, nomes, homônimos, nomes inseguros, assinatura parcial, render obsoleto, isolamento de falhas, OAuth restrito a super admin e consumo único do state, Vault, lease único, pastas sem duplicação, idempotência e proteção do assinado, notificações sem cliente, separação dos caminhos de contratos/propostas no Storage, permissões, exclusão de contratos e privilégios de coluna do navegador.
+- `tests/google-drive.test.mjs`: protocolo com Drive simulado (pastas, multipart até 5 MB, upload resumível acima de 5 MB, adoção de arquivo existente, repetição sem duplicar, renovação de token, erros sem segredos, cota).
 - `deno check` das Edge Functions, `npm run lint`, `npm run build` e `npm test`.
 - UI com sessão e APIs simuladas em 320, 390, 768 e 1440 px: cartão em Integrações, indicadores na lista de contratos, painel no contrato e propostas no cliente, sem overflow horizontal.
 

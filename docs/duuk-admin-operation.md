@@ -2,7 +2,7 @@
 
 ## Google Drive — 1.4.0
 
-Contratos originais, contratos assinados e propostas comerciais são guardados no Google Drive da conta central da DUUK, por uma fila no banco processada a cada minuto pela Edge Function `duuk-drive`. Configuração, estrutura de pastas, regras de repetição e roteiro de validação com conta real estão em [google-drive-setup.md](google-drive-setup.md). A validação real ainda está pendente: migração `supabase/google-drive.sql`, deploy da função, Google Drive API, escopo `drive.file` e conexão por um super administrador.
+Contratos originais, contratos assinados e propostas comerciais são guardados no Google Drive da conta central da DUUK, por uma fila no banco processada a cada minuto pela Edge Function `duuk-drive`. Configuração, estrutura de pastas, regras de repetição e roteiro de validação com conta real estão em [google-drive-setup.md](google-drive-setup.md). A validação real ainda está pendente: migração `supabase/google-drive.sql`, deploy da função, Google Drive API, escopo `drive.file`, cliente OAuth Web dedicado (separado do Calendar), dois segredos `DUUK_DRIVE_GOOGLE_*` e conexão por um super administrador.
 
 ## Agenda Google, navegação e notificações — 1.3.0
 

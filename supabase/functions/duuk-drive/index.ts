@@ -2,7 +2,7 @@ import { checked, database, handler, HttpError, json, member, readBody, readJson
 import { PDFDocument } from '../_shared/pdf.ts'
 import { authorizationUrl, defaultDriveAccount, DriveError, driveRedirect, driveScope, driveStatePrefix, ensureFolder, exchangeToken, identityOf, SourceError, storageQuota, syncDocument } from '../_shared/google-drive.mjs'
 
-const configuration = () => ({ id: Deno.env.get('DUUK_GOOGLE_CLIENT_ID') || '', secret: Deno.env.get('DUUK_GOOGLE_CLIENT_SECRET') || '', account: (Deno.env.get('DUUK_DRIVE_ACCOUNT_EMAIL') || defaultDriveAccount).trim().toLowerCase() })
+const configuration = () => ({ id: Deno.env.get('DUUK_DRIVE_GOOGLE_CLIENT_ID') || '', secret: Deno.env.get('DUUK_DRIVE_GOOGLE_CLIENT_SECRET') || '', account: (Deno.env.get('DUUK_DRIVE_ACCOUNT_EMAIL') || defaultDriveAccount).trim().toLowerCase() })
 const random = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('')
 const tokensOf = (token: any, previous: any = {}) => ({ access_token: token.access_token, refresh_token: token.refresh_token || previous.refresh_token, expires_at: Date.now() + Number(token.expires_in || 3600) * 1000 })
 const authorizationFailure = (cause: any) => cause instanceof DriveError && cause.authorization
@@ -72,7 +72,7 @@ export async function dispatch(db: ReturnType<typeof database>, config: ReturnTy
 handler(async (req, headers) => {
   const db = database(), config = configuration(), configured = !!config.id && !!config.secret
   const rpc = async (operation: string, payload: any = {}) => checked(await db.rpc('duuk_drive_backend', { operation, payload }))
-  const limit = async (actor: string, name: string, maximum: number) => { if (!checked(await db.rpc('duuk_action_limit', { actor, action: name, maximum, window_seconds: 600 }))) throw new HttpError('Aguarde alguns minutos antes de tentar novamente.', 429) }
+  const limit = async (actor: string, name: string, maximum: number) => { if (!checked(await db.rpc('duuk_action_limit', { actor, action_name: name, maximum, window_seconds: 600 }))) throw new HttpError('Aguarde alguns minutos antes de tentar novamente.', 429) }
 
   if (req.headers.get('content-type')?.includes('multipart/form-data')) {
     const user = await member(req, db, 'crm.clients'), scope = { user_id: user.id }

@@ -78,6 +78,7 @@ begin
  lease:=public.duuk_drive_backend('claim');
  if lease is null or not (lease->>'quota_due')::boolean then raise exception 'Claim não entregou a conexão'; end if;
  if public.duuk_drive_backend('claim') is not null then raise exception 'Dois workers receberam a mesma conexão'; end if;
+ if (select lease_until from public.duuk_drive_connection) < now() + interval '4 minutes' then raise exception 'Lease não cobre uma transferência resumível'; end if;
  scope:=jsonb_build_object('generation',lease->>'generation','lease_id',lease->>'lease_id');
  perform public.duuk_drive_backend('folder_save',scope||jsonb_build_object('key','root','drive_id','drv-root','name','DUUK'));
  perform public.duuk_drive_backend('folder_save',scope||jsonb_build_object('key','section:contracts','drive_id','drv-contracts','name','Contratos','parent_key','root'));
@@ -142,6 +143,14 @@ begin
  begin perform public.duuk_drive_backend('documents',jsonb_build_object('user_id',outsider,'contract_id',first_contract));raise exception 'Listagem sem permissão';exception when sqlstate 'PT403' then null;end;
  if (public.duuk_drive_backend('documents',jsonb_build_object('user_id',staff,'contract_id',first_contract)))::text like '%drive_file_id%' or (public.duuk_drive_backend('documents',jsonb_build_object('user_id',staff,'contract_id',first_contract)))::text not like '%drive.google.com/file/d/drv-file-original/view%' then raise exception 'Campos do Drive expostos de forma incorreta'; end if;
  begin perform public.duuk_drive_backend('file',jsonb_build_object('user_id',staff,'document_id',(select id from public.duuk_drive_documents where kind='proposal' limit 1)));raise exception 'Proposta acessada sem permissão comercial';exception when sqlstate 'PT403' then null;end;
+ delete from public.duuk_clients where id=crm_client;
+ select to_jsonb(d) into job from public.duuk_drive_documents d where kind='proposal' order by created_at limit 1;
+ for i in 1..3 loop
+  perform public.duuk_drive_backend('finish',scope||jsonb_build_object('document_id',job->>'id','error','Falha de proposta','retryable',true));
+ end loop;
+ if not exists(select 1 from public.duuk_notifications where user_id=sales and dedupe_key like 'drive:fail:'||(job->>'id')||'%' and link='/admin/comercial/clientes') then raise exception 'Falha da proposta sem cliente não gerou destino seguro'; end if;
+ perform public.duuk_drive_backend('finish',scope||jsonb_build_object('document_id',job->>'id','drive_file_id','drv-proposal-orphan','drive_folder_id','drv-proposals','drive_link','https://drive.google.com/file/d/drv-proposal-orphan/view'));
+ if not exists(select 1 from public.duuk_notifications where user_id=sales and dedupe_key like 'drive:recovered:'||(job->>'id')||'%' and link='/admin/comercial/clientes') then raise exception 'Recuperação da proposta sem cliente não foi registrada'; end if;
 
  -- Exclusão do contrato preserva a referência e os arquivos do Drive.
  select to_jsonb(d) into job from public.duuk_drive_documents d where contract_id=second_contract and kind='contract_original';
@@ -160,13 +169,20 @@ begin
  if not exists(select 1 from public.duuk_drive_documents where drive_file_id='drv-file-signed') then raise exception 'Desconexão apagou referências'; end if;
  if public.duuk_drive_backend('claim') is not null then raise exception 'Conexão desconectada continuou processando'; end if;
 
- -- Leitura pelo navegador respeita permissão e não vê IDs do Drive.
+ -- Leitura pelo navegador respeita permissão, inclusive no bucket compartilhado, e não vê IDs do Drive.
+ insert into storage.objects(bucket_id,name) values
+  ('duuk-documents','original/'||first_contract||'/'||gen_random_uuid()||'.pdf'),
+  ('duuk-documents','proposal/'||gen_random_uuid()||'/'||gen_random_uuid()||'.pdf');
+ grant select on storage.objects to authenticated;
  perform set_config('request.jwt.claims',jsonb_build_object('sub',staff,'role','authenticated')::text,true);
  set local role authenticated;
  if (select count(*) from public.duuk_drive_documents where kind in('contract_original','contract_signed'))=0 then raise exception 'Equipe de contratos não vê o estado da sincronização'; end if;
  if exists(select 1 from public.duuk_drive_documents where kind='proposal') then raise exception 'Contratos enxergou propostas'; end if;
+ if not exists(select 1 from storage.objects where name like 'original/%') or exists(select 1 from storage.objects where name like 'proposal/%') then raise exception 'Contratos acessou o caminho de propostas no Storage'; end if;
  begin perform drive_file_id from public.duuk_drive_documents;raise exception 'Navegador leu ID do Drive';exception when insufficient_privilege then null;end;
  begin perform count(*) from public.duuk_drive_connection;raise exception 'Navegador leu a conexão';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',sales,'role','authenticated')::text,true);
+ if not exists(select 1 from storage.objects where name like 'proposal/%') or exists(select 1 from storage.objects where name like 'original/%') then raise exception 'CRM recebeu acesso incorreto ao bucket de documentos'; end if;
  perform set_config('request.jwt.claims',jsonb_build_object('sub',outsider,'role','authenticated')::text,true);
  if (select count(*) from public.duuk_drive_documents)<>0 then raise exception 'Usuário sem permissão leu documentos'; end if;
  reset role;

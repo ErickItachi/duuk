@@ -5,6 +5,7 @@ export const defaultDriveAccount = 'duukfilms@gmail.com'
 const api = 'https://www.googleapis.com/drive/v3'
 const uploadApi = 'https://www.googleapis.com/upload/drive/v3/files'
 const folderType = 'application/vnd.google-apps.folder'
+const multipartLimit = 5 * 1024 * 1024
 
 export const sections = {
  contract_original: { section: 'contracts', label: 'Contratos', child: 'generated', childLabel: 'Contratos Gerados' },
@@ -128,9 +129,27 @@ export async function findDocumentFile(ctx, documentId) {
  return found?.files?.[0] || null
 }
 export async function uploadDocument(ctx, doc, folder, bytes) {
- const boundary = `duuk-${crypto.randomUUID()}`
  const metadata = { name: doc.file_name, mimeType: 'application/pdf', parents: [folder.id], description: 'Enviado automaticamente pelo DUUK Admin.', appProperties: { duuk_document: doc.id, duuk_kind: doc.kind } }
- return driveRequest(`${uploadApi}?${new URLSearchParams({ uploadType: 'multipart', fields: fileFields })}`, { method: 'POST', headers: { ...authorized(ctx.token), 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipartBody(metadata, bytes, boundary) }, ctx.request, 60000)
+ if (bytes.length <= multipartLimit) {
+  const boundary = `duuk-${crypto.randomUUID()}`
+  return driveRequest(`${uploadApi}?${new URLSearchParams({ uploadType: 'multipart', fields: fileFields })}`, { method: 'POST', headers: { ...authorized(ctx.token), 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipartBody(metadata, bytes, boundary) }, ctx.request, 60000)
+ }
+ const started = await ctx.request(`${uploadApi}?${new URLSearchParams({ uploadType: 'resumable', fields: fileFields })}`, {
+  method: 'POST',
+  headers: { ...authorized(ctx.token), 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': 'application/pdf', 'X-Upload-Content-Length': String(bytes.length) },
+  body: JSON.stringify(metadata),
+  redirect: 'error',
+  signal: AbortSignal.timeout(30000),
+ })
+ if (!started.ok) {
+  const data = await started.json().catch(() => ({}))
+  throw new DriveError(started.status, typeof data.error === 'string' ? data.error : data.error?.errors?.[0]?.reason || '')
+ }
+ const location = started.headers.get('Location')
+ let session
+ try { session = new URL(location) } catch { throw new DriveError(500) }
+ if (session.protocol !== 'https:' || !(session.hostname === 'www.googleapis.com' || session.hostname.endsWith('.googleapis.com'))) throw new DriveError(500)
+ return driveRequest(session.href, { method: 'PUT', headers: { ...authorized(ctx.token), 'Content-Type': 'application/pdf' }, body: bytes }, ctx.request, 120000)
 }
 
 export async function syncDocument(ctx, doc, bytes) {

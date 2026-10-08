@@ -92,6 +92,16 @@ create policy drive_documents_read on public.duuk_drive_documents for select to 
  or (kind = 'proposal' and (select duuk_private.has_permission('crm.clients')))
 );
 
+-- O bucket é compartilhado com contratos, mas propostas obedecem à permissão do CRM.
+-- A policy anterior permitia que qualquer membro de Contratos lesse todos os caminhos.
+drop policy office_document_read on storage.objects;
+create policy office_document_read on storage.objects for select to authenticated using (
+ bucket_id = 'duuk-documents' and (
+  (name ~ '^(original|signed)/[a-f0-9-]{36}/[a-f0-9-]{36}\.pdf$' and (select duuk_private.has_permission('contracts')))
+  or (name ~ '^proposal/[a-f0-9-]{36}/[a-f0-9-]{36}\.pdf$' and (select duuk_private.has_permission('crm.clients')))
+ )
+);
+
 create function duuk_private.drive_safe_name(value text, fallback text) returns text
  language sql immutable set search_path='' as $$
  select coalesce(nullif(btrim(left(btrim(regexp_replace(regexp_replace(coalesce(value,''),'[\\/:*?"<>|[:cntrl:]]+',' ','g'),'\s+',' ','g')),90)),''),fallback);
@@ -302,7 +312,9 @@ begin
    for update skip locked;
   if c.singleton is null then return null; end if;
   lease := gen_random_uuid();
-  update public.duuk_drive_connection set lease_id = lease, lease_until = now() + interval '90 seconds';
+  -- Uma única transferência resumível pode levar até dois minutos. A folga impede
+  -- que outro Cron reivindique o mesmo documento enquanto o primeiro ainda envia.
+  update public.duuk_drive_connection set lease_id = lease, lease_until = now() + interval '5 minutes';
   select decrypted_secret::jsonb into result from vault.decrypted_secrets where id = c.credential_id;
   return jsonb_build_object('generation',c.generation,'lease_id',lease,'tokens',result,'quota_due',c.storage_checked_at is null or c.storage_checked_at < now() - interval '6 hours');
 
@@ -345,7 +357,7 @@ begin
     update public.duuk_drive_documents set status = 'synced', drive_file_id = payload->>'drive_file_id', drive_folder_id = payload->>'drive_folder_id', drive_link = payload->>'drive_link', synced_at = now(), last_attempt_at = now(), attempts = 0, last_error = null, error_notified_at = null where id = doc.id;
     update public.duuk_drive_connection set last_synced_at = now(), last_error = null;
     if doc.kind = 'proposal' then
-     if doc.error_notified_at is not null then perform duuk_private.notify_members('commercial','crm.clients','Proposta salva no Google Drive',doc.file_name,'/admin/comercial/clientes?cliente=' || doc.client_id,'drive:recovered:' || doc.id || ':' || extract(epoch from clock_timestamp())::bigint); end if;
+     if doc.error_notified_at is not null then perform duuk_private.notify_members('commercial','crm.clients','Proposta salva no Google Drive',doc.file_name,'/admin/comercial/clientes' || case when doc.client_id is not null then '?cliente=' || doc.client_id else '' end,'drive:recovered:' || doc.id || ':' || extract(epoch from clock_timestamp())::bigint); end if;
     elsif doc.kind = 'contract_signed' then
      perform duuk_private.notify_members('contracts','contracts','Contrato finalizado salvo no Google Drive',doc.client_name || ' · ' || doc.file_name,'/admin/contratos' || coalesce('/' || doc.contract_id,''),'drive:signed:' || doc.id);
     elsif doc.error_notified_at is not null then
@@ -358,7 +370,7 @@ begin
     if (doc.attempts >= 3) and doc.error_notified_at is null then
      update public.duuk_drive_documents set error_notified_at = now() where id = doc.id;
      if doc.kind = 'proposal' then
-      perform duuk_private.notify_members('commercial','crm.clients','Falha ao guardar a proposta no Google Drive',doc.file_name || '. Tente novamente em alguns minutos.','/admin/comercial/clientes?cliente=' || doc.client_id,'drive:fail:' || doc.id || ':' || extract(epoch from clock_timestamp())::bigint);
+      perform duuk_private.notify_members('commercial','crm.clients','Falha ao guardar a proposta no Google Drive',doc.file_name || '. Tente novamente em alguns minutos.','/admin/comercial/clientes' || case when doc.client_id is not null then '?cliente=' || doc.client_id else '' end,'drive:fail:' || doc.id || ':' || extract(epoch from clock_timestamp())::bigint);
      else
       perform duuk_private.notify_members('contracts','contracts','Falha ao guardar o contrato no Google Drive',doc.file_name || '. O contrato continua salvo no DUUK Admin e uma nova tentativa será feita.','/admin/contratos' || coalesce('/' || doc.contract_id,''),'drive:fail:' || doc.id || ':' || extract(epoch from clock_timestamp())::bigint);
      end if;

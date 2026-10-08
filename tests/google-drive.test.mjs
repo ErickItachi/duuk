@@ -7,9 +7,9 @@ const pdf = text => new TextEncoder().encode(`%PDF-1.7\n${text}`)
 const sha = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('')
 
 function fakeDrive() {
-  const files = new Map(), calls = []
+  const files = new Map(), calls = [], sessions = new Map()
   let next = 1
-  const ids = { create: 0, upload: 0 }
+  const ids = { create: 0, upload: 0, resumable: 0 }
   const request = async (url, options = {}) => {
     const parsed = new URL(url), method = options.method || 'GET'
     calls.push([method, parsed.pathname, parsed.search])
@@ -33,8 +33,23 @@ function fakeDrive() {
       return file ? json(200, file) : json(404, { error: { errors: [{ reason: 'notFound' }] } })
     }
     if (parsed.pathname === '/upload/drive/v3/files') {
-      assert.equal(parsed.searchParams.get('uploadType'), 'multipart')
+      const type = parsed.searchParams.get('uploadType')
+      if (type === 'resumable') {
+        const session = `session${next++}`
+        ids.resumable++
+        sessions.set(session, JSON.parse(options.body))
+        assert.equal(options.headers['X-Upload-Content-Type'], 'application/pdf')
+        return new Response(null, { status: 200, headers: { Location: `https://www.googleapis.com/upload-session/${session}` } })
+      }
+      assert.equal(type, 'multipart')
       const text = new TextDecoder().decode(options.body), metadata = JSON.parse(text.split('\r\n\r\n')[1].split('\r\n--')[0]), id = `file${next++}`
+      ids.upload++
+      files.set(id, { id, trashed: false, webViewLink: `https://drive.google.com/file/d/${id}/view`, ...metadata, bytes: options.body })
+      return json(200, files.get(id))
+    }
+    if (parsed.pathname.startsWith('/upload-session/') && method === 'PUT') {
+      const metadata = sessions.get(parsed.pathname.split('/').pop()), id = `file${next++}`
+      assert(metadata)
       ids.upload++
       files.set(id, { id, trashed: false, webViewLink: `https://drive.google.com/file/d/${id}/view`, ...metadata, bytes: options.body })
       return json(200, files.get(id))
@@ -131,6 +146,16 @@ test('upload cria um PDF privado com marcador do documento e sem compartilhament
   assert.equal(result.drive_link, `https://drive.google.com/file/d/${file.id}/view`)
   assert.equal(result.drive_folder_id, drive.files.get(file.parents[0]).id)
   assert(!drive.calls.some(([, path]) => path.includes('permissions')))
+})
+
+test('PDF acima de 5 MB usa sessão resumível oficial', async () => {
+  const drive = fakeDrive(), bytes = new Uint8Array(5 * 1024 * 1024 + 1)
+  bytes.set(new TextEncoder().encode('%PDF-1.7\n'))
+  const result = await syncDocument(context(drive), { ...contract, source_sha256: await sha(bytes) }, bytes)
+  assert.equal(drive.ids.resumable, 1)
+  assert.equal(drive.ids.upload, 1)
+  assert.equal(drive.files.get(result.drive_file_id).bytes.length, bytes.length)
+  assert(drive.calls.some(([, path, search]) => path === '/upload/drive/v3/files' && search.includes('uploadType=resumable')))
 })
 
 test('nova tentativa depois de resposta perdida adota o arquivo existente sem duplicar', async () => {
