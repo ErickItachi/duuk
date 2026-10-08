@@ -16,6 +16,7 @@ import { NotificationProvider, NotificationBell, NotificationsPage, Notification
 import { UsersPage, PermissionsPage, ProfilePage, AuditPage } from './TeamPages'
 import IntegrationsPage from './IntegrationsPage'
 import DrivePage from './DrivePage'
+import AppLogo from './AppLogo'
 import TeamPresence from './TeamPresence'
 import CommercialPage from '../crm/CommercialPages'
 import MessageTemplatesPage from '../crm/WhatsAppMessages'
@@ -43,7 +44,6 @@ const sections = [
   { to: '/admin/comercial/emails', label: 'E-mails', icon: 'mail', permission: 'mail', group: 'Comercial' },
   { to: '/admin/comercial/relatorios', label: 'Relatórios', icon: 'chart', permission: 'crm.reports', group: 'Comercial' },
   { to: '/admin/contratos', label: 'Contratos', icon: 'document', permission: 'contracts' },
-  { to: '/admin/drive', label: 'Google Drive', icon: 'drive', permission: 'drive' },
   { to: '/admin/agenda', label: 'Agenda', icon: 'calendar', permission: 'agenda' },
   { to: '/admin/financeiro', label: 'Financeiro', icon: 'wallet', permission: 'finance' },
   { to: '/admin/insights', label: 'Insights', icon: 'chart', permission: 'insights' },
@@ -58,6 +58,7 @@ const sections = [
   { to: '/admin/configuracoes/historico', label: 'Histórico de alterações', icon: 'activity', permission: 'audit', group: 'Configurações' },
   { to: '/admin/configuracoes/sobre', label: 'Sobre o DUUK Admin', icon: 'info', group: 'Configurações' },
   { to: '/admin/configuracoes/perfil', label: 'Meu perfil', icon: 'user', group: 'Configurações' },
+  { to: '/admin/drive', label: 'Google Drive', icon: 'drive', permission: 'drive', last: true },
 ]
 
 function ProjectList({ notify }) {
@@ -213,7 +214,7 @@ function AdminWorkspace() {
  useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(null),7000);return()=>clearTimeout(timer)},[toast])
  useEffect(()=>{const media=matchMedia('(max-width: 1023px)');const resize=()=>{setNarrow(media.matches);if(!media.matches)setMenuOpen(false)};media.addEventListener('change',resize);return()=>media.removeEventListener('change',resize)},[])
  useEffect(()=>{if(!menuOpen||!narrow)return;const previous=document.body.style.overflow,opener=menuButton.current;document.body.style.overflow='hidden';const target=sidebar.current;target.querySelector('button')?.focus();const trap=e=>{if(e.key==='Escape'){e.preventDefault();setMenuOpen(false)}if(e.key==='Tab'){const focusable=Array.from(target.querySelectorAll('a[href],button:not([disabled]),input,select')).filter(el=>el.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};target.addEventListener('keydown',trap);return()=>{document.body.style.overflow=previous;target.removeEventListener('keydown',trap);opener?.focus()}},[menuOpen,narrow])
- const navItem=item=><NavLink key={item.to} to={item.to} end={item.to==='/admin'||item.to==='/admin/comercial'} title={item.label} aria-label={item.label} onClick={()=>setMenuOpen(false)}><Icon name={item.icon}/><span>{item.label}</span></NavLink>
+ const navItem=item=><NavLink key={item.to} to={item.to} end={item.to==='/admin'||item.to==='/admin/comercial'} title={item.label} aria-label={item.label} onClick={()=>setMenuOpen(false)}>{item.icon==='drive'?<AppLogo app="drive" size={18}/>:<Icon name={item.icon}/>}<span>{item.label}</span></NavLink>
  const visible=sections.filter(item=>auth.hasPermission(item.permission))
  const navGroup=(name,icon)=>{const items=visible.filter(i=>i.group===name);if(!items.length)return null;const active=items.some(i=>pathname===i.to||pathname.startsWith(i.to+'/'));const open=(groups[name]??active)||collapsed&&!narrow;return <div className="admin-nav-group" key={name}><button className={active?'is-active':''} aria-expanded={open} title={name} onClick={()=>setGroups(old=>({...old,[name]:!open}))}><Icon name={icon}/><span>{name}</span><Icon name={open?'up':'down'} size={14}/></button>{open&&<div className="admin-nav-group__items">{items.map(navItem)}</div>}</div>}
  const guarded=(key,element)=><Allowed permission={key}>{element}</Allowed>
@@ -224,7 +225,7 @@ function AdminWorkspace() {
    <div className="admin-sidebar__drawer-head"><button className="admin-icon-button" aria-label="Fechar menu" onClick={()=>setMenuOpen(false)}><Icon name="close"/></button></div>
    <div className="admin-sidebar__head"><Link className="admin-brand" to="/admin" onClick={()=>setMenuOpen(false)} aria-label="DUUK — visão geral"><img src="/media/duuk-logo-white.png" width="52" height="64" alt="DUUK"/><span>ADMIN<small>O espaço da equipe.</small></span></Link></div>
    <div className="admin-sidebar__control"><span>NAVEGAÇÃO</span><button className="admin-collapse-toggle" aria-expanded={!collapsed} aria-controls="admin-navigation" aria-label={collapsed?'Expandir menu':'Minimizar menu'} title={collapsed?'Expandir menu':'Minimizar menu'} onClick={toggleSidebar}><Icon name={collapsed?"sidebarOpen":"sidebar"} size={17}/></button></div>
-   <div id="admin-navigation" className="admin-sidebar__menu"><nav aria-label="Painel administrativo">{visible.filter(i=>!i.group).map(navItem)}{navGroup('Comercial','briefcase')}{navGroup('Site DUUK','film')}{navGroup('Configurações','settings')}</nav><div className="admin-sidebar__bottom"><Link className="admin-sidebar-profile" to="/admin/configuracoes/perfil" onClick={()=>setMenuOpen(false)}><Avatar profile={auth.profile} online={auth.isOnline(auth.user.id)}/><span><strong>{auth.profile.name}</strong><small>{auth.profile.is_super_admin?'Super administrador':auth.profile.role_name}</small></span></Link><button className="admin-reset" aria-label="Sair da conta" title="Sair da conta" onClick={()=>auth.signOut().catch(cause=>notify(cause.message,true))}><Icon name="logout"/><span>Sair da conta</span></button><span className="admin-sidebar__signature">DUUK® / {currentRelease.version}</span></div></div>
+   <div id="admin-navigation" className="admin-sidebar__menu"><nav aria-label="Painel administrativo">{visible.filter(i=>!i.group&&!i.last).map(navItem)}{navGroup('Comercial','briefcase')}{navGroup('Site DUUK','film')}{navGroup('Configurações','settings')}{visible.filter(i=>i.last).map(navItem)}</nav><div className="admin-sidebar__bottom"><Link className="admin-sidebar-profile" to="/admin/configuracoes/perfil" onClick={()=>setMenuOpen(false)}><Avatar profile={auth.profile} online={auth.isOnline(auth.user.id)}/><span><strong>{auth.profile.name}</strong><small>{auth.profile.is_super_admin?'Super administrador':auth.profile.role_name}</small></span></Link><button className="admin-reset" aria-label="Sair da conta" title="Sair da conta" onClick={()=>auth.signOut().catch(cause=>notify(cause.message,true))}><Icon name="logout"/><span>Sair da conta</span></button><span className="admin-sidebar__signature">DUUK® / {currentRelease.version}</span></div></div>
   </aside>
   <div className="admin-workspace" inert={narrow&&menuOpen?true:undefined}>
    <header className="admin-topbar"><div className="admin-topbar__identity"><button ref={menuButton} className="admin-mobile-toggle admin-icon-button" aria-label="Abrir menu" aria-controls="admin-navigation" aria-expanded={menuOpen} onClick={()=>setMenuOpen(true)}><Icon name="menu" size={22}/></button><img className="admin-header-logo" src="/media/duuk-logo-white.png" width="24" height="30" alt="DUUK"/><div className="admin-environment"><span className="admin-topbar-label">DUUK ADMIN</span><span className="admin-topbar-divider">/</span><span className="admin-topbar-note">{pathname==='/admin/notificacoes'?'Notificações':section.label}</span></div></div><div className="admin-topbar__actions"><TeamPresence/><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16}/></Link><NotificationBell/><Link to="/admin/configuracoes/perfil" aria-label="Meu perfil" title={auth.profile.name}><Avatar profile={auth.profile} size={34} online={auth.isOnline(auth.user.id)}/></Link></div></header>

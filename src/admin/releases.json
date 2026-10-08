@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.6.0",
+    "date": "2026-10-08",
+    "title": "Google Drive: pastas e organização",
+    "new": [
+      "Navegação por pastas, criação, renomeação, descrição e movimentação de arquivos e pastas no Google Drive.",
+      "Lixeira com restauração, preservando os originais dos contratos e as evidências das assinaturas."
+    ],
+    "improved": [
+      "Upload para a pasta escolhida e novas tentativas sem duplicação.",
+      "Logo oficial do Google Drive no último item do menu."
+    ]
+  },
+  {
     "version": "1.5.1",
     "date": "2026-10-08",
     "title": "Google Drive: arquivos no painel",

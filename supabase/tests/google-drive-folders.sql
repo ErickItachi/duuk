@@ -1,0 +1,55 @@
+-- Testes sem rede, com rollback de todas as alterações.
+begin;
+do $$
+declare actor uuid:=gen_random_uuid(); outsider uuid:=gen_random_uuid(); role_id uuid:=gen_random_uuid(); secret_id uuid; req uuid; payload jsonb; prepared jsonb; result jsonb; scope jsonb; listing jsonb; fixture_parent_key text; fixture_child_key text; file_id uuid:=gen_random_uuid();
+begin
+ insert into public.duuk_roles(id,name) values(role_id,'Teste Drive pastas '||role_id);
+ insert into auth.users(id,email) values(actor,actor||'@test.invalid'),(outsider,outsider||'@test.invalid');
+ insert into public.duuk_profiles(id,name,email,role_id,is_super_admin) values(actor,'Teste pastas',actor||'@test.invalid',role_id,true),(outsider,'Sem acesso',outsider||'@test.invalid',role_id,false);
+ select vault.create_secret('{"refresh_token":"fixture","access_token":"fixture"}','fixture-folders-'||actor) into secret_id;
+ update public.duuk_drive_connection set status='connected',credential_id=secret_id,generation=gen_random_uuid(),lease_id=null,lease_until=null where singleton=true;
+ if has_function_privilege('authenticated','public.duuk_drive_manage_backend(text,jsonb)','execute') or has_function_privilege('anon','public.duuk_drive_manage_backend(text,jsonb)','execute') then raise exception 'RPC exposta';end if;
+ begin perform public.duuk_drive_manage_backend('browse',jsonb_build_object('user_id',outsider));raise exception 'Acesso exposto';exception when sqlstate 'PT403' then null;end;
+ req:=gen_random_uuid();fixture_parent_key:='custom:'||req;
+ payload:=jsonb_build_object('user_id',actor,'request_id',req,'action','folder_create','parent_id','root','name','Fixture '||req,'description','Teste privado');
+ prepared:=public.duuk_drive_manage_backend('prepare',payload);scope:=jsonb_build_object('generation',prepared->>'generation','lease_id',prepared->>'lease_id','change_id',prepared->>'change_id');
+ perform public.duuk_drive_manage_backend('check',scope);
+ perform public.duuk_drive_manage_backend('abort',scope||jsonb_build_object('error','Resposta perdida'));
+ listing:=public.duuk_drive_manage_backend('browse',jsonb_build_object('user_id',actor));
+ if not exists(select 1 from jsonb_array_elements(listing->'pending_changes') p where p->>'request_id'=req::text) then raise exception 'Criação pendente invisível';end if;
+ begin perform public.duuk_drive_manage_backend('prepare',payload||jsonb_build_object('request_id',gen_random_uuid()));raise exception 'Duplicação pendente permitida';exception when sqlstate 'PT409' then null;end;
+ prepared:=public.duuk_drive_manage_backend('prepare',payload);scope:=jsonb_build_object('generation',prepared->>'generation','lease_id',prepared->>'lease_id','change_id',prepared->>'change_id');
+ result:=public.duuk_drive_manage_backend('commit',scope||jsonb_build_object('result',jsonb_build_object('drive_id','fixture-parent-'||req,'name',payload->>'name','description','Teste privado','parent_drive_id',prepared->'parent'->>'drive_id')));
+ if not (result->>'saved')::boolean then raise exception 'Confirmação ausente';end if;
+ if public.duuk_drive_manage_backend('prepare',payload)->'completed' is distinct from result then raise exception 'Replay duplicou criação';end if;
+ req:=gen_random_uuid();fixture_child_key:='custom:'||req;
+ payload:=jsonb_build_object('user_id',actor,'request_id',req,'action','folder_create','parent_id',fixture_parent_key,'name','Filha');
+ prepared:=public.duuk_drive_manage_backend('prepare',payload);scope:=jsonb_build_object('generation',prepared->>'generation','lease_id',prepared->>'lease_id','change_id',prepared->>'change_id');
+ perform public.duuk_drive_manage_backend('commit',scope||jsonb_build_object('result',jsonb_build_object('drive_id','fixture-child-'||req,'name','Filha','description','','parent_drive_id',prepared->'parent'->>'drive_id')));
+ begin perform public.duuk_drive_manage_backend('prepare',jsonb_build_object('user_id',actor,'request_id',gen_random_uuid(),'action','folder_move','id',fixture_parent_key,'parent_id',fixture_child_key,'revision',1));raise exception 'Ciclo permitido';exception when sqlstate 'PT400' then null;end;
+ begin perform public.duuk_drive_manage_backend('prepare',jsonb_build_object('user_id',actor,'request_id',gen_random_uuid(),'action','folder_trash','id','root','revision',(select revision from public.duuk_drive_folders where key='root')));raise exception 'Raiz apagável';exception when sqlstate 'PT400' then null;end;
+ insert into public.duuk_drive_documents(id,kind,client_key,client_name,file_name,source_path,source_sha256,source_bucket,mime_type,byte_size,status,drive_file_id,drive_folder_id,managed_folder_key,directly_trashed)
+ values(file_id,'file','internal','Internos','Fixture.txt','files/'||actor||'/'||gen_random_uuid(),repeat('a',64),'duuk-drive-files','text/plain',10,'synced','fixture-file-'||file_id,(select drive_id from public.duuk_drive_folders where key=fixture_child_key),fixture_child_key,true);
+ perform duuk_private.drive_refresh_trash();
+ payload:=jsonb_build_object('user_id',actor,'request_id',gen_random_uuid(),'action','folder_trash','id',fixture_parent_key,'revision',1);
+ prepared:=public.duuk_drive_manage_backend('prepare',payload);scope:=jsonb_build_object('generation',prepared->>'generation','lease_id',prepared->>'lease_id','change_id',prepared->>'change_id');
+ perform public.duuk_drive_manage_backend('abort',scope||jsonb_build_object('error','Resposta perdida'));
+ begin perform public.duuk_drive_manage_backend('prepare',jsonb_build_object('user_id',actor,'request_id',gen_random_uuid(),'action','folder_update','id',fixture_child_key,'revision',1,'name','Alteração bloqueada'));raise exception 'Filha mudou com pai pendente';exception when sqlstate 'PT409' then null;end;
+ prepared:=public.duuk_drive_manage_backend('prepare',payload);scope:=jsonb_build_object('generation',prepared->>'generation','lease_id',prepared->>'lease_id','change_id',prepared->>'change_id');
+ perform public.duuk_drive_manage_backend('commit',scope||jsonb_build_object('result',jsonb_build_object('drive_id',prepared->'target'->>'drive_id')));
+ if not (select trashed_at is not null from public.duuk_drive_folders where key=fixture_child_key) then raise exception 'Lixeira não herdada';end if;
+ if not duuk_private.drive_document_blocked((select d from public.duuk_drive_documents d where d.id=file_id)) then raise exception 'Worker recria arquivo na lixeira';end if;
+ payload:=jsonb_build_object('user_id',actor,'request_id',gen_random_uuid(),'action','folder_restore','id',fixture_parent_key,'revision',(select revision from public.duuk_drive_folders where key=fixture_parent_key));
+ prepared:=public.duuk_drive_manage_backend('prepare',payload);scope:=jsonb_build_object('generation',prepared->>'generation','lease_id',prepared->>'lease_id','change_id',prepared->>'change_id');
+ perform public.duuk_drive_manage_backend('commit',scope||jsonb_build_object('result',jsonb_build_object('drive_id',prepared->'target'->>'drive_id')));
+ if (select trashed_at is not null from public.duuk_drive_folders where key=fixture_child_key) then raise exception 'Filha não restaurada';end if;
+ if not (select drive_trashed_at is not null from public.duuk_drive_documents where id=file_id) then raise exception 'Restaurou arquivo individual';end if;
+ begin perform public.duuk_drive_manage_backend('prepare',jsonb_build_object('user_id',actor,'request_id',gen_random_uuid(),'action','folder_update','id',fixture_parent_key,'revision',1,'name','Revisão obsoleta'));raise exception 'Revisão obsoleta aceita';exception when sqlstate 'PT409' then null;end;
+ update public.duuk_drive_folders set required_permissions=array['drive','contracts'] where key=fixture_child_key;
+ insert into public.duuk_user_permissions(user_id,permission,allowed) values(outsider,'drive',true);
+ if duuk_private.drive_folder_can_access(outsider,fixture_child_key) then raise exception 'Pasta confidencial exposta';end if;
+ begin perform public.duuk_drive_backend('file',jsonb_build_object('user_id',outsider,'document_id',file_id));raise exception 'Download da pasta confidencial exposto';exception when sqlstate 'PT403' then null;end;
+ if (select source_sha256 from public.duuk_drive_documents where id=file_id)<>repeat('a',64) then raise exception 'Hash alterado';end if;
+end $$;
+select 'PASS: Drive folders, private RPC, replay, pending create, cycles, revisions, shared lease, inherited trash, restore, permissions and immutable sources' as result;
+rollback;

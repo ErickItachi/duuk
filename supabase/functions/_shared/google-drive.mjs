@@ -75,6 +75,7 @@ export async function storageQuota(token, request = fetch) {
 async function folderAvailable(ctx, id) {
  try {
   const folder = await driveRequest(`${api}/files/${encodeURIComponent(id)}?fields=id,trashed,mimeType`, { headers: authorized(ctx.token) }, ctx.request)
+  if (folder?.trashed) throw new SourceError('A pasta de destino está na lixeira do Google Drive. Restaure-a para sincronizar novos arquivos.')
   return Boolean(folder?.id) && !folder.trashed && folder.mimeType === folderType
  } catch (error) { if (error?.status === 404) return false; throw error }
 }
@@ -84,8 +85,10 @@ async function folderAvailable(ctx, id) {
 export async function ensureFolder(ctx, { key, name, parent = null, clientKey = null }) {
  const existing = await ctx.store.get(key)
  if (existing) {
+  if (existing.trashed_at) throw new SourceError('A pasta de destino está na lixeira. Restaure-a para sincronizar novos arquivos.')
   if (ctx.verified.has(key)) return { id: existing.drive_id, key }
   if (await folderAvailable(ctx, existing.drive_id)) { ctx.verified.add(key); return { id: existing.drive_id, key } }
+  if (key.startsWith('custom:')) throw new SourceError('A pasta escolhida não está mais disponível no Google Drive. Escolha outra pasta.')
   await ctx.store.forget(key)
  }
  const tag = await tagFor(key)
@@ -104,6 +107,12 @@ export async function ensureFolder(ctx, { key, name, parent = null, clientKey = 
 }
 
 export async function ensurePath(ctx, doc) {
+ if (doc.drive_trashed_at) throw new SourceError('Este arquivo está na lixeira. Restaure-o antes de sincronizar.')
+ if (doc.managed_folder_key) {
+  const selected = await ctx.store.get(doc.managed_folder_key)
+  if (!selected) throw new SourceError('A pasta escolhida não está mais disponível. Escolha outra pasta.')
+  return ensureFolder(ctx, { key: doc.managed_folder_key, name: selected.name })
+ }
  const layout = sections[doc.kind]
  if (!layout) throw new SourceError('Tipo de documento não suportado.')
  const root = await ensureFolder(ctx, { key: 'root', name: 'DUUK' })

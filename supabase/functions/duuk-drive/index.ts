@@ -1,6 +1,7 @@
 import { checked, database, handler, HttpError, json, member, readBody, readJson, sha256, text, uuid } from '../_shared/http.ts'
 import { PDFDocument } from '../_shared/pdf.ts'
 import { libraryFileType, libraryLimit } from '../_shared/drive-files.mjs'
+import { createManagedFolder, updateManagedItem } from '../_shared/drive-manager.mjs'
 import { authorizationUrl, defaultDriveAccount, DriveError, driveRedirect, driveScope, driveStatePrefix, ensureFolder, exchangeToken, identityOf, SourceError, storageQuota, syncDocument } from '../_shared/google-drive.mjs'
 
 const configuration = () => ({ id: Deno.env.get('DUUK_DRIVE_GOOGLE_CLIENT_ID') || '', secret: Deno.env.get('DUUK_DRIVE_GOOGLE_CLIENT_SECRET') || '', account: (Deno.env.get('DUUK_DRIVE_ACCOUNT_EMAIL') || defaultDriveAccount).trim().toLowerCase() })
@@ -13,6 +14,33 @@ async function backend(db: ReturnType<typeof database>, operation: string, paylo
   const result = await db.rpc('duuk_drive_backend', { operation, payload })
   if (result.error) console.error(JSON.stringify({ source: 'drive-rpc', operation, code: result.error.code }))
   return checked(result)
+}
+async function manageBackend(db: ReturnType<typeof database>, operation: string, payload: any = {}) {
+  const result = await db.rpc('duuk_drive_manage_backend', { operation, payload })
+  if (result.error) console.error(JSON.stringify({ source: 'drive-manager-rpc', operation, code: result.error.code }))
+  return checked(result)
+}
+async function organize(db: ReturnType<typeof database>, config: ReturnType<typeof configuration>, payload: any) {
+  const change = await manageBackend(db, 'prepare', payload)
+  if (change.completed) return change.completed
+  const scope = { generation: change.generation, lease_id: change.lease_id, change_id: change.change_id }
+  try {
+    let tokens = change.tokens
+    if (!tokens?.refresh_token) throw new DriveError(401)
+    if (!tokens.access_token || tokens.expires_at < Date.now() + 60000) {
+      tokens = tokensOf(await exchangeToken({ grant_type: 'refresh_token', refresh_token: tokens.refresh_token }, config), tokens)
+      await backend(db, 'tokens', { ...scope, tokens })
+    }
+    const ctx = { token: tokens.access_token, request: fetch, check: () => manageBackend(db, 'check', scope) }
+    const result = change.action === 'folder_create' ? await createManagedFolder(ctx, change) : await updateManagedItem(ctx, change)
+    return await manageBackend(db, 'commit', { ...scope, result })
+  } catch (cause) {
+    const error = cause instanceof DriveError || cause instanceof SourceError || cause instanceof HttpError ? cause.message : 'Não foi possível concluir no Google Drive. Tente novamente a mesma alteração.'
+    if (authorizationFailure(cause)) await backend(db, 'error', { ...scope, error }).catch(() => {})
+    else await manageBackend(db, 'abort', { ...scope, error }).catch(() => {})
+    if (cause instanceof HttpError) throw cause
+    throw new HttpError(error, cause instanceof SourceError ? 409 : 502)
+  }
 }
 export async function dispatch(db: ReturnType<typeof database>, config: ReturnType<typeof configuration>, options: Options = {}) {
   const rpc = (operation: string, payload: any = {}) => backend(db, operation, payload)
@@ -98,10 +126,11 @@ handler(async (req, headers) => {
       let mime: string
       try { mime = libraryFileType(file.name, bytes) } catch (cause) { throw new HttpError((cause as Error).message) }
       if (mime === 'application/pdf') try { await PDFDocument.load(bytes) } catch { throw new HttpError('Use um PDF válido, sem senha.') }
+      const selectedFolder = form.get('folder_id') ? await manageBackend(db, 'upload_folder', { ...scope, folder_id: text(form.get('folder_id'), 'a pasta', 240) }) : null
       const path = `files/${user.id}/${crypto.randomUUID()}`, title = text(form.get('title'), 'o título', 160, false)
       checked(await db.storage.from('duuk-drive-files').upload(path, bytes, { contentType: mime, upsert: false }))
       let saved
-      try { saved = await rpc('add_file', { ...scope, file_name: file.name, title, client_id: form.get('client_id') ? uuid(form.get('client_id')) : undefined, source_path: path, sha256: await sha256(bytes), mime_type: mime, byte_size: bytes.length }) }
+      try { saved = await rpc('add_file', { ...scope, file_name: file.name, title, client_id: form.get('client_id') ? uuid(form.get('client_id')) : undefined, managed_folder_key: selectedFolder?.folder_key, source_path: path, sha256: await sha256(bytes), mime_type: mime, byte_size: bytes.length }) }
       catch (cause) {
         const linked = await db.from('duuk_drive_documents').select('id').eq('source_path', path).maybeSingle()
         if (!linked.error && !linked.data) await db.storage.from('duuk-drive-files').remove([path])
@@ -135,6 +164,12 @@ handler(async (req, headers) => {
   }
 
   const user = await member(req, db), scope = { user_id: user.id }
+  if (['browse', 'folders'].includes(body.action)) return json(await manageBackend(db, body.action, { ...scope, folder_id: text(body.folder_id, 'a pasta', 240, false) || null, kind: text(body.kind, 'a categoria', 30, false), search: text(body.search, 'a busca', 120, false), offset: Math.max(0, Math.min(100000, Number(body.offset) || 0)), trashed: body.trashed === true, view: body.view === 'all' ? 'all' : 'folder' }), headers)
+  if (['folder_create', 'folder_update', 'folder_move', 'folder_trash', 'folder_restore', 'document_update', 'document_move', 'document_trash', 'document_restore'].includes(body.action)) {
+    if (!configured) throw new HttpError('A integração aguarda a configuração do Google Cloud.', 503)
+    await limit(user.id, 'drive-organize', 100)
+    return json(await organize(db, config, { ...scope, action: body.action, request_id: uuid(body.request_id), id: text(body.id, 'o item', 240, false) || null, parent_id: text(body.parent_id, 'a pasta de destino', 240, false) || null, name: text(body.name, 'o nome', 200, false) || null, description: text(body.description, 'a descrição', 2000, false), revision: Math.max(0, Math.min(2147483647, Number(body.revision) || 0)) }), headers)
+  }
   if (body.action === 'status') return json({ configured, expected_account: config.account, ...await rpc('status', scope) }, headers)
   if (body.action === 'library') return json(await rpc('library', { ...scope, kind: text(body.kind, 'a categoria', 30, false), search: text(body.search, 'a busca', 120, false), offset: Math.max(0, Math.min(100000, Number(body.offset) || 0)) }), headers)
   if (body.action === 'documents') return json({ documents: await rpc('documents', { ...scope, kind: body.kind, contract_id: body.contract_id ? uuid(body.contract_id) : undefined, client_id: body.client_id ? uuid(body.client_id) : undefined }) }, headers)

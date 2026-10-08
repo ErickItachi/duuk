@@ -117,16 +117,71 @@ test('banco vazio reaproveita as pastas marcadas no Drive em vez de duplicar', a
   assert.equal(pathOf(drive, again.id), 'DUUK/Contratos/Apollo Grill/Contratos Gerados')
 })
 
-test('pasta removida ou na lixeira do Drive é recriada e os filhos obsoletos são esquecidos', async () => {
+test('pasta automática removida definitivamente é recriada e os filhos obsoletos são esquecidos', async () => {
   const drive = fakeDrive(), ctx = context(drive)
   await ensurePath(ctx, contract)
   const section = ctx.store.rows.get('section:contracts')
-  drive.files.get(section.drive_id).trashed = true
+  drive.files.delete(section.drive_id)
   const fresh = context(drive, ctx.store)
   const folder = await ensureFolder(fresh, { key: 'section:contracts', name: 'Contratos', parent: { id: ctx.store.rows.get('root').drive_id, key: 'root' } })
   assert.notEqual(folder.id, section.drive_id)
   assert.equal(ctx.store.rows.get('section:contracts').drive_id, folder.id)
   assert(!ctx.store.rows.has('client:contracts:crm:abc'))
+})
+
+test('pasta na lixeira do Google interrompe a fila sem recriar, esquecer referências ou reenviar arquivos', async () => {
+  const drive = fakeDrive(), ctx = context(drive), bytes = pdf('original'), digest = await sha(bytes)
+  await ensurePath(ctx, contract)
+  const section = ctx.store.rows.get('section:contracts'), created = drive.ids.create, saved = [...ctx.store.rows.entries()]
+  drive.files.get(section.drive_id).trashed = true
+  await assert.rejects(() => syncDocument(context(drive, ctx.store), { ...contract, source_sha256: digest }, bytes), error => error instanceof SourceError && /lixeira/.test(error.message))
+  assert.equal(drive.ids.create, created)
+  assert.equal(drive.ids.upload, 0)
+  assert.deepEqual([...ctx.store.rows.entries()], saved)
+})
+
+test('lixeira registrada no painel é respeitada mesmo com pasta verificada e sem consultar o Google', async () => {
+  const drive = fakeDrive(), ctx = context(drive)
+  const root = await ensureFolder(ctx, { key: 'root', name: 'DUUK' })
+  ctx.store.rows.get('root').trashed_at = new Date().toISOString()
+  const calls = drive.calls.length, created = drive.ids.create
+  await assert.rejects(() => ensureFolder(ctx, { key: 'root', name: 'DUUK' }), error => error instanceof SourceError && /lixeira/.test(error.message))
+  assert.equal(drive.calls.length, calls)
+  assert.equal(drive.ids.create, created)
+  assert.equal(ctx.store.rows.get('root').drive_id, root.id)
+})
+
+test('arquivo enviado à pasta escolhida mantém esse destino sem recriar a organização automática', async () => {
+  const drive = fakeDrive(), ctx = context(drive), bytes = new TextEncoder().encode('Briefing organizado')
+  const root = await ensureFolder(ctx, { key: 'root', name: 'DUUK' })
+  const selected = await ensureFolder(ctx, { key: 'custom:production', name: 'Produção', parent: root }), created = drive.ids.create
+  const result = await syncDocument(context(drive, ctx.store), { ...contract, kind: 'file', managed_folder_key: selected.key, mime_type: 'text/plain', file_name: 'Briefing.txt', source_sha256: await sha(bytes) }, bytes)
+  assert.equal(result.drive_folder_id, selected.id)
+  assert.equal(drive.ids.create, created)
+  assert.equal(pathOf(drive, result.drive_file_id), 'DUUK/Produção/Briefing.txt')
+  assert(!ctx.store.rows.has('section:documents'))
+})
+
+test('pasta personalizada ausente não é recriada nem substituída pela pasta automática', async () => {
+  const drive = fakeDrive(), ctx = context(drive)
+  const root = await ensureFolder(ctx, { key: 'root', name: 'DUUK' })
+  const selected = await ensureFolder(ctx, { key: 'custom:production', name: 'Produção', parent: root }), created = drive.ids.create
+  drive.files.delete(selected.id)
+  await assert.rejects(() => ensurePath(context(drive, ctx.store), { ...contract, managed_folder_key: selected.key }), error => error instanceof SourceError && /Escolha outra pasta/.test(error.message))
+  assert.equal(drive.ids.create, created)
+  assert.equal(drive.ids.upload, 0)
+  assert.equal(ctx.store.rows.get(selected.key).drive_id, selected.id)
+  const calls = drive.calls.length
+  ctx.store.rows.delete(selected.key)
+  await assert.rejects(() => ensurePath(context(drive, ctx.store), { ...contract, managed_folder_key: selected.key }), SourceError)
+  assert.equal(drive.calls.length, calls)
+})
+
+test('arquivo na lixeira não volta ao Drive por nova tentativa de sincronização', async () => {
+  const drive = fakeDrive(), bytes = pdf('original'), digest = await sha(bytes)
+  await assert.rejects(() => syncDocument(context(drive), { ...contract, drive_trashed_at: new Date().toISOString(), source_sha256: digest }, bytes), error => error instanceof SourceError && /lixeira/.test(error.message))
+  assert.equal(drive.calls.length, 0)
+  assert.equal(drive.ids.upload, 0)
 })
 
 test('clientes com o mesmo nome e identificadores diferentes recebem pastas distintas', async () => {

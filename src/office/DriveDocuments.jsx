@@ -11,6 +11,7 @@ import './drive.css'
 
 const FeedbackContext = createContext(() => {})
 const states = {
+  trashed: { icon: 'trash', label: 'Na lixeira do Drive', hint: 'A cópia do Drive está na lixeira. O original e as assinaturas continuam preservados no painel.' },
   synced: { icon: 'cloudCheck', label: 'Sincronizado', hint: 'Guardado no Google Drive da DUUK.' },
   pending: { icon: 'cloudUpload', label: 'Pendente', hint: 'Aguardando o envio automático ao Google Drive.' },
   error: { icon: 'cloudAlert', label: 'Erro de sincronização', hint: 'Não foi possível guardar no Google Drive. O documento continua salvo no DUUK Admin.' },
@@ -24,15 +25,15 @@ export function DriveChip({ state }) {
 }
 
 function DriveDocumentRow({ document, busy, onView, onDownload, onRetry, canManage }) {
-  const state = states[document.status] || states.pending, link = safeDriveLink(document.drive_link)
+  const status = document.drive_trashed_at ? 'trashed' : document.status, state = states[status] || states.pending, link = status === 'trashed' ? '' : safeDriveLink(document.drive_link)
   return <article className="drive-document">
-    <div className="drive-document__head"><div><strong>{kindLabels[document.kind] || 'Documento'}</strong><small>{document.file_name}</small></div><DriveChip state={document.status} /></div>
-    <p className="drive-document__note">{document.status === 'error' && document.last_error ? document.last_error : document.status === 'synced' && document.synced_at ? `Salvo em ${dateLabel(document.synced_at)}.` : state.hint}</p>
+    <div className="drive-document__head"><div><strong>{kindLabels[document.kind] || 'Documento'}</strong><small>{document.file_name}</small></div><DriveChip state={status} /></div>
+    <p className="drive-document__note">{status === 'error' && document.last_error ? document.last_error : status === 'synced' && document.synced_at ? `Salvo em ${dateLabel(document.synced_at)}.` : state.hint}</p>
     <div className="drive-document__actions">
       <button type="button" className="admin-icon-button" disabled={busy} onClick={() => onView(document)} aria-label={`Visualizar ${document.file_name}`} title="Visualizar"><Icon name="eye" /></button>
       <button type="button" className="admin-icon-button" disabled={busy} onClick={() => onDownload(document)} aria-label={`Baixar ${document.file_name}`} title="Baixar"><Icon name="download" /></button>
       {link && document.can_open && <a className="admin-icon-button" href={link} target="_blank" rel="noopener noreferrer" aria-label={`Abrir ${document.file_name} no Google Drive`} title="Abrir no Google Drive"><Icon name="external" /></a>}
-      {document.status !== 'synced' && canManage && <button type="button" className="admin-icon-button" disabled={busy} onClick={() => onRetry(document)} aria-label={`Sincronizar ${document.file_name} novamente`} title="Sincronizar novamente"><Icon name="refresh" /></button>}
+      {status !== 'synced' && status !== 'trashed' && canManage && <button type="button" className="admin-icon-button" disabled={busy} onClick={() => onRetry(document)} aria-label={`Sincronizar ${document.file_name} novamente`} title="Sincronizar novamente"><Icon name="refresh" /></button>}
     </div>
   </article>
 }

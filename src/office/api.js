@@ -20,7 +20,7 @@ export const driveRequest = (body) => platformRequest("duuk-drive", body);
 export async function listDriveStatuses(kinds) {
   const { data, error } = await supabase
     .from("duuk_drive_documents")
-    .select("id,kind,contract_id,status")
+    .select("id,kind,contract_id,status,drive_trashed_at")
     .in("kind", kinds)
     .not("contract_id", "is", null)
     .limit(2000);

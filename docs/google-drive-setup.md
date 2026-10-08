@@ -1,8 +1,8 @@
-# Google Drive da DUUK — 1.5.1
+# Google Drive da DUUK — 1.6.0
 
 Integração oficial OAuth 2.0 + Google Drive API v3, usada somente pelo DUUK Admin. O site institucional não é afetado. A conta central esperada é `duukfilms@gmail.com`; um super administrador a conecta uma única vez em **Configurações → Integrações → Google Drive**. Membros comuns não conectam nada.
 
-**Estado em 8 de outubro de 2026: conta central conectada e envio real validado.** A migração inicial, as três correções incrementais e a função `duuk-drive` v3 estão instaladas. O Cron roda a cada minuto. Google Drive API, cliente Web **DUUK Drive**, redirect, escopo `drive.file` e segredos dedicados estão configurados no projeto `duuk-511001`, preservando o Calendar. A conta `duukfilms@gmail.com` concluiu OAuth. O contrato original que estava pendente foi enviado de verdade: a API retornou HTTP 200, um documento processado, zero falhas, ID do Google registrado e estado `synced`. O Google informou cota de 15 GB. Nenhuma configuração adicional do Google Cloud é necessária para esse fluxo. A transferência de um contrato final após duas assinaturas foi validada em testes de banco/protocolo, sem criar assinaturas ou contratos reais apenas para o teste.
+**Estado em 8 de outubro de 2026: conta central conectada e envio real validado.** A migração inicial, as correções incrementais de fila/biblioteca e a migração de pastas, com a função `duuk-drive` v4 estão instaladas. O Cron roda a cada minuto. Google Drive API, cliente Web **DUUK Drive**, redirect, escopo `drive.file` e segredos dedicados estão configurados no projeto `duuk-511001`, preservando o Calendar. A conta `duukfilms@gmail.com` concluiu OAuth. O contrato original que estava pendente foi enviado de verdade: a API retornou HTTP 200, um documento processado, zero falhas, ID do Google registrado e estado `synced`. O Google informou cota de 15 GB. Nenhuma configuração adicional do Google Cloud é necessária para esse fluxo. A transferência de um contrato final após duas assinaturas foi validada em testes de banco/protocolo, sem criar assinaturas ou contratos reais apenas para o teste.
 
 ## O que é guardado e como
 
@@ -20,7 +20,7 @@ DUUK/
 - Propostas e documentos: enviados no cadastro do cliente (Comercial → Clientes e leads → cliente → Propostas ou Documentos). Exigem a permissão `crm.clients`.
 - O cliente é identificado por `crm:<id>` (CRM, quando e-mail/nome/empresa casam com um único cadastro) ou por um hash estável de nome+e-mail. Quando existe e-mail informado sem correspondência única no CRM, a chave externa usa nome e e-mail, sem presumir identidade pelo nome. Clientes homônimos não compartilham pasta. Nomes repetidos recebem sufixo `(2)`, `(3)`.
 - Os IDs das pastas ficam em `duuk_drive_folders`; pastas e arquivos recebem `appProperties` próprias, então tentativas repetidas adotam o que já existe em vez de duplicar.
-- Nada é apagado no Drive: excluir contrato preserva as referências dos documentos já enviados e só remove pendências que nunca chegaram ao Google.
+- Excluir um contrato no módulo Contratos preserva as referências dos documentos já enviados. A organização do Drive usa somente a lixeira reversível do Google; nunca exclui originais ou evidências do Supabase.
 - Nenhum link público ou permissão compartilhada é criado. Visualizar/baixar passa pelo backend autenticado, que entrega o PDF a partir do armazenamento privado do Supabase; "Abrir no Drive" só aparece para quem tem permissão e só aponta para `drive.google.com`.
 
 ## Biblioteca de arquivos — 1.5.1
@@ -30,6 +30,16 @@ O menu **Google Drive** abre `/admin/drive`: busca por arquivo/cliente, categori
 **Enviar arquivo** aceita PDF, JPG/PNG/WebP, DOCX/XLSX/PPTX, TXT/CSV, ZIP e MP4/MOV até 20 MB. Validação confere extensão, assinatura do formato, tamanho e hash; PDFs devem estar sem senha. Use a pasta **Internos** ou selecione um cliente com acesso ao CRM. Os arquivos ficam no bucket privado `duuk-drive-files`, sem policy pública e sem acesso direto do navegador, e seguem a fila existente para o Drive. Os limites gratuitos do Supabase e da conta Google continuam aplicáveis.
 
 A permissão **Google Drive** pode ser atribuída aos grupos e membros. Ela permite arquivos gerais; contratos ainda exigem **Contratos**, e propostas/documentos de cliente exigem **Clientes e leads**. A biblioteca não mostra arquivos pessoais anteriores da conta Google: o escopo permanece `drive.file`.
+
+## Organização por pastas — 1.6.0
+
+O Drive é o último item do menu, com sua logo oficial. **Pastas** mostra a estrutura e o caminho navegável; **Todos os arquivos** reúne os documentos permitidos; **Lixeira** permite restaurar. É possível criar pastas, renomear, editar descrições, mover arquivos/pastas e enviar arquivos diretamente à pasta escolhida. A edição de documentos altera somente nome e descrição, preservando extensão, bytes, hashes e assinaturas. A pasta principal DUUK permanece disponível.
+
+As ações passam pela RPC exclusiva do servidor `duuk_drive_manage_backend`, com permissões atuais, revisão, registro de auditoria e o mesmo lease da fila. Um diário privado guarda a operação antes da chamada ao Google. Uma tentativa interrompida pode ser concluída com o mesmo identificador; a criação busca seu marcador antes de enviar outro POST. IDs do Google são resolvidos pelo banco, e marcadores confirmam que o item pertence à DUUK antes do PATCH. Nenhuma ação cria compartilhamentos públicos ou exclui definitivamente arquivos.
+
+Pastas com conteúdo de outros módulos exigem acesso a todo o conteúdo para organização. A origem da permissão acompanha a pasta mesmo ao movê-la. A lixeira é herdada pelos descendentes; restaurar uma pasta preserva arquivos que já estavam individualmente na lixeira. Pastas na lixeira não são recriadas pelo worker; restaure a pasta para retomar novos envios automáticos. Se o Google remover definitivamente um item da lixeira, ele deixa de estar disponível para restauração por este módulo.
+
+Instale `supabase/google-drive-folders.sql` após as migrações anteriores e publique a função `duuk-drive` com `_shared/drive-manager.mjs`. A versão não requer novos escopos, consentimento, credenciais ou plano pago.
 
 ## Fila e tentativas
 
@@ -48,7 +58,7 @@ Respeitam permissões e preferências, com deduplicação: contrato finalizado s
 
 ## Configurar o Supabase
 
-1. Aplique `supabase/google-drive.sql` e depois `google-drive-queue-fix.sql`, `google-drive-library.sql` e `google-drive-safeupdate.sql`, nessa ordem e uma única vez cada, no SQL Editor (como as demais migrações, não é reexecutável). Ele cria tabelas, RLS, funções, triggers, o backfill dos contratos existentes e o Cron. Contratos já existentes entram na fila; a migração não chama o Google.
+1. Aplique `supabase/google-drive.sql` e depois `google-drive-queue-fix.sql`, `google-drive-library.sql` e `google-drive-safeupdate.sql`, seguidos de `google-drive-folders.sql`, nessa ordem e uma única vez cada, no SQL Editor (como as demais migrações, não é reexecutável). Ele cria tabelas, RLS, funções, triggers, o backfill dos contratos existentes e o Cron. Contratos já existentes entram na fila; a migração não chama o Google.
 2. Faça o deploy da Edge Function `duuk-drive` (`supabase/functions/duuk-drive`), com a mesma configuração das demais (a função valida usuários e o segredo Cron; não ative a verificação JWT legada do gateway).
 3. Cadastre `DUUK_DRIVE_GOOGLE_CLIENT_ID` e `DUUK_DRIVE_GOOGLE_CLIENT_SECRET` com as credenciais do cliente Web **DUUK Drive**. Não copie as credenciais `DUUK_GOOGLE_*` do Calendar. Opcional: `DUUK_DRIVE_ACCOUNT_EMAIL` para trocar a conta esperada (padrão `duukfilms@gmail.com`).
 4. Nenhuma variável nova na Vercel. Nada de credencial no navegador ou no repositório.
@@ -76,3 +86,7 @@ Se a migração ou a função ficarem indisponíveis, as telas ocultam os indica
 7. Remova apenas os registros de teste.
 
 Referências: [escopos do Drive](https://developers.google.com/workspace/drive/api/guides/api-specific-auth), [OAuth para aplicações web](https://developers.google.com/identity/protocols/oauth2/web-server), [upload de arquivos](https://developers.google.com/workspace/drive/api/guides/manage-uploads).
+
+Validação 1.6.0: 71 testes Node passaram (um opt-in não executado); fixtures SQL com rollback validaram criação/replay, recuperação, ciclos, revisões, lixeira herdada, restauração seletiva e permissões. Type check e build passaram; lint manteve somente três avisos preexistentes. O navegador validou CRUD, upload para pasta, prévia/download privados, menu e formulários em 320–1440 px com APIs interceptadas. A atualização PWA 1.4.0 → 1.6.0 preservou formulário pendente, outra aba aberta e cache apenas de assets, sem chamadas de escrita.
+
+Na conta central real, as chamadas autenticadas validaram criação/replay sem duplicação, nome/descrição, movimentação de pastas, upload TXT para pasta escolhida, rename/movimento de arquivo, download privado com bytes originais, lixeira e restauração de pasta preservando um arquivo individualmente na lixeira. A pasta temporária ficou na lixeira do Google após o teste. Nenhum contrato de cliente foi alterado.
