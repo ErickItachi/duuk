@@ -64,8 +64,14 @@ begin
  perform public.duuk_drive_backend('consume',jsonb_build_object('user_id',admin_id,'state_hash',state));
  begin perform public.duuk_drive_backend('consume',jsonb_build_object('user_id',admin_id,'state_hash',state));raise exception 'State repetido aceito';exception when sqlstate 'PT400' then null;end;
  perform public.duuk_drive_backend('connect',jsonb_build_object('user_id',admin_id,'state_hash',state,'google_subject','sub-drive','account_email','duukfilms@gmail.com','tokens',jsonb_build_object('access_token','FAKE_ACCESS_TOKEN','refresh_token','FAKE_REFRESH_TOKEN','expires_at',0)));
- if exists(select 1 from public.duuk_drive_connection c join vault.secrets v on v.id=c.credential_id where v.secret not like '%FAKE_REFRESH_TOKEN%') then raise exception 'Credencial não foi guardada no Vault'; end if;
+ if not exists(select 1 from public.duuk_drive_connection c join vault.secrets v on v.id=c.credential_id where v.secret like '%FAKE_REFRESH_TOKEN%') then raise exception 'Credencial não foi guardada no Vault'; end if;
  if (public.duuk_drive_backend('status',jsonb_build_object('user_id',admin_id)))::text like '%FAKE_%' then raise exception 'Status expôs token'; end if;
+ state:='drv.teste-novo-'||admin_id;
+ perform public.duuk_drive_backend('start',jsonb_build_object('user_id',admin_id,'state_hash',state,'verifier','verificador-novo'));
+ perform public.duuk_drive_backend('consume',jsonb_build_object('user_id',admin_id,'state_hash',state));
+ lease:=public.duuk_drive_backend('connect',jsonb_build_object('user_id',admin_id,'state_hash',state,'google_subject','sub-drive','account_email','duukfilms@gmail.com','tokens',jsonb_build_object('access_token','NEW_ACCESS_TOKEN','refresh_token','NEW_REFRESH_TOKEN','expires_at',0)));
+ if lease#>>'{replaced_tokens,refresh_token}'<>'FAKE_REFRESH_TOKEN' then raise exception 'Reconexão não devolveu a credencial anterior para revogação'; end if;
+ if exists(select 1 from vault.secrets where secret like '%FAKE_REFRESH_TOKEN%') or not exists(select 1 from public.duuk_drive_connection c join vault.secrets v on v.id=c.credential_id where v.secret like '%NEW_REFRESH_TOKEN%') then raise exception 'Reconexão não substituiu a credencial no Vault'; end if;
  begin perform public.duuk_drive_backend('status',jsonb_build_object('user_id',staff));raise exception 'Status liberado para membro comum';exception when sqlstate 'PT403' then null;end;
 
  -- Fila: um único worker por vez, estrutura de pastas única e nome desambiguado.

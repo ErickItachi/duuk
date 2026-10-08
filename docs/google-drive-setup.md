@@ -43,7 +43,7 @@ Respeitam permissões e preferências, com deduplicação: contrato finalizado s
 2. Faça o deploy da Edge Function `duuk-drive` (`supabase/functions/duuk-drive`), com a mesma configuração das demais (a função valida usuários e o segredo Cron; não ative a verificação JWT legada do gateway).
 3. Segredos já existentes e reutilizados: `DUUK_GOOGLE_CLIENT_ID` e `DUUK_GOOGLE_CLIENT_SECRET`. Opcional: `DUUK_DRIVE_ACCOUNT_EMAIL` para trocar a conta esperada (padrão `duukfilms@gmail.com`).
 4. Nenhuma variável nova na Vercel. Nada de credencial no navegador ou no repositório.
-5. Um super administrador abre **Configurações → Integrações → Google Drive**, toca em **Conectar Google Drive** e entra com `duukfilms@gmail.com`. O backend só aceita o retorno se o e-mail verificado for o esperado, o escopo concedido incluir `drive.file` e houver refresh token; caso contrário, revoga a autorização. O refresh token fica criptografado no Vault; as RPCs são exclusivas de `service_role`.
+5. Um super administrador abre **Configurações → Integrações → Google Drive**, toca em **Conectar Google Drive** e entra com `duukfilms@gmail.com`. O backend só aceita o retorno se o e-mail verificado for o esperado, o escopo concedido incluir `drive.file` e houver refresh token; caso contrário, revoga a autorização. O refresh token fica criptografado no Vault; as RPCs são exclusivas de `service_role`. Ao reconectar, a credencial anterior é retirada do Vault e sua revogação no Google é tentada sem expô-la ao navegador.
 
 Enquanto a migração ou a função não estiverem no ar, as telas ocultam os indicadores nas listas e mostram uma mensagem discreta nos painéis; contratos e assinaturas funcionam normalmente.
 

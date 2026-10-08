@@ -128,18 +128,21 @@ handler(async (req, headers) => {
   if (!state.startsWith(driveStatePrefix)) throw new HttpError('Conexão inválida. Comece novamente no painel.')
   const pending = await rpc('consume', { ...scope, state_hash: await sha256(state) })
   if (body.denied || !code) throw new HttpError('Conexão cancelada no Google. O armazenamento anterior foi preservado.')
-  let token: any
+  let token: any, persisted = false
   try {
     token = await exchangeToken({ grant_type: 'authorization_code', code, redirect_uri: driveRedirect, code_verifier: pending.verifier }, config)
     if (!String(token.scope || '').split(' ').includes(driveScope) || !token.refresh_token) throw new HttpError('Permita o acesso aos arquivos criados pelo DUUK e o acesso contínuo para concluir a conexão.')
     const identity = await identityOf(token.access_token)
     if (!identity?.sub || !identity.email_verified || !identity.email) throw new HttpError('O Google não confirmou o e-mail da conta.')
     if (String(identity.email).toLowerCase() !== config.account) {
-      await revoke(token.refresh_token)
       throw new HttpError(`Entre com a conta ${config.account} para conectar o armazenamento da DUUK.`)
     }
-    await rpc('connect', { ...scope, state_hash: await sha256(state), google_subject: identity.sub, account_email: identity.email, tokens: tokensOf(token) })
+    const connected = await rpc('connect', { ...scope, state_hash: await sha256(state), google_subject: identity.sub, account_email: identity.email, tokens: tokensOf(token) })
+    persisted = true
+    const previous = connected?.replaced_tokens?.refresh_token
+    if (previous && previous !== token.refresh_token) await revoke(previous)
   } catch (cause) {
+    if (!persisted) await revoke(token?.refresh_token || token?.access_token)
     if (cause instanceof HttpError) throw cause
     throw new HttpError(cause instanceof DriveError ? cause.message : 'Não foi possível concluir a conexão com o Google. Tente novamente.', 400)
   }

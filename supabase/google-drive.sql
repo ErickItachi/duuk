@@ -180,7 +180,7 @@ $$;
 create function duuk_private.drive_backend(operation text, payload jsonb) returns jsonb
  language plpgsql security definer set search_path='' as $$
 declare actor uuid := nullif(payload->>'user_id','')::uuid; c public.duuk_drive_connection; s duuk_private.drive_oauth_states;
- doc public.duuk_drive_documents; secret uuid; result jsonb; lease uuid; profile_name text; n integer; label text; base text; owner record;
+ doc public.duuk_drive_documents; secret uuid; result jsonb; replaced_tokens jsonb; lease uuid; profile_name text; n integer; label text; base text; owner record;
  pending_error text := nullif(payload->>'error','');
 begin
  if operation = 'status' then
@@ -208,7 +208,10 @@ begin
   delete from duuk_private.drive_oauth_states where user_id = actor and state_hash = payload->>'state_hash' and consumed_at is not null and expires_at > now() returning * into s;
   if s.user_id is null then raise exception 'A conexão mudou. Comece novamente no painel.' using errcode = 'PT409'; end if;
   select * into c from public.duuk_drive_connection for update;
-  if c.credential_id is not null then delete from vault.secrets where id = c.credential_id; end if;
+  if c.credential_id is not null then
+   select decrypted_secret::jsonb into replaced_tokens from vault.decrypted_secrets where id = c.credential_id;
+   delete from vault.secrets where id = c.credential_id;
+  end if;
   secret := vault.create_secret((payload->'tokens')::text);
   if c.singleton is not null and c.google_subject is distinct from payload->>'google_subject' then
    -- Outra conta: as pastas e os arquivos antigos permanecem intactos no Drive anterior; os documentos voltam à fila.
@@ -222,7 +225,7 @@ begin
   update public.duuk_drive_documents set status = 'pending', attempts = 0, next_attempt_at = now(), last_error = null where status = 'error';
   select name into profile_name from public.duuk_profiles where id = actor;
   insert into public.duuk_audit(actor_id,actor_name,action,entity,entity_id,summary) values(actor,coalesce(profile_name,''),'drive.connect','google_drive','duukfilms','Conexão do Google Drive atualizada.');
-  return '{}'::jsonb;
+  return jsonb_build_object('replaced_tokens',coalesce(replaced_tokens,'{}'::jsonb));
 
  elsif operation = 'disconnect' then
   perform duuk_private.drive_require_super(actor);
