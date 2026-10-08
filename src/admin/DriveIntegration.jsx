@@ -25,7 +25,8 @@ export default function DriveIntegration({ callback, notify }) {
   }, [callback, setParams, reload, notify])
   useEffect(() => { const timer = setInterval(() => { if (document.visibilityState === 'visible' && navigator.onLine) reload() }, 30000); return () => clearInterval(timer) }, [reload])
   const connection = query.data?.connection, counts = query.data?.counts || {}, connected = connection && connection.status !== 'disconnected', account = query.data?.expected_account || 'duukfilms@gmail.com'
-  const limit = Number(connection?.storage_limit), usage = Number(connection?.storage_usage), percent = limit > 0 && Number.isFinite(usage) ? Math.min(100, Math.round(usage / limit * 100)) : null
+  const limit = connection?.storage_limit == null ? null : Number(connection.storage_limit), usage = connection?.storage_usage == null ? null : Number(connection.storage_usage)
+  const percent = Number.isFinite(limit) && limit > 0 && Number.isFinite(usage) ? Math.min(100, Math.round(usage / limit * 100)) : null
   const act = async action => {
     setBusy(action)
     try {
