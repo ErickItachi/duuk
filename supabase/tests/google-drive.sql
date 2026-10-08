@@ -173,6 +173,7 @@ begin
  insert into storage.objects(bucket_id,name) values
   ('duuk-documents','original/'||first_contract||'/'||gen_random_uuid()||'.pdf'),
   ('duuk-documents','proposal/'||gen_random_uuid()||'/'||gen_random_uuid()||'.pdf');
+ grant usage on schema storage to authenticated;
  grant select on storage.objects to authenticated;
  perform set_config('request.jwt.claims',jsonb_build_object('sub',staff,'role','authenticated')::text,true);
  set local role authenticated;
