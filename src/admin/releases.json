@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.4.0",
+    "date": "2026-10-08",
+    "title": "WhatsApp no ritmo do Comercial",
+    "new": [
+      "Abertura manual de conversas por links oficiais do WhatsApp, com modelos editáveis e variáveis do cliente, empresa, projeto e evento.",
+      "Registro manual de contato com atualização de negociação e próximo follow-up numa única operação."
+    ],
+    "improved": [
+      "Reagendamento de follow-ups, lembretes comerciais sem duplicação e filtros por período e responsável no dashboard."
+    ]
+  },
+  {
     "version": "1.3.2",
     "date": "2026-10-07",
     "title": "Presença ajustada no celular",

@@ -7,7 +7,7 @@ import { brl, cents } from "../office/model";
 import { ConfirmModal, Icon, Modal, RefreshButton } from "../admin/components";
 import { Avatar, Field, PageTitle, QueryState } from "../admin/forms";
 import {
-  addActivity,
+  recordContact,
   addFollowup,
   clientHistory,
   commercialData,
@@ -15,6 +15,7 @@ import {
   deleteClient,
   movePipeline,
   saveClient,
+  rescheduleFollowup,
 } from "./api";
 import {
   channels,
@@ -28,6 +29,8 @@ import {
 } from "./model";
 
 import PipelineBoard from "./PipelineBoard";
+import { WhatsAppComposer } from './WhatsAppMessages';
+import { whatsappPhone } from './whatsapp';
 
 const initialClient = {
   name: "",
@@ -47,6 +50,8 @@ const initialClient = {
   next_follow_up: "",
   estimated: "",
   tags: "",
+  project_name: "",
+  event_date: "",
 };
 function ClientEditor({ record, people, onClose, onSaved }) {
   const auth = useAuth(),
@@ -56,6 +61,7 @@ function ClientEditor({ record, people, onClose, onSaved }) {
             ...record,
             owner_id: record.owner_id || "",
             first_contact: record.first_contact || "",
+            event_date: record.event_date || "",
             next_follow_up: record.next_follow_up
               ? localInput(record.next_follow_up)
               : "",
@@ -79,6 +85,14 @@ function ClientEditor({ record, people, onClose, onSaved }) {
           .map((k) => [k, form[k]]),
       );
       payload.owner_id = payload.owner_id || null;
+      payload.event_date = payload.event_date || null;
+      for (const key of ['phone', 'whatsapp']) {
+        if (payload[key]) {
+          const phone = whatsappPhone(payload[key]);
+          if (!phone) throw new Error('Informe um telefone válido com DDI e DDD. Exemplo: +55 11 99999-9999.');
+          payload[key] = phone.number;
+        }
+      }
       payload.first_contact = payload.first_contact || null;
       payload.next_follow_up = timestamp(payload.next_follow_up);
       payload.estimated_cents = form.estimated ? cents(form.estimated) : 0;
@@ -108,8 +122,9 @@ function ClientEditor({ record, people, onClose, onSaved }) {
           {[
             ["name", "Nome", 160],
             ["company", "Empresa", 160],
-            ["phone", "Telefone", 40],
-            ["whatsapp", "WhatsApp", 40],
+            ["phone", "Telefone com DDI e DDD", 40],
+            ["whatsapp", "Outro número de WhatsApp (opcional)", 40],
+            ["project_name", "Nome do projeto", 160],
             ["email", "E-mail", 254],
             ["instagram", "Instagram", 160],
             ["website", "Site", 500],
@@ -124,11 +139,13 @@ function ClientEditor({ record, people, onClose, onSaved }) {
               onChange={(v) => update(key, v)}
               maxLength={max}
               type={
-                key === "email" ? "email" : key === "website" ? "url" : "text"
+                key === "email" ? "email" : key === "website" ? "url" : ['phone', 'whatsapp'].includes(key) ? 'tel' : "text"
               }
-              required={key === "name"}
+              placeholder={['phone', 'whatsapp'].includes(key) ? '+55 11 99999-9999' : undefined}
+              required={key === "name" || key === 'phone'}
             />
           ))}
+          <Field label="Data do evento" type="date" value={form.event_date} onChange={value => update('event_date', value)} />
           <Field label="Responsável">
             <select
               value={form.owner_id}
@@ -209,6 +226,8 @@ function ClientEditor({ record, people, onClose, onSaved }) {
   );
 }
 function ActivityEditor({ clients, clientId, onClose, onSaved }) {
+  const auth = useAuth();
+  const [requestId] = useState(() => crypto.randomUUID());
   const [form, setForm] = useState({
       client_id: clientId || clients[0]?.id || "",
       occurred_at: localInput(),
@@ -216,21 +235,26 @@ function ActivityEditor({ clients, clientId, onClose, onSaved }) {
       notes: "",
       result: "",
       next_step: "",
+      new_stage: "",
+      next_due: "",
     }),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   useUnsavedChanges(true);
   const update = (k, v) => setForm((old) => ({ ...old, [k]: v }));
   return (
-    <Modal title="Registrar contato" onClose={() => !busy && onClose()}>
+    <Modal title="Registrar contato realizado" onClose={() => !busy && onClose()}>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
           try {
-            await addActivity({
-              ...form,
-              occurred_at: timestamp(form.occurred_at),
+            const client = clients.find(item => item.id === form.client_id);
+            await recordContact({
+              target: form.client_id, revision: client.version, request_id: requestId,
+              contacted_at: timestamp(form.occurred_at), contact_channel: form.channel,
+              contact_notes: form.notes, outcome: form.result, next_step: form.next_step,
+              next_due: timestamp(form.next_due), new_stage: form.new_stage || null,
             });
             await onSaved();
             onClose();
@@ -295,6 +319,8 @@ function ActivityEditor({ clients, clientId, onClose, onSaved }) {
             value={form.next_step}
             onChange={(v) => update("next_step", v)}
           />
+          {(auth.hasPermission('crm.pipeline') || auth.hasPermission('crm.clients')) && <Field label="Atualizar negociação"><select value={form.new_stage} onChange={event => update('new_stage', event.target.value)}><option value="">Manter etapa atual</option>{stages.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></Field>}
+          {auth.hasPermission('crm.followups') && <Field label="Próximo contato (opcional)" type="datetime-local" value={form.next_due} onChange={value => update('next_due', value)} />}
           {error && (
             <p className="admin-error" role="alert">
               {error}
@@ -303,7 +329,7 @@ function ActivityEditor({ clients, clientId, onClose, onSaved }) {
         </div>
         <div className="admin-modal__foot">
           <button className="admin-button" disabled={busy || !clients.length}>
-            {busy ? "Salvando…" : "Registrar contato"}
+            {busy ? "Salvando…" : "Registrar contato realizado"}
           </button>
         </div>
       </form>
@@ -317,13 +343,14 @@ function FollowupEditor({
   onClose,
   onSaved,
   complete,
+  reschedule,
 }) {
   const auth = useAuth(),
     [form, setForm] = useState({
-      client_id: clientId || clients[0]?.id || "",
-      owner_id: auth.user.id,
-      due_at: localInput(),
-      notes: "",
+      client_id: reschedule?.client_id || clientId || clients[0]?.id || "",
+      owner_id: reschedule?.owner_id || auth.user.id,
+      due_at: reschedule ? localInput(reschedule.due_at) : localInput(),
+      notes: reschedule?.notes || "",
       result: "",
       next_due: "",
       new_stage: "",
@@ -334,7 +361,7 @@ function FollowupEditor({
   const update = (k, v) => setForm((old) => ({ ...old, [k]: v }));
   return (
     <Modal
-      title={complete ? "Concluir follow-up" : "Agendar follow-up"}
+      title={complete ? "Concluir follow-up" : reschedule ? 'Reagendar follow-up' : "Agendar follow-up"}
       onClose={() => !busy && onClose()}
     >
       <form
@@ -350,6 +377,7 @@ function FollowupEditor({
                 next_due: timestamp(form.next_due),
                 new_stage: form.new_stage || null,
               });
+            else if (reschedule) await rescheduleFollowup(reschedule, timestamp(form.due_at));
             else
               await addFollowup({
                 client_id: form.client_id,
@@ -387,6 +415,7 @@ function FollowupEditor({
               />
               <Field label="Atualizar etapa">
                 <select
+                  disabled={!auth.hasPermission('crm.pipeline') && !auth.hasPermission('crm.clients')}
                   value={form.new_stage}
                   onChange={(e) => update("new_stage", e.target.value)}
                 >
@@ -404,6 +433,7 @@ function FollowupEditor({
               <Field label="Cliente">
                 <select
                   required
+                  disabled={!!reschedule}
                   value={form.client_id}
                   onChange={(e) => update("client_id", e.target.value)}
                 >
@@ -417,6 +447,7 @@ function FollowupEditor({
               <Field label="Responsável">
                 <select
                   required
+                  disabled={!!reschedule}
                   value={form.owner_id}
                   onChange={(e) => update("owner_id", e.target.value)}
                 >
@@ -436,6 +467,7 @@ function FollowupEditor({
               />
               <Field label="Observações">
                 <textarea
+                  disabled={!!reschedule}
                   maxLength={2000}
                   rows={3}
                   value={form.notes}
@@ -456,6 +488,7 @@ function FollowupEditor({
               ? "Salvando…"
               : complete
                 ? "Concluir contato"
+                : reschedule ? 'Reagendar'
                 : "Agendar follow-up"}
           </button>
         </div>
@@ -471,6 +504,7 @@ function ClientDetail({
   onActivity,
   onFollowup,
   onEmail,
+  onWhatsApp,
 }) {
   const query = useQuery(
     useCallback(() => clientHistory(client.id), [client.id]),
@@ -494,6 +528,8 @@ function ClientDetail({
             ["E-mail", client.email],
             ["Telefone", client.phone],
             ["WhatsApp", client.whatsapp],
+            ['Projeto', client.project_name],
+            ['Data do evento', client.event_date?.split('-').reverse().join('/')],
             ["Instagram", client.instagram],
             ["Site", client.website],
             ["Cidade", client.city],
@@ -539,6 +575,7 @@ function ClientDetail({
         </QueryState>
       </div>
       <div className="admin-modal__foot">
+        <button className="admin-button admin-button--secondary" onClick={onWhatsApp}><Icon name="message" />Conversar no WhatsApp</button>
         {onEmail && (
           <Link
             className="admin-button admin-button--secondary"
@@ -569,7 +606,7 @@ function ClientDetail({
         {onActivity && (
           <button className="admin-button" onClick={onActivity}>
             <Icon name="plus" />
-            Registrar contato
+            Registrar contato realizado
           </button>
         )}
       </div>
@@ -595,7 +632,7 @@ function CommercialOverview({ data, report = false, filters }) {
   const stats = commercialStats(
     clients,
     activities,
-    data.followups.filter((f) => clientIds.has(f.client_id)),
+    data.followups.filter((f) => clientIds.has(f.client_id) && (!filters?.owner || f.owner_id === filters.owner)),
   );
   const origin = Object.entries(
     clients.reduce(
@@ -623,14 +660,15 @@ function CommercialOverview({ data, report = false, filters }) {
     <>
       <div className="crm-stats">
         {[
-          ["Total de leads", stats.total],
-          ["Contatos realizados", stats.contacts],
+          ["Clientes cadastrados", stats.total],
+          ["Negociações em andamento", stats.inProgress],
+          ["Contatos registrados no período", stats.contacts],
           ["Contatos hoje", stats.today],
           ["Esta semana", stats.week],
           ["Este mês", stats.month],
           ["Em negociação", stats.negotiating],
-          ["Propostas enviadas", stats.proposals],
-          ["Fechados", stats.won],
+          ["Propostas aguardando resposta", stats.proposals],
+          ["Negociações concluídas", stats.won],
           ["Perdidos", stats.lost],
           ["Follow-ups pendentes", stats.pending],
           ["Conversão de oportunidades concluídas", `${stats.conversion}%`],
@@ -767,6 +805,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
     [followup, setFollowup] = useState(null),
     [deleting, setDeleting] = useState(null),
     [moving, setMoving] = useState(""),
+    [whatsapp, setWhatsApp] = useState(null),
     [reportFilters, setReportFilters] = useState({
       owner: "",
       source: "",
@@ -956,7 +995,14 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
         )}
       </PageTitle>
       <QueryState query={query}>
-        {mode === "dashboard" && <CommercialOverview data={data} />}{" "}
+        {mode === "dashboard" && <>
+          <section className="admin-panel crm-report-filters">
+            <Field label="Responsável"><select value={reportFilters.owner} onChange={event => setReportFilters(previous => ({ ...previous, owner: event.target.value }))}><option value="">Toda a equipe</option>{data.people.map(person => <option key={person.id} value={person.id}>{person.name}</option>)}</select></Field>
+            <Field label="Contatos a partir de" type="date" value={reportFilters.from} onChange={value => setReportFilters(previous => ({ ...previous, from: value }))} />
+            <Field label="Até" type="date" min={reportFilters.from} value={reportFilters.to} onChange={value => setReportFilters(previous => ({ ...previous, to: value }))} />
+          </section>
+          <CommercialOverview data={data} filters={reportFilters} />
+        </>}{" "}
         {["clients", "pipeline", "activities", "followups"].includes(mode) &&
           toolbar}
         {mode === "clients" && (
@@ -978,6 +1024,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
                 <span className="crm-stage">{stageLabel(c.stage)}</span>
                 <strong className="crm-money">{brl(c.estimated_cents)}</strong>
                 <div className="admin-row-actions">
+                  <button className="admin-icon-button" aria-label={`Conversar no WhatsApp com ${c.name}`} onClick={() => setWhatsApp(c)}><Icon name="message" /></button>
                   <button
                     className="admin-icon-button"
                     aria-label={`Editar ${c.name}`}
@@ -1098,6 +1145,8 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
                     </small>
                     {f.result && <p>{f.result}</p>}
                   </div>
+                  {!f.completed_at && <button className="admin-icon-button" aria-label={`WhatsApp: ${data.clients.find(c => c.id === f.client_id)?.name}`} onClick={() => setWhatsApp(data.clients.find(c => c.id === f.client_id))}><Icon name="message" /></button>}
+                  {!f.completed_at && <button className="admin-icon-button" aria-label={`Reagendar follow-up de ${data.clients.find(c => c.id === f.client_id)?.name}`} onClick={() => setFollowup({ reschedule: f })}><Icon name="calendar" /></button>}
                   {!f.completed_at && (
                     <button
                       className="admin-button admin-button--secondary"
@@ -1181,6 +1230,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
       {detail && (
         <ClientDetail
           onEmail={auth.hasPermission("mail")}
+          onWhatsApp={() => { setWhatsApp(detail); setDetail(null); }}
           client={detail}
           people={data.people}
           onClose={() => setDetail(null)}
@@ -1218,6 +1268,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
           onSaved={saved}
         />
       )}{" "}
+      {whatsapp && <WhatsAppComposer client={whatsapp} onClose={() => setWhatsApp(null)} onRecord={auth.hasPermission('crm.activities') ? () => { setActivity({ clientId: whatsapp.id }); setWhatsApp(null); } : null} />}
       {followup && (
         <FollowupEditor
           clients={data.clients}

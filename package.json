@@ -20,6 +20,7 @@
     "@tiptap/starter-kit": "3.31.4",
     "fflate": "0.8.3",
     "hls.js": "^1.7.3",
+    "libphonenumber-js": "1.13.14",
     "lucide-react": "1.52.0",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "6.4.299",

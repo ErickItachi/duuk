@@ -44,6 +44,20 @@ export const addActivity = async (form) =>
   checked(
     await supabase.from("duuk_activities").insert(form).select().single(),
   );
+export const recordContact = async (body) => checked(await supabase.rpc('duuk_record_contact', body));
+export const listMessageTemplates = () => rows('duuk_whatsapp_templates', q => q.order('title').order('id'));
+export async function saveMessageTemplate(form, record) {
+  const result = checked(await (record
+    ? supabase.from('duuk_whatsapp_templates').update(form).eq('id', record.id).eq('version', record.version)
+    : supabase.from('duuk_whatsapp_templates').insert(form)).select().maybeSingle());
+  if (!result) throw new Error('O modelo mudou em outra aba. Atualize antes de salvar.');
+  return result;
+}
+export const rescheduleFollowup = async (record, due_at) => {
+  const result = checked(await supabase.from('duuk_follow_ups').update({ due_at }).eq('id', record.id).eq('version', record.version).is('completed_at', null).select().maybeSingle());
+  if (!result) throw new Error('O follow-up mudou. Atualize antes de reagendar.');
+  return result;
+};
 export const addFollowup = async (form) =>
   checked(
     await supabase.from("duuk_follow_ups").insert(form).select().single(),

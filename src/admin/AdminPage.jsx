@@ -17,6 +17,7 @@ import { UsersPage, PermissionsPage, ProfilePage, AuditPage } from './TeamPages'
 import IntegrationsPage from './IntegrationsPage'
 import TeamPresence from './TeamPresence'
 import CommercialPage from '../crm/CommercialPages'
+import MessageTemplatesPage from '../crm/WhatsAppMessages'
 import MailPage from '../mail/MailPage'
 import ProjectEditor from './ProjectEditor'
 import DashboardPage from '../office/DashboardPage'
@@ -36,6 +37,7 @@ const sections = [
   { to: '/admin/comercial/clientes', label: 'Clientes e leads', icon: 'users', permission: 'crm.clients', group: 'Comercial' },
   { to: '/admin/comercial/pipeline', label: 'Pipeline', icon: 'pipeline', permission: 'crm.pipeline', group: 'Comercial' },
   { to: '/admin/comercial/contatos', label: 'Contatos e atividades', icon: 'activity', permission: 'crm.activities', group: 'Comercial' },
+  { to: '/admin/comercial/modelos', label: 'Modelos de mensagens', icon: 'message', permission: 'crm.activities', group: 'Comercial' },
   { to: '/admin/comercial/follow-ups', label: 'Follow-ups', icon: 'clock', permission: 'crm.followups', group: 'Comercial' },
   { to: '/admin/comercial/emails', label: 'E-mails', icon: 'mail', permission: 'mail', group: 'Comercial' },
   { to: '/admin/comercial/relatorios', label: 'Relatórios', icon: 'chart', permission: 'crm.reports', group: 'Comercial' },
@@ -234,6 +236,7 @@ function AdminWorkspace() {
      <Route path="contratos" element={guarded('contracts',<ContractsPage notify={notify}/>)}/><Route path="contratos/:id" element={guarded('contracts',<ContractEditor notify={notify}/>)}/><Route path="agenda" element={guarded('agenda',<AgendaPage notify={notify}/>)}/><Route path="financeiro" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="despesas" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="insights" element={guarded('insights',<InsightsPage/>)}/>
      {[[undefined,'dashboard'],['clientes','clients'],['pipeline','pipeline'],['contatos','activities'],['follow-ups','followups'],['relatorios','reports']].map(([path,mode])=><Route key={mode} path={path?`comercial/${path}`:'comercial'} element={guarded(({dashboard:'crm.dashboard',clients:'crm.clients',pipeline:'crm.pipeline',activities:'crm.activities',followups:'crm.followups',reports:'crm.reports'})[mode],<CommercialPage mode={mode} notify={notify}/>)}/>)}
      <Route path="comercial/emails" element={guarded('mail',<MailPage notify={notify}/>)}/>
+     <Route path="comercial/modelos" element={guarded('crm.activities',<MessageTemplatesPage notify={notify}/>)}/>
      <Route path="configuracoes/usuarios" element={guarded('team',<UsersPage notify={notify}/>)}/><Route path="configuracoes/grupos" element={guarded('permissions',<PermissionsPage notify={notify}/>)}/><Route path="configuracoes/permissoes" element={guarded('permissions',<PermissionsPage mode="users" notify={notify}/>)}/><Route path="configuracoes/perfil" element={<ProfilePage notify={notify}/>}/><Route path="configuracoes/integracoes" element={<IntegrationsPage notify={notify}/>}/><Route path="configuracoes/historico" element={guarded('audit',<AuditPage/>)}/><Route path="configuracoes/notificacoes" element={<NotificationSettingsPage notify={notify}/>}/><Route path="configuracoes/sobre" element={<AboutAdminPage/>}/><Route path="notificacoes" element={<NotificationsPage notify={notify}/>}/><Route path="*" element={<Navigate to="/admin" replace/>}/>
     </Routes>}
    </div></main><footer className="admin-footer"><span>DUUK / SÃO PAULO</span><span>Seu estúdio. Seu ritmo.</span><Link to="/admin/configuracoes/sobre">v{currentRelease.version}</Link></footer>

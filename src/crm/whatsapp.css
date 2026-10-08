@@ -1,0 +1,22 @@
+.crm-whatsapp-compose { display: grid; gap: 20px; }
+.crm-whatsapp-recipient { display: flex; align-items: center; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--admin-line); }
+.crm-whatsapp-recipient > svg { color: #ffa381; flex-shrink: 0; }
+.crm-whatsapp-recipient > div { min-width: 0; }
+.crm-whatsapp-recipient strong { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.crm-whatsapp-recipient small { display: block; color: var(--admin-muted); font-size: 12px; margin-top: 6px; line-height: 1.6; overflow-wrap: anywhere; }
+.crm-whatsapp-preview { padding: 18px; border: 1px solid var(--admin-line); border-radius: 10px; background: #ffffff03; }
+.crm-whatsapp-preview > small, .crm-message-variables > small { color: var(--admin-muted); font-size: 9px; letter-spacing: .12em; }
+.crm-whatsapp-preview p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; font-size: 13px; margin-top: 12px; }
+.crm-whatsapp-missing { display: grid; gap: 14px; }
+.crm-whatsapp-missing > p, .crm-whatsapp-feedback { color: #ffa381; font-size: 12px; line-height: 1.7; }
+.crm-message-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.crm-message-card { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.crm-message-card > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.crm-message-card > div > svg { color: #ffa381; }
+.crm-message-card h2 { font-size: 21px; font-weight: 500; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.crm-message-card p { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--admin-muted); font-size: 12px; line-height: 1.8; flex: 1; }
+.crm-message-card > button { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; }
+.crm-message-variables { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.crm-message-variables > small { flex-basis: 100%; margin-bottom: 4px; }
+.crm-message-variables > button { padding: 8px; border: 1px solid var(--admin-line); border-radius: 5px; font-size: 11px; color: #ffa381; max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 767px) { .crm-message-grid { grid-template-columns: minmax(0, 1fr); } .crm-message-card { padding: 20px; } }

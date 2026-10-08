@@ -59,6 +59,7 @@ export function commercialStats(
     lost = clients.filter((c) => c.stage === "lost").length;
   return {
     total: clients.length,
+    inProgress: clients.filter(c => !['won', 'lost'].includes(c.stage)).length,
     contacts: activities.length,
     today: activities.filter((a) => localDay(a.occurred_at) === day).length,
     week: activities.filter(
