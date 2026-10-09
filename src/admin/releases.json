@@ -1,5 +1,11 @@
 [
   {
+    "version": "1.7.2",
+    "date": "2026-10-09",
+    "title": "DUUK AI: respostas melhores e mais conforto",
+    "improved": ["Instruções específicas, contexto de ajuda relevante e escolha do modelo conforme o pedido, com continuidade nas revisões.", "Aceite de privacidade salvo na conta, disponível nos outros aparelhos e revogável pelo próprio assistente.", "Seleção e foco mais discretos no administrativo, sem os contornos vermelhos na conversa."]
+  },
+  {
     "version": "1.7.1",
     "date": "2026-10-09",
     "title": "DUUK AI: conexão com Gemini",

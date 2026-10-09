@@ -1,5 +1,5 @@
 // Backend only. Master instructions supplied by DUUK, versioned independently of the app.
-export const promptVersion = '1.0.1'
+export const promptVersion = '1.1.0'
 
 export const systemPrompt = `## IDENTIDADE
 

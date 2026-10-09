@@ -13,6 +13,7 @@ const modes = [
   { id: 'help', icon: 'info', label: 'Ajuda com a DUUK', description: 'O próximo passo dentro da plataforma.', prompt: 'Como posso utilizar o DUUK Admin para ' },
 ]
 const documentTypes = [['script', 'Roteiro'], ['concept', 'Conceito'], ['proposal', 'Proposta'], ['briefing', 'Briefing'], ['other', 'Documento']]
+const consentVersion = '2026-10-09'
 const dateLabel = value => value ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(new Date(value)) : ''
 
 // All model output is rendered as React text. No raw HTML or remote images are
@@ -126,13 +127,16 @@ function DocumentEditor({ document, conversationId, onClose, onSaved, notify }) 
 
 export default function AiPage({ embedded = false, context = '', notify = () => {}, onDirtyChange, onClose }) {
   const auth = useAuth()
+  const memberId = auth?.user?.id || auth?.profile?.id
   const [history, setHistory] = useState([]), [documents, setDocuments] = useState([]), [conversation, setConversation] = useState(null), [messages, setMessages] = useState([])
   const [mode, setMode] = useState(embedded && context ? 'help' : 'free'), [draft, setDraft] = useState(''), [consent, setConsent] = useState(false), [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [error, setError] = useState('')
   const [status, setStatus] = useState(null), [sidebar, setSidebar] = useState(false), [tab, setTab] = useState('conversations'), [renaming, setRenaming] = useState(null), [renameTitle, setRenameTitle] = useState(''), [deleting, setDeleting] = useState(null), [editing, setEditing] = useState(null), [document, setDocument] = useState(null), [copied, setCopied] = useState(''), [retry, setRetry] = useState(null)
   const [configure, setConfigure] = useState(false), [apiKey, setApiKey] = useState(''), [freeTier, setFreeTier] = useState(false), [configuring, setConfiguring] = useState(false), [configurationError, setConfigurationError] = useState('')
   const [privacy, setPrivacy] = useState(null), [privacyAccepted, setPrivacyAccepted] = useState(false), [compact, setCompact] = useState(() => matchMedia('(max-width: 760px)').matches)
+  const [consentBusy, setConsentBusy] = useState(false), [consentError, setConsentError] = useState('')
   const controller = useRef(null), running = useRef(false), revision = useRef(0), scroll = useRef(null), input = useRef(null), nearBottom = useRef(true), alive = useRef(true), consentRef = useRef(false), menu = useRef(null), usage = useRef(null), shell = useRef(null)
-  const dirty = Boolean(draft.trim()) || busy || Boolean(apiKey) || configuring
+  const consentEpoch = useRef(0), accountEpoch = useRef(0)
+  const dirty = Boolean(draft.trim()) || busy || Boolean(apiKey) || configuring || consentBusy
   useUnsavedChanges(dirty)
   useEffect(() => { onDirtyChange?.(dirty); return () => onDirtyChange?.(false) }, [dirty, onDirtyChange])
   useEffect(() => { const media = matchMedia('(max-width: 760px)'), change = event => setCompact(event.matches); media.addEventListener('change', change); return () => media.removeEventListener('change', change) }, [])
@@ -159,8 +163,38 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
   }, [embedded])
   const stopGeneration = useCallback(() => controller.current?.abort(), [])
   const invalidate = useCallback(() => { revision.current++ }, [])
-  const refreshList = useCallback(async () => { const [result, library] = await Promise.all([aiRequest({ action: 'list' }), aiRequest({ action: 'documents' })]); if (alive.current) { setHistory(result.conversations || []); setDocuments(library.documents || []) } }, [])
-  useEffect(() => { alive.current = true; Promise.allSettled([refreshList(), aiRequest({ action: 'status' })]).then(results => { if (!alive.current) return; if (results[0].status === 'rejected') setError(results[0].reason.message); if (results[1].status === 'fulfilled') setStatus(results[1].value); else { setStatus({ configured: false, status_unavailable: true }); setError(results[1].reason.message) } setLoading(false) }); return () => { alive.current = false; stopGeneration(); invalidate() } }, [refreshList, stopGeneration, invalidate])
+  const invalidateConsent = useCallback(() => { consentEpoch.current++ }, [])
+  const invalidateAccount = useCallback(() => { accountEpoch.current++ }, [])
+  const isActiveAccount = useCallback(epoch => alive.current && epoch === accountEpoch.current, [])
+  const applyStatus = useCallback((result, epoch, account) => {
+    if (!isActiveAccount(account) || epoch !== consentEpoch.current) return
+    // The authenticated backend is the only source of consent. Never inherit an
+    // acceptance from this browser, another member or an older policy version.
+    const accepted = result.consent?.accepted === true && result.consent.version === consentVersion
+    consentRef.current = accepted; setConsent(accepted); setStatus(result)
+  }, [isActiveAccount])
+  const refreshList = useCallback(async () => { const account = accountEpoch.current, [result, library] = await Promise.all([aiRequest({ action: 'list' }), aiRequest({ action: 'documents' })]); if (isActiveAccount(account)) { setHistory(result.conversations || []); setDocuments(library.documents || []) } }, [isActiveAccount])
+  useEffect(() => {
+    let cancelled = false; alive.current = true; consentRef.current = false; invalidateConsent(); invalidateAccount()
+    const account = accountEpoch.current
+    const load = async () => {
+      // Resolve against the member's server record each time the panel mounts
+      // or the signed-in account changes, including the contextual popup.
+      await Promise.resolve(); if (cancelled) return
+      running.current = false; controller.current = null
+      setHistory([]); setDocuments([]); setConversation(null); setMessages([]); setDraft(''); setMode(embedded && context ? 'help' : 'free'); setSidebar(false); setTab('conversations'); setRenaming(null); setRenameTitle(''); setDeleting(null); setEditing(null); setDocument(null); setCopied(''); setRetry(null)
+      setConfigure(false); setApiKey(''); setFreeTier(false); setConfiguring(false); setConfigurationError(''); setBusy(false); setError('')
+      setConsent(false); setStatus(null); setPrivacy(null); setPrivacyAccepted(false); setConsentBusy(false); setConsentError(''); setLoading(true)
+      const epoch = consentEpoch.current, results = await Promise.allSettled([refreshList(), aiRequest({ action: 'status' })])
+      if (cancelled || !isActiveAccount(account)) return
+      if (results[0].status === 'rejected') setError(results[0].reason.message)
+      if (results[1].status === 'fulfilled') applyStatus(results[1].value, epoch, account)
+      else { setStatus({ configured: false, status_unavailable: true }); setError(results[1].reason.message) }
+      setLoading(false)
+    }
+    load()
+    return () => { cancelled = true; alive.current = false; invalidateConsent(); invalidateAccount(); stopGeneration(); invalidate() }
+  }, [memberId, embedded, context, applyStatus, refreshList, stopGeneration, invalidate, invalidateConsent, invalidateAccount, isActiveAccount])
   useEffect(() => { const element = scroll.current; if (nearBottom.current && element) element.scrollTo({ top: element.scrollHeight, behavior: busy ? 'instant' : 'smooth' }) }, [messages, busy])
   const open = async item => {
     if (running.current || draft.trim() && !window.confirm('Descartar a mensagem ainda não enviada?')) return
@@ -171,7 +205,7 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
   const copy = async (text, id) => { try { await navigator.clipboard.writeText(text); setCopied(id); setTimeout(() => setCopied(''), 2400) } catch { notify('Não foi possível copiar. Selecione o texto e copie.', true) } }
   const generate = async (payload, baseMessages) => {
     if (running.current || !consentRef.current || status?.configured !== true) return
-    const requestController = new AbortController()
+    const requestController = new AbortController(), account = accountEpoch.current
     running.current = true; setBusy(true); setError(''); setRetry(null); controller.current = requestController; nearBottom.current = true
     const pending = `pending:${payload.client_request_id}`, userMessage = { id: `user:${payload.client_request_id}`, role: 'user', content: payload.message }
     const prefix = baseMessages || messages
@@ -179,54 +213,78 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
     let accumulated = '', conversationId = payload.conversation_id, completed = false
     try {
       await streamAiRequest(payload, { signal: requestController.signal, onEvent: event => {
-        if (!alive.current || requestController.signal.aborted) return
+        if (!isActiveAccount(account) || requestController.signal.aborted) return
         if (event.type === 'meta' && event.conversation_id) { conversationId = event.conversation_id; setConversation(old => ({ ...old, id: conversationId, title: old?.title || payload.message.slice(0, 80), mode: payload.mode })) }
         if (event.type === 'delta') { accumulated += event.text || ''; setMessages(old => old.map(item => item.id === pending ? { ...item, content: accumulated } : item)) }
         if (event.type === 'done') { completed = true; conversationId = event.conversation_id || conversationId; setMessages(old => old.map(item => item.id === pending ? { ...item, ...(typeof event.message === 'object' ? event.message : {}), content: event.message?.content || accumulated, pending: false } : item)) }
       } })
+      if (!isActiveAccount(account)) return
       if (requestController.signal.aborted) throw new DOMException('Geração interrompida.', 'AbortError')
-      if (conversationId) { const result = await aiRequest({ action: 'conversation', id: conversationId }); if (alive.current) { setConversation(result.conversation); setMessages(result.messages || []) } }
+      if (conversationId) { const result = await aiRequest({ action: 'conversation', id: conversationId }); if (!isActiveAccount(account)) return; setConversation(result.conversation); setMessages(result.messages || []) }
       await refreshList()
     } catch (cause) {
-      if (!alive.current) return
+      if (!isActiveAccount(account)) return
       const aborted = requestController.signal.aborted || cause.name === 'AbortError'
       setMessages(old => old.map(item => item.id === pending ? { ...item, pending: false, interrupted: !completed } : item))
       setError(aborted ? 'Geração interrompida. O texto recebido continua aqui.' : cause.message)
       if (!completed) { setRetry({ payload, baseMessages: prefix }); setDraft(old => old || payload.message) }
       refreshList().catch(() => {})
-    } finally { running.current = false; controller.current = null; if (alive.current) { setBusy(false); aiRequest({ action: 'status' }).then(result => { if (alive.current) setStatus(result) }).catch(() => {}) } }
+    } finally { if (isActiveAccount(account)) { running.current = false; controller.current = null; setBusy(false); const epoch = consentEpoch.current; aiRequest({ action: 'status' }).then(result => applyStatus(result, epoch, account)).catch(() => {}) } }
   }
   const requestGeneration = (payload, baseMessages) => {
     if (running.current || !status?.configured) return
-    if (!consentRef.current) { setPrivacyAccepted(false); setPrivacy({ payload, baseMessages }); return }
+    if (!consentRef.current) { setPrivacyAccepted(false); setConsentError(''); setPrivacy({ payload, baseMessages }); return }
     generate(payload, baseMessages)
   }
   const submit = event => {
     event.preventDefault(); if (!draft.trim()) return
     if (retry && !editing && draft.trim() === retry.payload.message) { requestGeneration(retry.payload, retry.baseMessages); return }
     const index = editing ? messages.findIndex(item => item.id === editing.id) : -1
-    const payload = { message: draft.trim(), mode, context, consent: true, client_request_id: crypto.randomUUID(), ...(conversation?.id ? { conversation_id: conversation.id } : {}), ...(editing ? { edit_message_id: editing.id } : {}) }
+    const payload = { message: draft.trim(), mode, context, consent: true, consent_version: consentVersion, client_request_id: crypto.randomUUID(), ...(conversation?.id ? { conversation_id: conversation.id } : {}), ...(editing ? { edit_message_id: editing.id } : {}) }
     requestGeneration(payload, index >= 0 ? messages.slice(0, index) : undefined)
   }
   const regenerate = index => {
     const previous = messages.slice(0, index).findLast(item => item.role === 'user')
     if (!previous || String(previous.id).startsWith('user:')) return
     const userIndex = messages.findIndex(item => item.id === previous.id)
-    requestGeneration({ message: previous.content, mode, context, consent: true, conversation_id: conversation.id, client_request_id: crypto.randomUUID(), regenerate: true }, messages.slice(0, userIndex))
+    requestGeneration({ message: previous.content, mode, context, consent: true, consent_version: consentVersion, conversation_id: conversation.id, client_request_id: crypto.randomUUID(), regenerate: true }, messages.slice(0, userIndex))
   }
-  const rename = async event => { event.preventDefault(); try { await aiRequest({ action: 'rename', id: renaming.id, title: renameTitle.trim() }); setHistory(old => old.map(item => item.id === renaming.id ? { ...item, title: renameTitle.trim() } : item)); if (conversation?.id === renaming.id) setConversation(old => ({ ...old, title: renameTitle.trim() })); setRenaming(null) } catch (cause) { setRenaming(old => old ? { ...old, error: cause.message } : old) } }
-  const remove = async () => { await aiRequest({ action: 'delete', id: deleting.id }); setHistory(old => old.filter(item => item.id !== deleting.id)); if (conversation?.id === deleting.id) { setConversation(null); setMessages([]); setDraft(''); setEditing(null); setRetry(null); setError('') } }
-  const openDocument = async item => { try { const result = await aiRequest({ action: 'document', id: item.id }); setDocument({ ...(result.document || result), can_edit: result.can_edit ?? result.document?.can_edit }); setSidebar(false) } catch (cause) { setSidebar(false); setError(cause.message) } }
+  const rename = async event => { event.preventDefault(); const account = accountEpoch.current; try { await aiRequest({ action: 'rename', id: renaming.id, title: renameTitle.trim() }); if (!isActiveAccount(account)) return; setHistory(old => old.map(item => item.id === renaming.id ? { ...item, title: renameTitle.trim() } : item)); if (conversation?.id === renaming.id) setConversation(old => ({ ...old, title: renameTitle.trim() })); setRenaming(null) } catch (cause) { if (isActiveAccount(account)) setRenaming(old => old ? { ...old, error: cause.message } : old) } }
+  const remove = async () => { const account = accountEpoch.current; await aiRequest({ action: 'delete', id: deleting.id }); if (!isActiveAccount(account)) return; setHistory(old => old.filter(item => item.id !== deleting.id)); if (conversation?.id === deleting.id) { setConversation(null); setMessages([]); setDraft(''); setEditing(null); setRetry(null); setError('') } }
+  const openDocument = async item => { const account = accountEpoch.current; try { const result = await aiRequest({ action: 'document', id: item.id }); if (!isActiveAccount(account)) return; setDocument({ ...(result.document || result), can_edit: result.can_edit ?? result.document?.can_edit }); setSidebar(false) } catch (cause) { if (isActiveAccount(account)) { setSidebar(false); setError(cause.message) } } }
   const selectMode = item => { setMode(item.id); if (!draft.trim()) setDraft(item.prompt); input.current?.focus() }
   const showConfiguration = () => { menu.current?.removeAttribute('open'); setConfigure(true); setConfigurationError('') }
   const showRename = () => { menu.current?.removeAttribute('open'); setRenaming(conversation); setRenameTitle(conversation.title || '') }
-  const acceptPrivacy = event => { event.preventDefault(); if (!privacyAccepted || !privacy?.payload) return; const pending = privacy; consentRef.current = true; setConsent(true); setPrivacy(null); setPrivacyAccepted(false); generate(pending.payload, pending.baseMessages) }
+  const closePrivacy = () => { if (consentBusy) return; setPrivacy(null); setPrivacyAccepted(false); setConsentError('') }
+  const acceptPrivacy = async event => {
+    event.preventDefault(); if (!privacyAccepted || !privacy?.payload || consentBusy) return
+    const pending = privacy, current = revision.current; consentEpoch.current++; setConsentBusy(true); setConsentError('')
+    try {
+      const result = await aiRequest({ action: 'consent', accepted: true, version: consentVersion })
+      if (result.consent?.accepted !== true || result.consent.version !== consentVersion) throw new Error('Não foi possível salvar sua autorização. Tente novamente.')
+      if (!alive.current || current !== revision.current) return
+      consentRef.current = true; setConsent(true); setStatus(old => ({ ...old, consent: result.consent })); setPrivacy(null); setPrivacyAccepted(false)
+      generate(pending.payload, pending.baseMessages)
+    } catch (cause) { if (alive.current && current === revision.current) setConsentError(cause.message) }
+    finally { if (alive.current && current === revision.current) { consentEpoch.current++; setConsentBusy(false) } }
+  }
+  const revokePrivacy = async () => {
+    if (consentBusy) return
+    const current = revision.current; consentEpoch.current++; setConsentBusy(true); setConsentError('')
+    try {
+      const result = await aiRequest({ action: 'consent', accepted: false, version: consentVersion })
+      if (result.consent?.accepted !== false) throw new Error('Não foi possível revogar sua autorização. Tente novamente.')
+      if (!alive.current || current !== revision.current) return
+      consentRef.current = false; setConsent(false); setStatus(old => ({ ...old, consent: result.consent })); setPrivacy(null); setPrivacyAccepted(false)
+    } catch (cause) { if (alive.current && current === revision.current) setConsentError(cause.message) }
+    finally { if (alive.current && current === revision.current) { consentEpoch.current++; setConsentBusy(false) } }
+  }
   const saveConfiguration = async event => {
     event.preventDefault(); if (!freeTier || !apiKey.trim() || configuring) return
-    setConfiguring(true); setConfigurationError('')
+    const account = accountEpoch.current; setConfiguring(true); setConfigurationError('')
     const key = apiKey.trim(); setApiKey('')
-    try { await aiRequest({ action: 'configure', api_key: key, free_tier_confirmed: true }); const result = await aiRequest({ action: 'status' }); setStatus(result); setConfigure(false); setFreeTier(false); setError(''); notify('Gemini configurado com segurança.') }
-    catch (cause) { setConfigurationError(cause.message) } finally { setConfiguring(false) }
+    try { await aiRequest({ action: 'configure', api_key: key, free_tier_confirmed: true }); if (!isActiveAccount(account)) return; const epoch = consentEpoch.current, result = await aiRequest({ action: 'status' }); if (!isActiveAccount(account)) return; applyStatus(result, epoch, account); setConfigure(false); setFreeTier(false); setError(''); notify('Gemini configurado com segurança.') }
+    catch (cause) { if (isActiveAccount(account)) setConfigurationError(cause.message) } finally { if (isActiveAccount(account)) setConfiguring(false) }
   }
   const configured = status?.configured === true, lastAssistant = messages.findLastIndex(item => item.role === 'assistant')
   const suggestions = embedded ? [
@@ -294,7 +352,7 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
               {busy ? <button key="stop" type="button" className="duuk-ai-send duuk-ai-send--stop" onClick={event => { event.preventDefault(); stopGeneration() }} aria-label="Interromper geração" title="Interromper"><span /></button> : <button key="send" type="submit" className="duuk-ai-send" aria-label="Enviar" title="Enviar" disabled={!draft.trim() || !configured || loading}><Icon name="send" size={17} /></button>}
             </div>
           </form>
-          <div className="duuk-ai-footnote"><button type="button" disabled={busy} onClick={() => { setPrivacyAccepted(false); setPrivacy({ informationOnly: true }) }}><Icon name="lock" size={11} />{consent ? 'Privacidade' : 'Sobre seus dados'}</button><span>Revise antes de usar.</span>
+          <div className="duuk-ai-footnote"><button type="button" disabled={busy} onClick={() => { setPrivacyAccepted(false); setConsentError(''); setPrivacy({ informationOnly: true }) }}><Icon name="lock" size={11} />{consent ? 'Privacidade' : 'Sobre seus dados'}</button><span>Revise antes de usar.</span>
             {status?.limits?.requests_per_day && <details ref={usage} className="duuk-ai-usage"><summary>Uso <span>{status.usage?.requests_today || 0}/{status.limits.requests_per_day}</span></summary><div><strong>Cotas da DUUK AI</strong><p>{status.usage?.requests_today || 0} de {status.limits.requests_per_day} solicitações hoje.</p>{status.limits.tokens_per_day && <p>{Number(status.usage?.tokens_today || 0).toLocaleString('pt-BR')} de {Number(status.limits.tokens_per_day).toLocaleString('pt-BR')} tokens, incluindo reservas.</p>}<small>As cotas gratuitas do Google também se aplicam.</small></div></details>}
           </div>
         </div>
@@ -303,13 +361,14 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
     {renaming && <Modal title="Renomear conversa" onClose={() => setRenaming(null)}><form onSubmit={rename}><div className="duuk-ai-rename"><label className="admin-field"><span>Nome da conversa</span><input autoFocus required maxLength={160} value={renameTitle} onChange={e => { setRenameTitle(e.target.value); if (renaming.error) setRenaming(old => ({ ...old, error: '' })) }} /></label>{renaming.error && <p className="admin-error" role="alert">{renaming.error}</p>}</div><div className="admin-modal__foot"><button type="button" className="admin-button admin-button--secondary" onClick={() => setRenaming(null)}>Cancelar</button><button className="admin-button" disabled={!renameTitle.trim()}>Salvar nome</button></div></form></Modal>}
     {deleting && <ConfirmModal title="Excluir conversa?" message="A conversa e suas mensagens serão excluídas. Os documentos já salvos serão preservados." action="Excluir conversa" onClose={() => setDeleting(null)} onConfirm={remove} />}
     {document && <DocumentEditor key={document.id || 'new'} document={document} conversationId={conversation?.id} onClose={() => setDocument(null)} onSaved={() => refreshList().catch(() => {})} notify={notify} />}
-    {privacy && <Modal title={privacy.payload ? 'Antes de enviar' : 'Privacidade do DUUK AI'} subtitle="Seu conteúdo será processado pelo Google Gemini." onClose={() => { setPrivacy(null); setPrivacyAccepted(false) }}>
+    {privacy && <Modal title={privacy.payload ? 'Antes de enviar' : 'Privacidade do DUUK AI'} subtitle="Seu conteúdo será processado pelo Google Gemini." onClose={closePrivacy}>
       <form onSubmit={acceptPrivacy} className="duuk-ai-privacy-dialog">
         <div className="duuk-ai-privacy-dialog__body"><p><strong>No plano gratuito, o Google pode usar as mensagens para melhorar seus produtos.</strong> Envie apenas informações fictícias ou anonimizadas. Não compartilhe dados pessoais, contratos, propostas privadas ou informações financeiras confidenciais.</p><p>A DUUK envia o texto que você escrever e o histórico desta conversa. O histórico fica privado no painel. Dados de clientes e campos de formulários não são enviados automaticamente.{context && ' Para ajuda nesta tela, enviamos somente o módulo e a rota.'}</p><a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Ler os termos do Google Gemini<Icon name="arrow" size={14} /></a>
-          {privacy.payload && <label className="admin-checkbox"><input type="checkbox" required checked={privacyAccepted} onChange={event => setPrivacyAccepted(event.target.checked)} /><span>Li e autorizo o envio das mensagens e do histórico das conversas que eu escolher nesta sessão.</span></label>}
-          {!privacy.payload && <small>{consent ? 'Você autorizou o envio nesta sessão. Pode revogar a autorização abaixo.' : 'Antes do primeiro envio, pediremos sua autorização. Nenhuma mensagem é enviada ao Google automaticamente.'}</small>}
+          {privacy.payload && <label className="admin-checkbox"><input type="checkbox" required checked={privacyAccepted} disabled={consentBusy} onChange={event => setPrivacyAccepted(event.target.checked)} /><span>Li e autorizo o envio das mensagens e do histórico das conversas que eu escolher. Meu aceite será salvo na minha conta até eu revogá-lo ou estes termos mudarem.</span></label>}
+          {!privacy.payload && <small>{consent ? 'Sua autorização está salva na sua conta, inclusive para outros aparelhos. Você pode revogá-la abaixo.' : 'Antes do primeiro envio, pediremos sua autorização uma única vez para estes termos. Nenhuma mensagem é enviada ao Google automaticamente.'}</small>}
+          {consentError && <p className="admin-error" role="alert">{consentError}</p>}
         </div>
-        <div className="admin-modal__foot">{privacy.payload ? <><button type="button" className="admin-button admin-button--secondary" onClick={() => { setPrivacy(null); setPrivacyAccepted(false) }}>Cancelar</button><button className="admin-button" disabled={!privacyAccepted}>Autorizar e enviar</button></> : <>{consent && <button type="button" className="admin-button admin-button--secondary" onClick={() => { consentRef.current = false; setConsent(false); setPrivacy(null) }}>Revogar autorização</button>}<button type="button" className="admin-button" onClick={() => setPrivacy(null)}>Concluir</button></>}</div>
+        <div className="admin-modal__foot">{privacy.payload ? <><button type="button" className="admin-button admin-button--secondary" disabled={consentBusy} onClick={closePrivacy}>Cancelar</button><button className="admin-button" disabled={!privacyAccepted || consentBusy}>{consentBusy ? 'Salvando autorização…' : 'Autorizar e enviar'}</button></> : <>{consent && <button type="button" className="admin-button admin-button--secondary" disabled={consentBusy} onClick={revokePrivacy}>{consentBusy ? 'Revogando…' : 'Revogar autorização'}</button>}<button type="button" className="admin-button" disabled={consentBusy} onClick={closePrivacy}>Concluir</button></>}</div>
       </form>
     </Modal>}
     {configure && <Modal title="Configurar Google Gemini" subtitle="Somente super administradores podem conectar a API. A chave é validada e guardada criptografada no backend da DUUK." onClose={() => { if (!configuring) { setConfigure(false); setApiKey(''); setFreeTier(false) } }}><form onSubmit={saveConfiguration}><div className="duuk-ai-configuration"><p>Crie uma chave no <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Google AI Studio</a> usando um projeto sem faturamento. A DUUK não ativa cobrança nem troca para um modelo pago quando a cota acaba.</p><label className="admin-field"><span>Chave da API Gemini</span><input type="password" autoComplete="off" spellCheck={false} required minLength={20} value={apiKey} onChange={e => setApiKey(e.target.value)} disabled={configuring} placeholder="Cole a chave somente aqui" /><small>A chave nunca é salva no navegador, no histórico de conversas ou no repositório.</small></label><label className="admin-checkbox"><input type="checkbox" required checked={freeTier} onChange={e => setFreeTier(e.target.checked)} disabled={configuring} /><span>Confirmo que este projeto Gemini não tem faturamento ativado e que a DUUK deve usar somente cotas gratuitas.</span></label>{configurationError && <p className="admin-error" role="alert">{configurationError}</p>}</div><div className="admin-modal__foot"><button type="button" className="admin-button admin-button--secondary" disabled={configuring} onClick={() => { setConfigure(false); setApiKey(''); setFreeTier(false) }}>Cancelar</button><button className="admin-button" disabled={configuring || !freeTier || !apiKey.trim()}>{configuring ? 'Validando modelos…' : 'Conectar Gemini'}</button></div></form></Modal>}

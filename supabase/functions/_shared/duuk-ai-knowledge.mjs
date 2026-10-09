@@ -1,11 +1,13 @@
 // Backend-owned manual. These are UI labels and static paths, never application records.
 // Verified against AdminPage, ContractsPage, AgendaPage, CommercialPages, TeamPages,
 // Notifications, MailPage and DrivePage. Update this version when those workflows change.
-export const knowledgeVersion = '1.0.0'
+import { normalizedTaskText, taskFor } from './duuk-ai-quality.mjs'
+export { taskFor } from './duuk-ai-quality.mjs'
+export const knowledgeVersion = '1.1.0'
 
 const pages = [
  { route: '/admin', module: 'Visão geral', actions: ['Atualizar', 'Abrir módulo'], fields: [], guidance: ['Os cartões e atalhos dependem das permissões do membro. O indicador de pessoas online reflete conexões ativas; o celular suspenso pode ficar offline.'] },
- { route: '/admin/ai', module: 'DUUK AI', permission: 'ai', actions: ['Nova conversa', 'Enviar mensagem', 'Interromper geração', 'Copiar resposta', 'Renomear conversa', 'Excluir conversa', 'Editar mensagem', 'Regenerar resposta'], fields: ['Mensagem', 'Modo'], guidance: ['Os modos são Criar roteiro, Desenvolver conceito, Assistente comercial e Ajuda com a DUUK. O assistente fornece texto e orientações; não executa ações nos demais módulos. Use exemplos fictícios ou anonimizados.'] },
+ { route: '/admin/ai', module: 'DUUK AI', permission: 'ai', actions: ['Nova conversa', 'Enviar mensagem', 'Interromper geração', 'Copiar resposta', 'Renomear conversa', 'Excluir conversa', 'Editar mensagem', 'Regenerar resposta', 'Privacidade', 'Revogar autorização'], fields: ['Mensagem', 'Modo'], guidance: ['Os modos são Criar roteiro, Desenvolver conceito, Assistente comercial e Ajuda com a DUUK. O assistente fornece texto e orientações; não executa ações nos demais módulos. Use exemplos fictícios ou anonimizados. O aceite de privacidade é salvo por conta e versão dos termos, inclusive no pop-up e em outros aparelhos. Abra Privacidade para consultar ou revogar a autorização. Após revogar, é necessário aceitar novamente antes de enviar ao Gemini.'] },
  { route: '/admin/contratos', module: 'Contratos', permission: 'contracts', actions: ['Novo contrato', 'Atualizar', 'Filtrar status', 'Abrir contrato', 'Mover para lixeira', 'Restaurar contrato'], fields: ['Título do contrato', 'Nome do cliente', 'E-mail do cliente · opcional', 'Representante da DUUK', 'Arquivo PDF'], guidance: ['Clique em Novo contrato, preencha os dados e envie um PDF pronto de até 10 MB e 30 páginas, sem senha. O painel abre a preparação dos campos. A lixeira preserva documentos e assinaturas e revoga os links anteriores. Restaurar não reativa links antigos.'] },
  { route: '/admin/contratos/:id', module: 'Preparação e assinaturas de contrato', permission: 'contracts', actions: ['Adicionar campo', 'Salvar campos', 'Gerar link', 'Baixar original', 'Baixar PDF assinado', 'Gerar PDF atualizado', 'Baixar registro de aceite', 'Tentar sincronizar'], fields: ['Página do PDF', 'Campo', 'Participante', 'Rótulo do campo', 'Esquerda', 'Topo', 'Largura', 'Altura'], guidance: ['Escolha a página, adicione os campos para cliente e DUUK, posicione-os no PDF e salve. Cada participante precisa de um campo de assinatura. Gere e compartilhe manualmente um link privado separado para cada participante; ele vale sete dias. Gerar outro link revoga o anterior daquele participante. Após gerar links, PDF e campos ficam bloqueados. O fluxo registra aceite e desenho, sem certificado ICP-Brasil ou verificação de identidade por e-mail. O PDF assinado e o registro de aceite podem ser baixados quando disponíveis. Falhas no Drive não interrompem as assinaturas.'] },
  { route: '/admin/agenda', module: 'Agenda', permission: 'agenda', actions: ['Novo compromisso', 'Editar compromisso', 'Excluir compromisso', 'Atualizar', 'Mudar mês', 'Selecionar dia'], fields: ['Título do compromisso', 'Tipo', 'Situação', 'Responsável pelo compromisso', 'Data inicial', 'Data final', 'Dia inteiro', 'Horário inicial', 'Horário final · opcional', 'Cliente · opcional', 'Local · opcional', 'Observações'], guidance: ['Selecione o dia e clique em Novo compromisso. Defina título, tipo, responsável e datas. Desmarque Dia inteiro para informar horários. O painel utiliza o horário de Brasília. Cada compromisso registra um responsável. A conexão do Google Calendar é individual e sincroniza apenas DUUK para Google; não importa eventos pessoais.'] },
@@ -70,6 +72,78 @@ export function knowledgeFor(permissions, route) {
  return { version: knowledgeVersion, scope: 'static-help-only', current, pages: current ? [...allowed.filter(page => page.route === current.route), ...allowed.filter(page => page.route !== current.route)] : allowed }
 }
 
+// Local retrieval over the permission-filtered static manual: no embeddings,
+// external classification, database records or user text in the returned context.
+const helpTopics = [
+ ['/admin/agenda', /\b(agenda|compromissos?|agendar|agendo|calendario)\b/],
+ ['/admin/contratos', /\b(contratos?)\b/],
+ ['/admin/contratos/:id', /\b(assinaturas?|assinar|assinado|signatarios?|campos? do pdf|campos? de assinatura|link de assinatura)\b/],
+ ['/admin/financeiro', /\b(financeiro|despesas?|excel|csv|vencimentos?|pagamento)\b/],
+ ['/admin/insights', /\b(insights|visitas?|acessos? do site|estatisticas? do site)\b/],
+ ['/admin/comercial', /\b(comercial|dashboard comercial|metricas comerciais|indicadores comerciais)\b/],
+ ['/admin/comercial/clientes', /\b(clientes?|leads?|cadastro comercial|anexar proposta)\b/],
+ ['/admin/comercial/pipeline', /\b(pipeline|negociacoes|etapas?|quadros?|cartoes?)\b/],
+ ['/admin/comercial/contatos', /\b(contatos?|atividades?|registrar contato)\b/],
+ ['/admin/comercial/modelos', /\b(modelos? de mensage\w*|whatsapp|wa\.me)\b/],
+ ['/admin/comercial/follow-ups', /\b(follow[ -]?ups?|reagendar|proximo contato)\b/],
+ ['/admin/comercial/relatorios', /\b(relatorios? comerciais?|origem dos leads)\b/],
+ ['/admin/comercial/emails', /\b(e-?mails?|titan|caixa de entrada|anexos?|cc|cco|encaminhar)\b/],
+ ['/admin/portfolio', /\b(portfolio|projetos?|destaque na home|ordenar filmes|rascunhos?|arquivados?)\b/],
+ ['/admin/inicio', /\b(abertura|pagina inicial|capa de abertura|video inicial|video da home)\b/],
+ ['/admin/midias', /\b(midias?|biblioteca de midia)\b/],
+ ['/admin/drive', /\b(drive|pastas?|lixeira do drive)\b/],
+ ['/admin/configuracoes/usuarios', /\b(usuarios?|equipe|pessoas? online|membros?|redefinir senha)\b/],
+ ['/admin/configuracoes/grupos', /\b(grupos? de acesso|grupos?)\b/],
+ ['/admin/configuracoes/permissoes', /\b(permissoes?|permissao|acessos? individuais)\b/],
+ ['/admin/configuracoes/perfil', /\b(meu perfil|minha foto|meu nome|minha senha|alterar senha)\b/],
+ ['/admin/configuracoes/integracoes', /\b(integracoes?|integracao|conectar|reconectar|desconectar|google calendar|sincroniz\w*)\b/],
+ ['/admin/configuracoes/historico', /\b(auditoria|historico de alteracoes)\b/],
+ ['/admin/configuracoes/notificacoes', /\b(push|iphone|ativar notificacoes|preferencias de notificacoes|permissao do navegador)\b/],
+ ['/admin/configuracoes/sobre', /\b(atualiz\w* aplicativo|atualiz\w* app|nova versao|pwa|versao do painel)\b/],
+ ['/admin/notificacoes', /\b(notificacoes?|sino|avisos?|marcar como lida)\b/],
+ ['/admin/ai', /\b(duuk ai|gemini|conversas?|regenerar resposta|documentos da ia)\b/],
+]
+
+function matchingHelpRoutes(message) {
+ const text = normalizedTaskText(message)
+ return helpTopics.filter(([, pattern]) => pattern.test(text)).map(([route]) => route)
+}
+
+export function knowledgeForRequest(permissions, route, request = {}) {
+ const options = request && typeof request === 'object' ? request : {}
+ const allowed = allowedPages(permissions), index = allowed.map(page => ({ route: page.route, module: page.module }))
+ const task = taskFor(options.mode, options.message, options.history)
+ // Even a creative request inside Contracts must not get distracted by the
+ // contracts manual. The minimal index keeps the available navigation factual.
+ if (task !== 'help') return { version: knowledgeVersion, scope: 'static-help-only', current: null, index, pages: [] }
+ let requested = matchingHelpRoutes(options.message)
+ if (!requested.length && Array.isArray(options.history)) {
+  for (const item of options.history.slice(-10).reverse()) {
+   if (item?.role !== 'user' || typeof item.content !== 'string' || item.content === options.message) continue
+   requested = matchingHelpRoutes(item.content)
+   if (requested.length) break
+  }
+ }
+ const normalized = canonicalRoute(route)
+ // A named topic outranks the open page. An inaccessible topic must not fall
+ // through to unrelated details from the current page or leak its own manual.
+ const selected = requested.length ? requested.flatMap(path => allowed.filter(page => page.route === path)) : allowed.filter(page => page.route === normalized)
+ const details = selected.slice(0, 3)
+ const current = details.some(page => page.route === normalized) ? contextFor(normalized, permissions) : null
+ return { version: knowledgeVersion, scope: 'static-help-only', current, index, pages: details }
+}
+
+// A conservative character bound for every possible focused response with these
+// grants. It does not guess which question wins retrieval: all three longest
+// detail pages and the longest current-page metadata fit, even together.
+export function knowledgeInputBound(permissions) {
+ const allowed = allowedPages(permissions), index = allowed.map(page => ({ route: page.route, module: page.module }))
+ const base = JSON.stringify({ version: knowledgeVersion, scope: 'static-help-only', current: null, index, pages: [] }).length
+ const details = allowed.map(page => JSON.stringify(page).length).sort((left, right) => right - left).slice(0, 3).reduce((sum, length) => sum + length, 0)
+ const current = Math.max(0, ...allowed.map(page => JSON.stringify({ route: page.route, module: page.module, actions: page.actions, fields: page.fields, scope: 'static-help-only' }).length))
+ return base + details + current + 64
+}
+
 // These IDs had a free text tier in the official pricing table on 2026-10-08.
 // https://ai.google.dev/gemini-api/docs/pricing
 // models.list availability is required as well. This allowlist is NOT a billing-state check.
@@ -87,9 +161,11 @@ export function selectModel(mode, message, available, config = {}) {
   const methods = item.supportedActions || item.supportedGenerationMethods
   return !Array.isArray(methods) || methods.includes('generateContent')
  }).map(item => normalizedModel(typeof item === 'string' ? item : item.name)).filter(name => freeModelAllowlist.includes(name)))
- const text = typeof message === 'string' ? message.slice(0, 20000) : ''
- const helping = ['help', 'ajuda'].includes(mode)
- const creative = !helping && (['script', 'roteiro', 'concept', 'conceito', 'creative'].includes(mode) || text.length > 1800 || /\b(roteiro completo|campanha audiovisual|storytelling|conceito criativo|proposta comercial complexa)\b/i.test(text))
+ const task = taskFor(mode, message, settings.history), text = normalizedTaskText(message)
+ const previous = Array.isArray(settings.history) ? settings.history.slice(-10).filter(item => item?.role === 'user' && typeof item.content === 'string').map(item => normalizedTaskText(item.content)).reverse() : []
+ const substantive = taskFor('free', message) === 'free' && task !== 'free' ? previous.find(item => taskFor('free', item) === task) || text : text
+ const complexProposal = task === 'commercial' && (/\b(proposta comercial complexa|proposta completa|proposta em pdf|proposta para pdf|proposta detalhada|estrategia comercial|plano comercial)\b/.test(substantive) || /\bpropostas?\b/.test(substantive) && (/\b(pdf|escopo|entregaveis|investimento|cronograma)\b/.test(substantive) || substantive.length > 700))
+ const creative = task === 'script' || task === 'concept' || task !== 'help' && (complexProposal || text.length > 1800)
  const candidates = creative ? [configuredCreative, configuredLight, 'gemini-3.1-flash-lite'] : [configuredLight, 'gemini-3.1-flash-lite', configuredCreative]
  // Choose once before generation. A 429/5xx must be reported, never trigger model switching.
  return candidates.find(name => models.has(name)) || null

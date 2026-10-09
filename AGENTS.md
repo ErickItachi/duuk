@@ -1,10 +1,13 @@
 # Fluxo de trabalho da DUUK
 
-## DUUK AI — 1.7.1
+## DUUK AI — 1.7.2
 
 - `/admin/ai` e ajuda contextual exigem a permissão `ai`. As conversas são privadas; documentos só são compartilhados por autorização explícita e pelas permissões atuais do projeto. Não enviar automaticamente registros comerciais, contratos, agenda, financeiro, credenciais ou valores de formulários ao modelo.
 - A Edge Function `duuk-ai` verifica Supabase Auth e permissões no servidor. Usa Gemini oficial (`@google/genai` fixado), Vault e cotas por membro. Não ativar faturamento, contratar planos ou trocar para modelos pagos. Sem retry automático após erro de geração; manter reservas para consumo desconhecido após interrupção.
 - Gemini conectado em 9 de outubro de 2026 na conta `duukfilms@gmail.com`, projeto `gen-lang-client-0425131914` no Nível gratuito e sem faturamento configurado no AI Studio. A chave de autenticação fica criptografada no Vault. Preserve suporte às novas chaves Google, sem exigir o prefixo legado. Roteiro, conceito, comercial e ajuda foram validados de verdade com dados fictícios, streaming e histórico persistente. Nunca pedir a chave pelo chat. Instruções e limites: `docs/duuk-ai-setup.md`. Preserve o prompt mestre integral; os complementos de segurança são versionados separadamente no mesmo arquivo e mantêm condições comerciais não confirmadas como `[a definir]`.
+
+- O aceite de privacidade é persistido por membro e versão em `duuk_private.ai_consents`; instale `supabase/duuk-ai-consent.sql` depois da migração AI original. A RPC de consentimento é exclusiva do servidor. Nunca aceitar automaticamente, copiar aceite entre pessoas nem reativar aceite revogado pelo caminho de compatibilidade legado. Mantenha revogação e erros de gravação visíveis na interface.
+- As instruções de qualidade em `duuk-ai-quality.mjs` complementam o mestre integral. O contexto detalhado contém no máximo três páginas relevantes, filtradas por permissões; o roteamento considera pedidos reais e histórico do membro. Preserve cotas, reservas conservadoras e escolha de modelo antes do envio ao Google, sem repetição automática. Foco de teclado no Admin usa indicação neutra; não restaure contornos vermelhos no composer nem altere o foco do site institucional.
 
 ## Site e painel publicados
 

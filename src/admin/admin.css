@@ -7,6 +7,7 @@
   --admin-raised: #1d1a17;
   color-scheme: dark;
   --admin-accent: var(--coral, #eb4b3f);
+  --admin-focus: #b8aea7;
   --admin-radius: 12px;
   color: var(--admin-ink);
   font-family: Inter, sans-serif;
@@ -37,7 +38,9 @@
 @media (max-width: 1023px) { .admin-collapse-toggle { display: none; } }
 .admin-shell button, .admin-modal button { cursor: pointer; }
 .admin-shell button:disabled, .admin-modal button:disabled { opacity: .45; cursor: not-allowed; }
-.admin-shell :focus-visible, .admin-modal :focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 3px; }
+.admin-shell ::selection, .admin-modal ::selection { color: var(--admin-ink); background: #fff8f333; }
+.admin-shell :focus:not(:focus-visible), .admin-modal :focus:not(:focus-visible) { outline: none; }
+.admin-shell :focus-visible, .admin-modal :focus-visible { outline: 2px solid var(--admin-focus); outline-offset: 3px; }
 .admin-sidebar { width: 244px; flex: 0 0 244px; height: 100svh; height: 100dvh; position: sticky; top: 0; background: var(--black); color: #fff; padding: 24px 20px; display: flex; flex-direction: column; }
 .admin-sidebar__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
 .admin-sidebar__head .admin-brand { flex: 1; gap: 12px; }
@@ -102,7 +105,8 @@
 .admin-search { display: flex; align-items: center; gap: 9px; min-height: 44px; width: 230px; max-width: 100%; padding: 10px 12px; border: 1px solid var(--admin-line); border-radius: 7px; background: var(--admin-raised); color: var(--admin-muted); }
 .admin-search svg { flex-shrink: 0; }
 .admin-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 12px; }
-.admin-search:focus-within { border-color: var(--admin-accent); }
+.admin-search input:focus-visible { outline: none; }
+.admin-search:focus-within { border-color: var(--admin-focus); }
 .admin-list-heading, .admin-project-row { display: grid; grid-template-columns: minmax(0, 1fr) 94px 84px 176px; gap: 16px; align-items: center; padding: 0 24px; }
 .admin-list-heading { min-height: 38px; background: var(--admin-raised); border-block: 1px solid var(--admin-line); color: var(--admin-muted); font-size: 8px; letter-spacing: .11em; }
 .admin-list-heading > span:last-child { text-align: right; }
@@ -154,7 +158,8 @@ body:has(.admin-modal[open]) { overflow: hidden; }
 .admin-field > span, .admin-label { font-size: 12px; font-weight: 500; color: #e0d7d0; }
 .admin-field input, .admin-field textarea, .admin-field select { width: 100%; min-width: 0; min-height: 46px; padding: 12px 13px; border: 1px solid var(--admin-line); border-radius: 7px; outline: 0; background: var(--admin-raised); color: var(--admin-ink); font-size: 13px; }
 .admin-field textarea { resize: vertical; min-height: 90px; }
-.admin-field input:focus, .admin-field textarea:focus, .admin-field select:focus { border-color: var(--admin-accent); box-shadow: 0 0 0 3px #eb4b3f0d; }
+.admin-field input:focus, .admin-field textarea:focus, .admin-field select:focus { border-color: var(--admin-focus); box-shadow: none; }
+.admin-field input:focus-visible, .admin-field textarea:focus-visible, .admin-field select:focus-visible { outline: none; }
 .admin-field input::placeholder, .admin-field textarea::placeholder { color: #a8988d; }
 .admin-field input[type=file] { font-size: 12px; overflow: hidden; }
 .admin-field input[type=file]::file-selector-button { border: 0; border-radius: 4px; background: #342c27; color: #e0d7d0; padding: 7px 10px; margin-right: 10px; cursor: pointer; }
@@ -165,7 +170,7 @@ body:has(.admin-modal[open]) { overflow: hidden; }
 .admin-input-prefix { display: flex; align-items: center; min-width: 0; border: 1px solid var(--admin-line); border-radius: 7px; background: var(--admin-raised); padding-left: 12px; }
 .admin-input-prefix > span { color: var(--admin-muted); font-size: 12px; flex-shrink: 0; }
 .admin-input-prefix input { border: 0; background: transparent; box-shadow: none; }
-.admin-input-prefix:focus-within { border-color: var(--admin-accent); }
+.admin-input-prefix:focus-within { border-color: var(--admin-focus); }
 .admin-checkbox { display: flex; align-items: center; gap: 10px; min-height: 44px; color: #e0d7d0; font-size: 13px; cursor: pointer; }
 .admin-checkbox input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--admin-accent); }
 .admin-language-tabs { display: flex; gap: 14px; border-bottom: 1px solid var(--admin-line); }
