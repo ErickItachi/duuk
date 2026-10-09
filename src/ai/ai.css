@@ -91,6 +91,36 @@
 .duuk-ai-message__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 15px; margin-top: 12px; }
 .duuk-ai-message__actions button { display: flex; align-items: center; gap: 6px; min-height: 32px; color: #a69889; font-size: 10px; }
 .duuk-ai-message__actions button:hover { color: var(--ai-peach); }
+.duuk-ai-action-cards { display: grid; gap: 12px; width: min(100%, 740px); min-width: 0; margin: 18px auto 0; }
+.duuk-ai-action { min-width: 0; padding: 17px; border: 1px solid #4a3b2e; border-radius: 11px; background: #1c1813; }
+.duuk-ai-action.is-finished { background: #171613; border-color: #37372e; }
+.duuk-ai-action__heading { display: flex; align-items: center; gap: 9px; min-width: 0; margin-bottom: 14px; color: var(--ai-peach); font-size: 11px; }
+.duuk-ai-action__heading > svg { flex-shrink: 0; }
+.duuk-ai-action__heading > strong { min-width: 0; font-weight: 500; }
+.duuk-ai-action__heading > span { margin-left: auto; flex-shrink: 0; color: #aa9b89; font-size: 9px; }
+.duuk-ai-action__summary { display: grid; gap: 6px; margin-bottom: 13px; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.duuk-ai-action__summary > strong { font-size: 14px; font-weight: 500; }
+.duuk-ai-action__summary > span { color: #b5a697; white-space: pre-wrap; }
+.duuk-ai-action__fields { display: grid; gap: 13px; min-width: 0; margin: 17px 0; padding: 17px 0 0; border: 0; border-top: 1px solid #393025; }
+.duuk-ai-action__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; min-width: 0; }
+.duuk-ai-action .admin-field, .duuk-ai-action .admin-field > input, .duuk-ai-action .admin-field > select, .duuk-ai-action .admin-field > textarea { min-width: 0; max-width: 100%; }
+.duuk-ai-action .admin-field > span { font-size: 10px; }
+.duuk-ai-action .admin-field input, .duuk-ai-action .admin-field select, .duuk-ai-action .admin-field textarea { min-height: 40px; font-size: 12px; }
+.duuk-ai-action .admin-field textarea { resize: vertical; line-height: 1.7; }
+.duuk-ai-action .admin-checkbox { font-size: 11px; }
+.duuk-ai-action__note { margin-block: 11px; color: #a99887; font-size: 10px; line-height: 1.8; overflow-wrap: anywhere; }
+.duuk-ai-action__note .admin-text-button { display: inline; min-height: 28px; font-size: inherit; }
+.duuk-ai-action__buttons { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 15px; margin-top: 13px; }
+.duuk-ai-action__buttons .admin-button { min-height: 39px; padding: 10px 13px; border-radius: 7px; font-size: 10px; line-height: 1.5; }
+.duuk-ai-action__buttons .admin-text-button { display: inline-flex; align-items: center; gap: 5px; min-height: 39px; color: #c2aa94; font-size: 10px; }
+.duuk-ai-action__completed { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 14px; font-size: 11px; }
+.duuk-ai-action__completed p, .duuk-ai-action__completed a { display: flex; align-items: center; gap: 6px; }
+.duuk-ai-action__completed p { color: #abbda5; }
+.duuk-ai-action__completed a { min-height: 32px; color: var(--ai-peach); }
+.duuk-ai-agenda-result { display: grid; gap: 12px; font-size: 12px; line-height: 1.7; }
+.duuk-ai-agenda-result > div { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid #342f26; }
+.duuk-ai-agenda-result strong { font-weight: 500; overflow-wrap: anywhere; }
+.duuk-ai-agenda-result span, .duuk-ai-agenda-result small { color: #ad9e8e; overflow-wrap: anywhere; }
 .duuk-ai-compose-area { flex-shrink: 0; width: 100%; max-width: 840px; min-width: 0; margin-inline: auto; padding: 0 28px 17px; }
 .duuk-ai-composer { padding: 3px; border: 1px solid #4c3d30; border-radius: 13px; background: #1c1814; transition: border-color .2s; }
 .duuk-ai-composer:focus-within { border-color: var(--admin-focus); }
@@ -196,6 +226,11 @@
   .duuk-ai-suggestions button > span { flex: 1; }
   .duuk-ai-message--user { max-width: 94%; padding: 14px 16px; }
   .duuk-ai-message__actions button { min-height: 36px; }
+  .duuk-ai-action { padding: 14px; }
+  .duuk-ai-action__row { grid-template-columns: minmax(0, 1fr); }
+  .duuk-ai-action .admin-field input, .duuk-ai-action .admin-field select, .duuk-ai-action .admin-field textarea { font-size: 16px; }
+  .duuk-ai-action__buttons .admin-button { flex: 1 1 100%; min-height: 42px; font-size: 11px; }
+  .duuk-ai-action__buttons .admin-text-button { min-height: 42px; font-size: 11px; }
   .duuk-ai-compose-area { padding: 0 13px 13px; }
   .duuk-ai-composer textarea { min-height: 60px; padding: 10px 10px 3px; font-size: 16px; line-height: 1.55; }
   .duuk-ai-composer__bottom { gap: 8px; padding: 4px 7px 7px; }

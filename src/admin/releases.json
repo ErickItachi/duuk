@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.8.0",
+    "date": "2026-10-09",
+    "title": "DUUK AI: ações no administrativo",
+    "new": [
+      "Peça à DUUK AI para preparar compromissos, despesas e follow-ups e confirme os dados para salvar de verdade.",
+      "Consulte períodos da agenda pelo assistente, com os resultados privados no painel."
+    ],
+    "improved": [
+      "Ferramentas oficiais por permissão, responsáveis e clientes reais selecionados no painel, proteção contra duplicação e confirmação antes de gravar."
+    ]
+  },
+  {
     "version": "1.7.2",
     "date": "2026-10-09",
     "title": "DUUK AI: respostas melhores e mais conforto",

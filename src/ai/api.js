@@ -1,8 +1,20 @@
 import { supabase } from '../content/supabase'
-import { platformRequest } from '../admin/api'
 import { readAiStream } from './stream.mjs'
 
-export const aiRequest = body => platformRequest('duuk-ai', body)
+export async function aiRequest(body) {
+  if (navigator.onLine === false) throw new Error('Você está offline. Reconecte para continuar.')
+  const { data, error } = await supabase.functions.invoke('duuk-ai', { body })
+  if (error) {
+    let message = 'Não foi possível concluir. Tente novamente.'
+    const status = Number(error.context?.status) || undefined
+    try { const result = await error.context?.json(); if (result?.error) message = result.error } catch {}
+    const failure = new Error(message)
+    failure.status = status
+    throw failure
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}
 
 // Authentication stays in the existing Supabase session. Gemini credentials never
 // enter this client; the Edge Function verifies the member on every request.

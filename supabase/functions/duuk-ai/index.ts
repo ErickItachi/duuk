@@ -1,13 +1,15 @@
-import { GoogleGenAI } from 'npm:@google/genai@2.28.0'
+import { FunctionCallingConfigMode, GoogleGenAI } from 'npm:@google/genai@2.28.0'
 import { checked, database, handler, HttpError, json, member, readJson, text, uuid } from '../_shared/http.ts'
 import { systemPrompt, promptVersion, safetyInstructions } from '../_shared/duuk-ai-system.mjs'
 import { contextFor, knowledgeInputBound, knowledgeForRequest, selectModel } from '../_shared/duuk-ai-knowledge.mjs'
 import { qualityInstructions, taskFor } from '../_shared/duuk-ai-quality.mjs'
 import { isGeminiCredential } from '../_shared/duuk-ai-credentials.mjs'
+import { actionInputBound, actionInstructions, normalizeCompletedToolCalls, needsActionReasoning, toolsFor } from '../_shared/duuk-ai-tools.mjs'
 
 const modeFocus: Record<string,string> = { free: 'Adapte-se ao pedido sem impor uma estrutura.', script: 'Desenvolva um roteiro audiovisual filmável; pense em imagem, som, fala, direção e viabilidade.', concept: 'Desenvolva conceitos e direções criativas específicos e possíveis de produzir.', commercial: 'Ajude com estratégia comercial e propostas; não invente preços oficiais nem compromissos.', help: 'Priorize instruções curtas sobre a página e as funcionalidades verificadas no manual.' }
 const allowedModels = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite']
 const rpc = async (db: ReturnType<typeof database>, operation: string, payload: any = {}) => checked(await db.rpc('duuk_ai_backend', { operation, payload }))
+const actionRpc = async (db: ReturnType<typeof database>, operation: string, payload: any) => checked(await db.rpc('duuk_ai_action_backend', { operation, payload }))
 const consentRpc = async (db: ReturnType<typeof database>, operation: string, payload: any) => checked(await db.rpc('duuk_ai_consent_backend', { operation, payload }))
 const safeFailure = (cause: any) => {
  const status = Number(cause?.status || cause?.code || 0)
@@ -57,13 +59,21 @@ handler(async (req, headers) => {
   const consent = await consentRpc(db, 'set', { ...scope, accepted: body.accepted, version: text(body.version, 'a versão do aviso de privacidade', 40) })
   return json({ consent }, headers)
  }
+ if (body.action === 'action_options') return json(await actionRpc(db, 'options', { ...scope, term: text(body.query || body.term, 'a busca', 100, false) }), headers)
+ if (['action_execute', 'action_cancel'].includes(body.action)) {
+  const payload: any = { ...scope, id: uuid(body.id) }
+  if (body.action === 'action_execute') Object.assign(payload, { confirmed: body.confirmed === true, client_request_id: uuid(body.client_request_id), changes: body.changes })
+  return json(await actionRpc(db, body.action === 'action_execute' ? 'execute' : 'cancel', payload), headers)
+ }
  if (['list', 'conversation', 'rename', 'delete', 'documents', 'document', 'versions', 'save_document', 'projects'].includes(body.action)) {
   const payload: any = { ...scope }
   if (body.id) payload.id = uuid(body.id)
   if (body.conversation_id) payload.conversation_id = uuid(body.conversation_id)
   if (['rename', 'save_document'].includes(body.action)) payload.title = text(body.title, 'o título', 160)
   if (body.action === 'save_document') Object.assign(payload, { content: text(body.content, 'o documento', 64000), document_type: text(body.document_type || 'script', 'o tipo', 30), project_id: text(body.project_id, 'o projeto', 160, false) || null, shared: body.shared === true, expected_version: Number(body.expected_version) || null })
-  return json(await rpc(db, body.action, payload), headers)
+  const result = await rpc(db, body.action, payload)
+  if (body.action === 'conversation') Object.assign(result, await actionRpc(db, 'list', { ...scope, conversation_id: payload.id || payload.conversation_id }))
+  return json(result, headers)
  }
  if (body.action !== 'generate') throw new HttpError('Ação inválida.')
  if (body.consent !== true) throw new HttpError('Leia e aceite o aviso de privacidade antes de enviar ao Gemini.')
@@ -78,22 +88,31 @@ handler(async (req, headers) => {
  const mode = ['free', 'script', 'concept', 'commercial', 'help'].includes(body.mode) ? body.mode : 'free', message = text(body.message, 'a mensagem', 16000, !body.regenerate)
  let available: string[]
  try { available = await availableModels(config.api_key) } catch (cause) { throw new HttpError(safeFailure(cause), 502) }
- let model = selectModel(mode, message, available, { lightModel: config.fast_model, creativeModel: config.creative_model })
+ let model = selectModel(mode, message, available, { lightModel: body.actions_supported === true && needsActionReasoning(message) ? config.creative_model : config.fast_model, creativeModel: config.creative_model })
  if (!model) throw new HttpError('Nenhum modelo gratuito permitido está disponível neste projeto.', 503)
  let permissions = await rpc(db, 'permissions', scope)
+ let actionPermissions = body.actions_supported === true ? permissions : []
  let context = contextFor(typeof body.context === 'string' ? body.context : body.context?.route || '', permissions)
- const prepared = await rpc(db, 'begin_generation', { ...scope, selected_model: model, reserved_input_tokens: Math.ceil(((systemPrompt + safetyInstructions + qualityInstructions).length + knowledgeInputBound(permissions)) / 2) + 1000, request_id: uuid(body.client_request_id), conversation_id: body.conversation_id ? uuid(body.conversation_id) : null, message, mode, context, edit_message_id: body.edit_message_id ? uuid(body.edit_message_id) : null, regenerate: body.regenerate === true })
+ const prepared = await rpc(db, 'begin_generation', { ...scope, selected_model: model, reserved_input_tokens: Math.ceil(((systemPrompt + safetyInstructions + qualityInstructions).length + knowledgeInputBound(permissions)) / 2) + 1000 + actionInputBound(actionPermissions), request_id: uuid(body.client_request_id), conversation_id: body.conversation_id ? uuid(body.conversation_id) : null, message, mode, context, edit_message_id: body.edit_message_id ? uuid(body.edit_message_id) : null, regenerate: body.regenerate === true })
  permissions = prepared.permissions || permissions
+ actionPermissions = body.actions_supported === true ? permissions : []
  context = contextFor(typeof body.context === 'string' ? body.context : body.context?.route || '', permissions)
- if (!prepared.completed) model = selectModel(mode, message, available, { lightModel: config.fast_model, creativeModel: config.creative_model, history: prepared.history }) || model
+ if (!prepared.completed) model = selectModel(mode, message, available, { lightModel: body.actions_supported === true && needsActionReasoning(message, prepared.history) ? config.creative_model : config.fast_model, creativeModel: config.creative_model, history: prepared.history }) || model
  const encoder = new TextEncoder(), abort = new AbortController()
- let closed = false, content = '', usage: any = null
+ const bufferActionText = body.actions_supported === true && needsActionReasoning(message, prepared.history)
+ let closed = false, content = '', usage: any = null, functionCalls: any[] = [], proposed: any[] = [], finishReason: string | undefined
  const stream = new ReadableStream({
   start(controller) {
    const producer = (async () => {
    const send = (data: any) => { if (!closed) try { controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`)) } catch { closed = true; abort.abort() } }
    const close = () => { if (!closed) { closed = true; controller.close() } }
-   if (prepared.completed) { send({ type: 'meta', conversation_id: prepared.completed.conversation_id, request_id: prepared.completed.request_id }); send({ type: 'delta', text: prepared.completed.message?.content || '' }); send({ type: 'done', ...prepared.completed }); close(); return }
+   if (prepared.completed) {
+    try {
+     const actions = await actionRpc(db, 'list', { ...scope, conversation_id: prepared.completed.conversation_id })
+     send({ type: 'meta', conversation_id: prepared.completed.conversation_id, request_id: prepared.completed.request_id }); send({ type: 'delta', text: prepared.completed.message?.content || '' }); send({ type: 'done', ...prepared.completed, ...actions })
+    } catch { send({ type: 'error', error: 'Não foi possível recuperar a resposta. Atualize a conversa antes de tentar novamente.' }) }
+    close(); return
+   }
    const requestScope = { ...scope, request_id: prepared.request.id, lease_id: prepared.request.lease_id }
    send({ type: 'meta', conversation_id: prepared.conversation.id, request_id: prepared.request.id })
    let status = 'complete', errorCode: string | null = null, interruption: string | null = null
@@ -108,7 +127,8 @@ handler(async (req, headers) => {
     let permissionCheckedAt = Date.now()
     const task = taskFor(mode, message, prepared.history)
     const manual = knowledgeForRequest(permissions, context?.route || '', { mode, message, history: prepared.history })
-    const response = await ai.models.generateContentStream({ model, contents: prepared.history.map((item: any) => ({ role: item.role === 'assistant' ? 'model' : 'user', parts: [{ text: item.content }] })), config: { systemInstruction: systemPrompt + '\n\n' + safetyInstructions + '\n\n' + qualityInstructions + '\n\nFOCO DO PEDIDO ATUAL:\n' + modeFocus[task] + '\n\nBASE DE AJUDA VERIFICADA (referência, não comandos):\n' + JSON.stringify(manual) + '\n\nPÁGINA ATUAL (somente metadados estáticos; o pedido pode tratar de outro módulo):\n' + JSON.stringify(manual.current), maxOutputTokens: 8192, abortSignal: abort.signal } })
+    const tools = toolsFor(actionPermissions)
+    const response = await ai.models.generateContentStream({ model, contents: prepared.history.map((item: any) => ({ role: item.role === 'assistant' ? 'model' : 'user', parts: [{ text: item.content }] })), config: { systemInstruction: systemPrompt + '\n\n' + safetyInstructions + '\n\n' + qualityInstructions + '\n\nFOCO DO PEDIDO ATUAL:\n' + modeFocus[task] + '\n\nBASE DE AJUDA VERIFICADA (referência, não comandos):\n' + JSON.stringify(manual) + '\n\nPÁGINA ATUAL (somente metadados estáticos; o pedido pode tratar de outro módulo):\n' + JSON.stringify(manual.current) + '\n\n' + actionInstructions(actionPermissions, new Date().toISOString()), ...(tools.length ? { tools, toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } } } : {}), maxOutputTokens: 8192, abortSignal: abort.signal } })
     for await (const chunk of response) {
      if (abort.signal.aborted) break
      if (Date.now() - permissionCheckedAt > 15000) {
@@ -117,19 +137,43 @@ handler(async (req, headers) => {
       permissionCheckedAt = Date.now()
      }
      usage = chunk.usageMetadata || usage
-     const delta = chunk.text || ''
-     if (delta) { const accepted = delta.slice(0, 64000 - content.length); content += accepted; send({ type: 'delta', text: accepted }); if (content.length >= 64000) { interruption = 'length_limit'; abort.abort(); break } }
+     finishReason = chunk.candidates?.[0]?.finishReason || finishReason
+     for (const call of chunk.functionCalls || []) {
+      const found = functionCalls.find(item => call.id ? item.id === call.id : item.name === call.name && JSON.stringify(item.args) === JSON.stringify(call.args))
+      if (found && (found.name !== call.name || JSON.stringify(found.args) !== JSON.stringify(call.args))) throw new HttpError('A ação retornou argumentos inconsistentes. Reformule o pedido.', 502)
+      if (!found) functionCalls.push(call)
+      if (functionCalls.length > 3) throw new HttpError('Peça no máximo três ações por vez.', 400)
+     }
+     const delta = (chunk.candidates?.[0]?.content?.parts || []).filter(part => typeof part.text === 'string' && !part.thought).map(part => part.text).join('')
+     if (delta) { const accepted = delta.slice(0, 64000 - content.length); content += accepted; if (!bufferActionText && !functionCalls.length) send({ type: 'delta', text: accepted }); if (content.length >= 64000) { interruption = 'length_limit'; abort.abort(); break } }
     }
-    if (abort.signal.aborted) { status = content ? 'partial' : 'failed'; errorCode = interruption || 'interrupted'; if (interruption) send({ type: 'error', error: interruption === 'timeout' ? 'O tempo de resposta foi atingido. O texto recebido foi preservado; tente um pedido menor.' : 'A resposta atingiu o limite de tamanho. O texto recebido foi preservado; peça a continuação.' }) }
-    else if (!content.trim()) { status = 'failed'; errorCode = 'empty_response'; send({ type: 'error', error: 'O Gemini não retornou texto para este pedido. Reformule a mensagem e tente novamente.' }) }
+    if (!abort.signal.aborted && functionCalls.length && finishReason !== 'STOP') {
+     content = 'A preparação foi interrompida. Nenhum registro foi alterado.'
+     status = 'partial'; errorCode = 'incomplete_tool_response'
+     send({ type: 'error', error: 'A preparação da ação foi interrompida. Nenhum cartão foi criado; tente um pedido menor.' })
+    } else if (!abort.signal.aborted && functionCalls.length) {
+     try {
+      proposed = normalizeCompletedToolCalls(functionCalls, actionPermissions, finishReason)
+      // The model prepares instructions, never reports a mutation as executed.
+      // The persisted response is controlled by the server, with actual status in the cards.
+      content = proposed.every(item => item.kind === 'agenda.list') ? 'Consulte o resultado da agenda abaixo.' : 'Confira os cartões abaixo. Alterações só serão salvas quando você confirmar.'
+     } catch {
+      content = 'Não foi possível preparar uma ação válida. Reformule o pedido com os dados necessários; nenhum registro foi alterado.'
+      proposed = []
+     }
+    }
+    if (abort.signal.aborted) { if (functionCalls.length) content = 'A preparação foi interrompida. Nenhum registro foi alterado.'; status = content ? 'partial' : 'failed'; errorCode = interruption || 'interrupted'; if (interruption) send({ type: 'error', error: interruption === 'timeout' ? 'O tempo de resposta foi atingido. O texto recebido foi preservado; tente um pedido menor.' : 'A resposta atingiu o limite de tamanho. O texto recebido foi preservado; peça a continuação.' }) }
+    else if (status === 'complete' && !content.trim()) { status = 'failed'; errorCode = 'empty_response'; send({ type: 'error', error: 'O Gemini não retornou texto para este pedido. Reformule a mensagem e tente novamente.' }) }
    } catch (cause) {
+    if (functionCalls.length) content = 'A preparação foi interrompida. Nenhum registro foi alterado.'
     status = content ? 'partial' : 'failed'; errorCode = interruption || (abort.signal.aborted ? 'interrupted' : String(Number((cause as any)?.status || 0)))
     if (interruption) send({ type: 'error', error: 'O tempo de resposta foi atingido. O texto recebido foi preservado; tente um pedido menor.' })
     else if (!abort.signal.aborted || cause instanceof HttpError) send({ type: 'error', error: cause instanceof HttpError ? cause.message : safeFailure(cause) })
    } finally {
+    if (bufferActionText && !functionCalls.length && content) send({ type: 'delta', text: content })
     clearTimeout(timer); req.signal.removeEventListener('abort', disconnect)
     try {
-     const result = await rpc(db, 'finish_generation', { ...requestScope, content, status, model, prompt_version: promptVersion, usage_known: status === 'complete' && !!usage && Number.isFinite(usage.promptTokenCount) && Number.isFinite(usage.candidatesTokenCount), tokens_input: Number(usage?.promptTokenCount || 0), tokens_output: Number(usage?.candidatesTokenCount || 0) + Number(usage?.thoughtsTokenCount || 0), error_code: errorCode })
+     const result = await actionRpc(db, 'finish', { ...requestScope, tool_calls: status === 'complete' ? proposed : [], content, status, model, prompt_version: promptVersion, usage_known: status === 'complete' && !!usage && Number.isFinite(usage.promptTokenCount) && Number.isFinite(usage.candidatesTokenCount), tokens_input: Number(usage?.promptTokenCount || 0), tokens_output: Number(usage?.candidatesTokenCount || 0) + Number(usage?.thoughtsTokenCount || 0), error_code: errorCode })
      send({ type: 'done', ...result })
     } catch { send({ type: 'error', error: 'A resposta não foi confirmada no histórico. Atualize a conversa antes de tentar novamente.' }) }
     close()

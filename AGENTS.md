@@ -1,6 +1,6 @@
 # Fluxo de trabalho da DUUK
 
-## DUUK AI — 1.7.2
+## DUUK AI — 1.8.0
 
 - `/admin/ai` e ajuda contextual exigem a permissão `ai`. As conversas são privadas; documentos só são compartilhados por autorização explícita e pelas permissões atuais do projeto. Não enviar automaticamente registros comerciais, contratos, agenda, financeiro, credenciais ou valores de formulários ao modelo.
 - A Edge Function `duuk-ai` verifica Supabase Auth e permissões no servidor. Usa Gemini oficial (`@google/genai` fixado), Vault e cotas por membro. Não ativar faturamento, contratar planos ou trocar para modelos pagos. Sem retry automático após erro de geração; manter reservas para consumo desconhecido após interrupção.
@@ -8,6 +8,9 @@
 
 - O aceite de privacidade é persistido por membro e versão em `duuk_private.ai_consents`; instale `supabase/duuk-ai-consent.sql` depois da migração AI original. A RPC de consentimento é exclusiva do servidor. Nunca aceitar automaticamente, copiar aceite entre pessoas nem reativar aceite revogado pelo caminho de compatibilidade legado. Mantenha revogação e erros de gravação visíveis na interface.
 - As instruções de qualidade em `duuk-ai-quality.mjs` complementam o mestre integral. O contexto detalhado contém no máximo três páginas relevantes, filtradas por permissões; o roteamento considera pedidos reais e histórico do membro. Preserve cotas, reservas conservadoras e escolha de modelo antes do envio ao Google, sem repetição automática. Foco de teclado no Admin usa indicação neutra; não restaure contornos vermelhos no composer nem altere o foco do site institucional.
+
+- O usuário autorizou a IA a executar ações do administrativo. As ferramentas nativas Gemini são limitadas ao registro do backend: preparar compromissos, despesas e follow-ups e consultar um período de agenda. Preparar não grava: a confirmação no cartão executa a transação. O diário privado `duuk_private.ai_actions` impede duplicação e confere propriedade, mensagem ativa, validade e permissões atuais antes de cada execução/replay. `supabase/duuk-ai-actions.sql` deve vir depois das migrações AI e consentimento; aplique `supabase/duuk-ai-actions-lock.sql` em seguida para serializar confirmação com regeneração e exclusão de conversa. Preserve os triggers oficiais de auditoria, calendário e notificações, com ator autenticado definido no contexto local da transação.
+- Os registros retornados pela consulta da agenda e as opções de responsáveis/clientes permanecem na interface DUUK; não são enviados ao Gemini. Ações de assinar contratos, enviar e-mails/mensagens, pagar, excluir registros ou alterar acessos não são ferramentas permitidas. Aplicativos antigos continuam sem funções de ação até atualizar para a interface que envia `actions_supported:true`.
 
 ## Site e painel publicados
 
