@@ -2,6 +2,7 @@ import { GoogleGenAI } from 'npm:@google/genai@2.28.0'
 import { checked, database, handler, HttpError, json, member, readJson, text, uuid } from '../_shared/http.ts'
 import { systemPrompt, promptVersion, safetyInstructions } from '../_shared/duuk-ai-system.mjs'
 import { contextFor, knowledgeFor, selectModel } from '../_shared/duuk-ai-knowledge.mjs'
+import { isGeminiCredential } from '../_shared/duuk-ai-credentials.mjs'
 
 const modeFocus: Record<string,string> = { free: 'Adapte-se ao pedido sem impor uma estrutura.', script: 'Desenvolva um roteiro audiovisual filmável; pense em imagem, som, fala, direção e viabilidade.', concept: 'Desenvolva conceitos e direções criativas específicos e possíveis de produzir.', commercial: 'Ajude com estratégia comercial e propostas; não invente preços oficiais nem compromissos.', help: 'Priorize instruções curtas sobre a página e as funcionalidades verificadas no manual.' }
 const allowedModels = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite']
@@ -36,7 +37,7 @@ handler(async (req, headers) => {
   if (!profile?.is_super_admin || !profile.active) throw new HttpError('A configuração é restrita à super administração.', 403)
   if (!checked(await db.rpc('duuk_action_limit', { actor: user.id, action_name: 'ai-configure', maximum: 5, window_seconds: 900 }))) throw new HttpError('Aguarde antes de configurar novamente.', 429)
   const apiKey = text(body.api_key, 'a chave Gemini', 200)
-  if (!/^AIza[A-Za-z0-9_-]{30,}$/.test(apiKey)) throw new HttpError('Confira a chave criada no Google AI Studio.')
+  if (!isGeminiCredential(apiKey)) throw new HttpError('Confira a chave criada no Google AI Studio.')
   if (body.free_tier_confirmed !== true) throw new HttpError('Confirme que o projeto Gemini está sem faturamento ativado.')
   let available: string[]
   try { available = await availableModels(apiKey) } catch (cause) { throw new HttpError(safeFailure(cause), 502) }

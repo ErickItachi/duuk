@@ -1,8 +1,8 @@
 # Operação do DUUK Admin
 
-## DUUK AI — 1.7.0
+## DUUK AI — 1.7.1
 
-O módulo `/admin/ai` acrescenta criação de roteiros, conceitos, apoio comercial e ajuda contextual. Conversas ficam privadas; documentos têm versões, PDF com a marca original e compartilhamento explícito por projeto. A Edge Function `duuk-ai` usa o SDK oficial Gemini, Supabase Auth, permissões ativas, Vault e limites por membro, sem modelos pagos ou repetição automática após erro. O assistente não consulta automaticamente registros de clientes nem executa ações nos módulos. A instalação e o roteiro de validação estão em [duuk-ai-setup.md](duuk-ai-setup.md). A geração real aguarda a chave conectada por um super administrador em **DUUK AI → Configurar Gemini**, usando um projeto sem faturamento. Fixtures não comprovam a geração real. A versão usa o mecanismo existente de atualização do aplicativo.
+O módulo `/admin/ai` acrescenta criação de roteiros, conceitos, apoio comercial e ajuda contextual. Conversas ficam privadas; documentos têm versões, PDF com a marca original e compartilhamento explícito por projeto. A Edge Function `duuk-ai` usa o SDK oficial Gemini, Supabase Auth, permissões ativas, Vault e limites por membro, sem modelos pagos ou repetição automática após erro. O assistente não consulta automaticamente registros de clientes nem executa ações nos módulos. A conta central `duukfilms@gmail.com` foi conectada em 9 de outubro de 2026, em projeto no Nível gratuito, e os quatro modos passaram em chamadas reais com dados fictícios, streaming e persistência. A versão 1.7.1 aceita as chaves de autenticação atuais do Google e simplifica painel e ajuda contextual. Configuração e validação estão em [duuk-ai-setup.md](duuk-ai-setup.md) e [duuk-ai-validation.md](duuk-ai-validation.md). A versão usa o mecanismo existente de atualização do aplicativo.
 
 ## Google Drive — 1.6.0
 

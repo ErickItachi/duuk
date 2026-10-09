@@ -4,6 +4,8 @@ O DUUK AI fica em `/admin/ai`, com a permissão `ai` e a autenticação já util
 
 ## Conectar o Gemini sem cobrança
 
+A conexão central já está ativa desde 9 de outubro de 2026: conta `duukfilms@gmail.com`, projeto `gen-lang-client-0425131914`, identificado como **Nível gratuito / Configurar faturamento** no AI Studio. Nenhuma conta de faturamento foi configurada. A credencial foi transferida diretamente entre a sessão Google e o campo protegido do DUUK Admin, sem clipboard, arquivos, chat ou logs. Os passos abaixo servem para substituição futura da chave, por um super administrador.
+
 1. Entre no [Google AI Studio](https://aistudio.google.com/api-keys) com a conta Google escolhida pela DUUK.
 2. Crie uma chave da API Gemini em um projeto **sem faturamento ativado**. O projeto do Google Drive pode ser diferente; não reutilize segredos OAuth como chave Gemini.
 3. Se o Console solicitar uma restrição de API, permita somente **Generative Language API**. A chave é usada por uma Edge Function: uma restrição por domínio de navegador não é apropriada para esta chamada de servidor.
@@ -35,9 +37,9 @@ Conversas são sempre particulares. Documentos têm edição, nomes, versões im
 
 Aplicar `supabase/duuk-ai.sql` uma única vez e publicar `supabase/functions/duuk-ai/index.ts`, incluindo os arquivos compartilhados importados. O fluxo usa a CLI quando disponível e MCP quando o binário local não inicia. O endpoint é `duuk-ai`; `verify_jwt=false` é intencional porque a função verifica o token pelo Supabase Auth e a permissão ativa no servidor em cada chamada. As RPCs de configuração e persistência são exclusivas de `service_role`. RLS e privilégios de leitura impedem acesso cruzado e escrita direta pelo navegador.
 
-O prompt mestre fornecido pelo usuário está integralmente em `duuk-ai-system.mjs`, versão `1.0.0`, separado dos complementos de segurança. A base versionada está em `duuk-ai-knowledge.mjs`; atualize o manual quando as telas mudarem. A logo Gemini local vem do [arquivo oficial do Google](https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg), sem redesenho.
+O prompt mestre fornecido pelo usuário está integralmente em `duuk-ai-system.mjs`, separado dos complementos de segurança; o conjunto de instruções está na versão `1.0.1`. Condições comerciais que o membro não informou devem aparecer como `[a definir]`, incluindo validade, revisões e formatos, sem tratar sugestões anteriores da própria IA como confirmação. A base versionada está em `duuk-ai-knowledge.mjs`; atualize o manual quando as telas mudarem. A logo Gemini local vem do [arquivo oficial do Google](https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg), sem redesenho.
 
-A versão 1.7.0 usa o changelog e o gerador de service worker existentes. O mecanismo de atualização preserva formulários pendentes e não armazena chamadas privadas da IA no cache. Publicar por `git push origin HEAD:main`, acompanhar a Vercel e verificar `admin-version.json`, `/admin/ai` e o site público.
+A versão 1.7.1 usa o changelog e o gerador de service worker existentes. O mecanismo de atualização preserva formulários pendentes e não armazena chamadas privadas da IA no cache. Publicar por `git push origin HEAD:main`, acompanhar a Vercel e verificar `admin-version.json`, `/admin/ai` e o site público.
 
 ## Validação
 
@@ -47,4 +49,4 @@ O fixture de navegador usa respostas interceptadas para verificar chat, edição
 
 Execute o transporte do SDK com `DUUK_AI_SDK_TEST=1 npx --yes deno@2.5.6 test --node-modules-dir=none --no-lock --allow-net=127.0.0.1 --allow-env supabase/tests/duuk-ai-sdk.integration.ts`. Os três casos cobrem paginação, texto incremental/uso final, cancelamento e resposta 429 com exatamente uma tentativa. A chave é fictícia e a rede fica restrita ao servidor local.
 
-**Pendente até a conexão de uma chave real:** autenticação do projeto Gemini, disponibilidade efetiva dos modelos, qualidade dos roteiros/conceitos/propostas/ajuda e tempo de resposta completo em produção. Não considerar esses testes aprovados por causa dos fixtures. Após conectar, execute os quatro modos com dados fictícios, teste interrupção/retomada e recarregue o histórico. Não esgote artificialmente a cota gratuita durante os testes.
+**Validação real em 9 de outubro de 2026:** a chave autenticou, `models.list` confirmou os modelos, e os quatro modos responderam pela API oficial com streaming e histórico confirmado no banco. O modelo leve configurado é `gemini-3.5-flash-lite`; o criativo é `gemini-3.5-flash`. O primeiro trecho chegou entre aproximadamente dois e seis segundos nessas amostras; isso não é uma garantia de latência. A proposta foi revisada e retestada após reforçar condições não confirmadas como `[a definir]`. Nenhum dado real de cliente foi enviado. Resultados em [duuk-ai-validation.md](duuk-ai-validation.md). Não esgote artificialmente a cota gratuita durante os testes futuros.

@@ -1,1 +1,12 @@
-.duuk-ai-help{position:fixed;right:24px;bottom:24px;z-index:50;box-shadow:0 8px 30px #0008;gap:8px;border-radius:999px;background:var(--admin-surface);min-height:44px;padding:11px 17px}.duuk-ai-help svg{color:var(--admin-accent)}.admin-modal:has(.duuk-ai--embedded){inset:16px 16px 16px auto;margin:0;width:min(640px,calc(100vw - 32px));max-width:calc(100vw - 32px);height:calc(100dvh - 32px);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;overflow:hidden}.admin-modal:has(.duuk-ai--embedded) .admin-modal__head{flex:0 0 auto;padding:22px 24px}.admin-modal:has(.duuk-ai--embedded) .duuk-ai--embedded{min-height:0;flex:1;overflow:hidden}.admin-modal:has(.duuk-ai--embedded)>p{padding:24px}@media(max-width:600px){.duuk-ai-help{right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:44px;height:44px;padding:0;justify-content:center}.duuk-ai-help span{display:none}.admin-modal:has(.duuk-ai--embedded){inset:0;width:100%;max-width:100%;height:100dvh;max-height:100dvh;border-radius:0}.admin-modal:has(.duuk-ai--embedded) .admin-modal__head{padding:14px 18px}.admin-modal:has(.duuk-ai--embedded) .admin-modal__head h2{font-size:25px}}
+.duuk-ai-help { position: fixed; right: 24px; bottom: 24px; z-index: 50; display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 10px 15px; border: 1px solid #514032; border-radius: 999px; background: #17130f; box-shadow: 0 5px 20px #0004; }
+.duuk-ai-help svg { color: #e2a27b; }
+.duuk-ai-help:hover { background: #2a1d13; border-color: #876044; }
+.admin-modal:has(.duuk-ai--embedded) { inset: 20px 20px 20px auto; margin: 0; width: min(600px, calc(100vw - 40px)); max-width: calc(100vw - 40px); height: calc(100dvh - 40px); max-height: calc(100dvh - 40px); border-radius: 14px; overflow: hidden; }
+.admin-modal:has(.duuk-ai--embedded)[open] { display: flex; flex-direction: column; }
+.admin-modal:has(.duuk-ai--embedded) > .admin-modal__head { display: none; }
+.admin-modal:has(.duuk-ai--embedded) > .duuk-ai--embedded { min-height: 0; flex: 1; overflow: hidden; }
+@media (max-width: 600px) {
+  .duuk-ai-help { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .duuk-ai-help span { display: none; }
+  .admin-modal:has(.duuk-ai--embedded) { inset: var(--duuk-ai-viewport-top, 0px) 0 auto; width: 100%; max-width: 100%; height: var(--duuk-ai-viewport-height, 100dvh); max-height: var(--duuk-ai-viewport-height, 100dvh); border-radius: 0; }
+}

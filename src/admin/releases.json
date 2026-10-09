@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.7.1",
+    "date": "2026-10-09",
+    "title": "DUUK AI: conexão com Gemini",
+    "fixed": ["Compatibilidade com as novas chaves de autenticação emitidas pelo Google AI Studio, com validação real dos modelos no servidor."],
+    "improved": ["DUUK AI com interface mais limpa no painel e na ajuda contextual, no celular e no desktop."]
+  },
+  {
     "version": "1.7.0",
     "date": "2026-10-08",
     "title": "Novo: DUUK AI",

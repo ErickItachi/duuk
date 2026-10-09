@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { MoreHorizontal } from 'lucide-react'
 import { useAuth } from '../content/AuthContext'
 import { ConfirmModal, Icon, Modal } from '../admin/components'
 import { useUnsavedChanges } from '../admin/unsavedChanges'
@@ -123,16 +124,39 @@ function DocumentEditor({ document, conversationId, onClose, onSaved, notify }) 
   </Modal>
 }
 
-export default function AiPage({ embedded = false, context = '', notify = () => {}, onDirtyChange }) {
-  const auth = useAuth(), name = auth?.profile?.full_name?.split(' ')[0] || auth?.member?.full_name?.split(' ')[0] || ''
+export default function AiPage({ embedded = false, context = '', notify = () => {}, onDirtyChange, onClose }) {
+  const auth = useAuth()
   const [history, setHistory] = useState([]), [documents, setDocuments] = useState([]), [conversation, setConversation] = useState(null), [messages, setMessages] = useState([])
-  const [mode, setMode] = useState('free'), [draft, setDraft] = useState(''), [consent, setConsent] = useState(false), [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [error, setError] = useState('')
+  const [mode, setMode] = useState(embedded && context ? 'help' : 'free'), [draft, setDraft] = useState(''), [consent, setConsent] = useState(false), [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [error, setError] = useState('')
   const [status, setStatus] = useState(null), [sidebar, setSidebar] = useState(false), [tab, setTab] = useState('conversations'), [renaming, setRenaming] = useState(null), [renameTitle, setRenameTitle] = useState(''), [deleting, setDeleting] = useState(null), [editing, setEditing] = useState(null), [document, setDocument] = useState(null), [copied, setCopied] = useState(''), [retry, setRetry] = useState(null)
   const [configure, setConfigure] = useState(false), [apiKey, setApiKey] = useState(''), [freeTier, setFreeTier] = useState(false), [configuring, setConfiguring] = useState(false), [configurationError, setConfigurationError] = useState('')
-  const controller = useRef(null), running = useRef(false), revision = useRef(0), scroll = useRef(null), input = useRef(null), nearBottom = useRef(true), alive = useRef(true)
+  const [privacy, setPrivacy] = useState(null), [privacyAccepted, setPrivacyAccepted] = useState(false), [compact, setCompact] = useState(() => matchMedia('(max-width: 760px)').matches)
+  const controller = useRef(null), running = useRef(false), revision = useRef(0), scroll = useRef(null), input = useRef(null), nearBottom = useRef(true), alive = useRef(true), consentRef = useRef(false), menu = useRef(null), usage = useRef(null), shell = useRef(null)
   const dirty = Boolean(draft.trim()) || busy || Boolean(apiKey) || configuring
   useUnsavedChanges(dirty)
   useEffect(() => { onDirtyChange?.(dirty); return () => onDirtyChange?.(false) }, [dirty, onDirtyChange])
+  useEffect(() => { const media = matchMedia('(max-width: 760px)'), change = event => setCompact(event.matches); media.addEventListener('change', change); return () => media.removeEventListener('change', change) }, [])
+  useEffect(() => { const close = event => { for (const detail of [menu.current, usage.current]) if (detail && !detail.contains(event.target)) detail.removeAttribute('open') }; window.document.addEventListener('pointerdown', close); return () => window.document.removeEventListener('pointerdown', close) }, [])
+  useEffect(() => { const element = input.current; if (element) { element.style.height = 'auto'; element.style.height = `${Math.min(element.scrollHeight, 144)}px` } }, [draft])
+  useEffect(() => {
+    if (!window.visualViewport) return
+    const viewport = window.visualViewport, element = shell.current, dialog = embedded ? element?.closest('dialog') : null
+    let frame
+    const resize = () => {
+      if (embedded) { dialog?.style.setProperty('--duuk-ai-viewport-height', `${Math.round(viewport.height)}px`); dialog?.style.setProperty('--duuk-ai-viewport-top', `${Math.round(viewport.offsetTop)}px`); return }
+      // iOS may shrink only the visual viewport when its keyboard opens. Keep
+      // this page's composer visible without changing the surrounding admin.
+      const active = window.document.activeElement
+      const keyboardOpen = viewport.scale <= 1.05 && window.innerHeight - viewport.height > 100 && element?.contains(active) && active?.closest('.duuk-ai-composer')
+      if (keyboardOpen) {
+        element.dataset.keyboardOpen = 'true'
+        element.style.setProperty('--duuk-ai-page-height', `${Math.max(170, Math.floor(viewport.offsetTop + viewport.height - element.getBoundingClientRect().top - 12))}px`)
+      } else { element?.removeAttribute('data-keyboard-open'); element?.style.removeProperty('--duuk-ai-page-height') }
+    }
+    const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(resize) }
+    resize(); viewport.addEventListener('resize', schedule); viewport.addEventListener('scroll', schedule); window.addEventListener('scroll', schedule); element?.addEventListener('focusin', schedule); element?.addEventListener('focusout', schedule)
+    return () => { cancelAnimationFrame(frame); viewport.removeEventListener('resize', schedule); viewport.removeEventListener('scroll', schedule); window.removeEventListener('scroll', schedule); element?.removeEventListener('focusin', schedule); element?.removeEventListener('focusout', schedule); element?.removeAttribute('data-keyboard-open'); element?.style.removeProperty('--duuk-ai-page-height'); dialog?.style.removeProperty('--duuk-ai-viewport-height'); dialog?.style.removeProperty('--duuk-ai-viewport-top') }
+  }, [embedded])
   const stopGeneration = useCallback(() => controller.current?.abort(), [])
   const invalidate = useCallback(() => { revision.current++ }, [])
   const refreshList = useCallback(async () => { const [result, library] = await Promise.all([aiRequest({ action: 'list' }), aiRequest({ action: 'documents' })]); if (alive.current) { setHistory(result.conversations || []); setDocuments(library.documents || []) } }, [])
@@ -143,10 +167,10 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
     const current = ++revision.current; setLoading(true); setSidebar(false); setError(''); setRetry(null); setEditing(null)
     try { const result = await aiRequest({ action: 'conversation', id: item.id }); if (current !== revision.current) return; setConversation(result.conversation); setMessages(result.messages || []); setMode(result.conversation?.mode || 'free'); setDraft(''); nearBottom.current = true } catch (cause) { if (current === revision.current) setError(cause.message) } finally { if (current === revision.current) setLoading(false) }
   }
-  const fresh = () => { if (running.current || draft.trim() && !window.confirm('Descartar a mensagem ainda não enviada?')) return; revision.current++; setLoading(false); setConversation(null); setMessages([]); setDraft(''); setEditing(null); setMode('free'); setError(''); setRetry(null); setSidebar(false); input.current?.focus() }
+  const fresh = () => { if (running.current || draft.trim() && !window.confirm('Descartar a mensagem ainda não enviada?')) return; revision.current++; setLoading(false); setConversation(null); setMessages([]); setDraft(''); setEditing(null); setMode(embedded && context ? 'help' : 'free'); setError(''); setRetry(null); setSidebar(false); input.current?.focus() }
   const copy = async (text, id) => { try { await navigator.clipboard.writeText(text); setCopied(id); setTimeout(() => setCopied(''), 2400) } catch { notify('Não foi possível copiar. Selecione o texto e copie.', true) } }
   const generate = async (payload, baseMessages) => {
-    if (running.current || !consent || status?.configured === false) return
+    if (running.current || !consentRef.current || status?.configured !== true) return
     const requestController = new AbortController()
     running.current = true; setBusy(true); setError(''); setRetry(null); controller.current = requestController; nearBottom.current = true
     const pending = `pending:${payload.client_request_id}`, userMessage = { id: `user:${payload.client_request_id}`, role: 'user', content: payload.message }
@@ -172,23 +196,31 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
       refreshList().catch(() => {})
     } finally { running.current = false; controller.current = null; if (alive.current) { setBusy(false); aiRequest({ action: 'status' }).then(result => { if (alive.current) setStatus(result) }).catch(() => {}) } }
   }
+  const requestGeneration = (payload, baseMessages) => {
+    if (running.current || !status?.configured) return
+    if (!consentRef.current) { setPrivacyAccepted(false); setPrivacy({ payload, baseMessages }); return }
+    generate(payload, baseMessages)
+  }
   const submit = event => {
     event.preventDefault(); if (!draft.trim()) return
-    if (retry && !editing && draft.trim() === retry.payload.message) { generate(retry.payload, retry.baseMessages); return }
+    if (retry && !editing && draft.trim() === retry.payload.message) { requestGeneration(retry.payload, retry.baseMessages); return }
     const index = editing ? messages.findIndex(item => item.id === editing.id) : -1
     const payload = { message: draft.trim(), mode, context, consent: true, client_request_id: crypto.randomUUID(), ...(conversation?.id ? { conversation_id: conversation.id } : {}), ...(editing ? { edit_message_id: editing.id } : {}) }
-    generate(payload, index >= 0 ? messages.slice(0, index) : undefined)
+    requestGeneration(payload, index >= 0 ? messages.slice(0, index) : undefined)
   }
   const regenerate = index => {
     const previous = messages.slice(0, index).findLast(item => item.role === 'user')
     if (!previous || String(previous.id).startsWith('user:')) return
     const userIndex = messages.findIndex(item => item.id === previous.id)
-    generate({ message: previous.content, mode, context, consent: true, conversation_id: conversation.id, client_request_id: crypto.randomUUID(), regenerate: true }, messages.slice(0, userIndex))
+    requestGeneration({ message: previous.content, mode, context, consent: true, conversation_id: conversation.id, client_request_id: crypto.randomUUID(), regenerate: true }, messages.slice(0, userIndex))
   }
   const rename = async event => { event.preventDefault(); try { await aiRequest({ action: 'rename', id: renaming.id, title: renameTitle.trim() }); setHistory(old => old.map(item => item.id === renaming.id ? { ...item, title: renameTitle.trim() } : item)); if (conversation?.id === renaming.id) setConversation(old => ({ ...old, title: renameTitle.trim() })); setRenaming(null) } catch (cause) { setRenaming(old => old ? { ...old, error: cause.message } : old) } }
   const remove = async () => { await aiRequest({ action: 'delete', id: deleting.id }); setHistory(old => old.filter(item => item.id !== deleting.id)); if (conversation?.id === deleting.id) { setConversation(null); setMessages([]); setDraft(''); setEditing(null); setRetry(null); setError('') } }
   const openDocument = async item => { try { const result = await aiRequest({ action: 'document', id: item.id }); setDocument({ ...(result.document || result), can_edit: result.can_edit ?? result.document?.can_edit }); setSidebar(false) } catch (cause) { setSidebar(false); setError(cause.message) } }
-  const selectMode = item => { setMode(mode === item.id ? 'free' : item.id); if (!draft.trim()) setDraft(item.prompt); input.current?.focus() }
+  const selectMode = item => { setMode(item.id); if (!draft.trim()) setDraft(item.prompt); input.current?.focus() }
+  const showConfiguration = () => { menu.current?.removeAttribute('open'); setConfigure(true); setConfigurationError('') }
+  const showRename = () => { menu.current?.removeAttribute('open'); setRenaming(conversation); setRenameTitle(conversation.title || '') }
+  const acceptPrivacy = event => { event.preventDefault(); if (!privacyAccepted || !privacy?.payload) return; const pending = privacy; consentRef.current = true; setConsent(true); setPrivacy(null); setPrivacyAccepted(false); generate(pending.payload, pending.baseMessages) }
   const saveConfiguration = async event => {
     event.preventDefault(); if (!freeTier || !apiKey.trim() || configuring) return
     setConfiguring(true); setConfigurationError('')
@@ -197,32 +229,89 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
     catch (cause) { setConfigurationError(cause.message) } finally { setConfiguring(false) }
   }
   const configured = status?.configured === true, lastAssistant = messages.findLastIndex(item => item.role === 'assistant')
-  return <section className={`duuk-ai${embedded ? ' duuk-ai--embedded' : ''}`} aria-label="DUUK AI">
-    <header className="duuk-ai-header"><div className="duuk-ai-brand"><span className="duuk-ai-brand__mark"><Icon name="spark" size={23} /></span><div><p className="admin-eyebrow">CRIATIVO / OPERACIONAL</p><h1>DUUK <span>AI</span></h1></div></div><div className="duuk-ai-header__actions"><span className="duuk-ai-private"><Icon name="lock" size={13} />Histórico privado</span>{auth?.profile?.is_super_admin && <button type="button" className="admin-icon-button" aria-label="Configurar Gemini" onClick={() => { setConfigure(true); setConfigurationError('') }}><Icon name="settings" /></button>}<button type="button" className="admin-icon-button duuk-ai-history-toggle" aria-label="Abrir histórico e documentos" aria-expanded={sidebar} onClick={() => setSidebar(!sidebar)}><Icon name={sidebar ? 'close' : 'list'} /></button><button type="button" className="admin-icon-button" aria-label="Nova conversa" onClick={fresh} disabled={busy}><Icon name="plus" /></button></div></header>
+  const suggestions = embedded ? [
+    { ...modes[3], label: 'Usar esta tela', prompt: 'Explique como usar esta tela do DUUK Admin e as principais ações disponíveis.' },
+    { id: 'free', icon: 'edit', label: 'Melhorar um texto', prompt: 'Melhore este texto mantendo uma linguagem simples e humana: ' },
+  ] : [modes[0], modes[1]]
+  const Heading = embedded ? 'h2' : 'h1'
+  return <section ref={shell} className={`duuk-ai${embedded ? ' duuk-ai--embedded' : ''}${sidebar ? ' has-sidebar' : ''}`} aria-label="DUUK AI" onKeyDown={event => { if (event.key === 'Escape' && sidebar && !renaming && !deleting && !document && !privacy && !configure) { event.preventDefault(); event.stopPropagation(); setSidebar(false) } }}>
+    <header className="duuk-ai-header">
+      <div className="duuk-ai-header__identity">
+        <button type="button" className="admin-icon-button duuk-ai-history-toggle" aria-label="Abrir histórico e documentos" title={sidebar ? 'Recolher histórico' : 'Histórico e documentos'} aria-expanded={sidebar} onClick={() => setSidebar(!sidebar)}><Icon name={sidebar ? 'sidebar' : 'sidebarOpen'} size={19} /></button>
+        <Heading className="duuk-ai-title">DUUK <span>AI</span></Heading>
+        {conversation?.id && <span className="duuk-ai-conversation-name" title={conversation.title}>{conversation.title || 'Nova conversa'}</span>}
+      </div>
+      <div className="duuk-ai-header__actions">
+        <button type="button" className="admin-icon-button" aria-label="Nova conversa" title="Nova conversa" onClick={fresh} disabled={busy}><Icon name="plus" size={20} /></button>
+        {(auth?.profile?.is_super_admin || conversation?.id) && <details ref={menu} className="duuk-ai-menu"><summary aria-label="Mais opções" title="Mais opções"><MoreHorizontal size={19} strokeWidth={1.6} aria-hidden="true" /></summary><div>
+          {conversation?.id && <button type="button" aria-label="Renomear conversa atual" onClick={showRename} disabled={busy}><Icon name="edit" size={15} />Renomear conversa</button>}
+          {auth?.profile?.is_super_admin && <button type="button" onClick={showConfiguration} disabled={busy}><Icon name="settings" size={15} />Configurar Gemini</button>}
+        </div></details>}
+        {embedded && onClose && <button type="button" className="admin-icon-button duuk-ai-close" aria-label="Fechar DUUK AI" onClick={onClose}><Icon name="close" size={20} /></button>}
+      </div>
+    </header>
     <div className="duuk-ai-workspace">
-      <aside className={`duuk-ai-sidebar${sidebar ? ' is-open' : ''}`} aria-label="Histórico do DUUK AI"><button className="admin-button admin-button--secondary duuk-ai-new" type="button" onClick={fresh} disabled={busy}><Icon name="plus" />Nova conversa</button><div className="duuk-ai-sidebar__tabs" role="tablist" aria-label="Biblioteca AI"><button role="tab" aria-selected={tab === 'conversations'} onClick={() => setTab('conversations')}>Conversas</button><button role="tab" aria-selected={tab === 'documents'} onClick={() => setTab('documents')}>Documentos</button></div><div className="duuk-ai-sidebar__list">
-        {tab === 'conversations' ? history.length ? history.map(item => <div key={item.id} className={`duuk-ai-history-item${conversation?.id === item.id ? ' is-active' : ''}`}><button type="button" onClick={() => open(item)} disabled={busy}><span>{item.title || 'Nova conversa'}</span><small>{dateLabel(item.updated_at || item.created_at)}</small></button><div><button type="button" aria-label={`Renomear ${item.title}`} onClick={() => { setRenaming(item); setRenameTitle(item.title || '') }} disabled={busy}><Icon name="edit" size={14} /></button><button type="button" aria-label={`Excluir ${item.title}`} onClick={() => setDeleting(item)} disabled={busy}><Icon name="trash" size={14} /></button></div></div>) : <p className="duuk-ai-sidebar__empty">Suas conversas ficam aqui, só para você.</p> : <><button className="duuk-ai-create-document" type="button" onClick={() => setDocument({ title: '', content: '' })}><Icon name="plus" size={15} />Novo documento</button>{documents.length ? documents.map(item => <button className="duuk-ai-document-item" key={item.id} type="button" onClick={() => openDocument(item)}><Icon name="document" size={17} /><span>{item.title}<small>{item.project_id ? 'Vinculado a projeto' : 'Documento pessoal'} · {dateLabel(item.updated_at || item.created_at)}</small></span></button>) : <p className="duuk-ai-sidebar__empty">Salve uma resposta como roteiro, conceito ou documento.</p>}</>}
-      </div><p className="duuk-ai-sidebar__note"><Icon name="shield" size={14} />Compartilhar documentos exige sua confirmação e acesso ao projeto.</p></aside>
-      <div className="duuk-ai-chat">
-        <div className="duuk-ai-chat__top"><span>{conversation?.title || 'Uma boa ideia começa com uma conversa.'}</span>{conversation?.id && <button type="button" className="admin-icon-button" aria-label="Renomear conversa atual" onClick={() => { setRenaming(conversation); setRenameTitle(conversation.title || '') }} disabled={busy}><Icon name="edit" size={15} /></button>}</div>
-        <div className="duuk-ai-messages" ref={scroll} role="log" aria-label="Mensagens da conversa" aria-busy={busy || loading} onScroll={() => { const el = scroll.current; nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100 }}>
-          {loading ? <div className="duuk-ai-loading" role="status"><span /><span /><span /><p>Preparando seu espaço.</p></div> : !messages.length ? <div className="duuk-ai-welcome"><span className="duuk-ai-welcome__label">SEU PARCEIRO DE CRIAÇÃO</span><h2>{name ? `${name}, o` : 'O'} que vamos<br /><span>colocar em cena?</span></h2><p>Da primeira ideia ao próximo passo da produção. Um espaço para pensar junto e fazer acontecer.</p><div className="duuk-ai-suggestions">{modes.map(item => <button key={item.id} type="button" onClick={() => selectMode(item)}><Icon name={item.icon} size={21} /><strong>{item.label}</strong><span>{item.description}</span><Icon name="arrow" size={15} /></button>)}</div></div> : messages.map((item, index) => <article key={item.id || index} className={`duuk-ai-message duuk-ai-message--${item.role}`}><div className="duuk-ai-message__who"><Icon name={item.role === 'user' ? 'user' : 'spark'} size={15} /><span>{item.role === 'user' ? 'Você' : 'DUUK AI'}</span>{item.pending && <small>Escrevendo<span className="duuk-ai-writing">…</span></small>}{item.interrupted && <small>Resposta interrompida</small>}</div>{item.content ? <Markdown content={item.content} /> : item.pending ? <div className="duuk-ai-thinking" aria-label="Preparando resposta"><i /><i /><i /></div> : <p className="duuk-ai-message__empty">A resposta não foi concluída.</p>}{!item.pending && item.content && <div className="duuk-ai-message__actions"><button type="button" onClick={() => copy(item.content, item.id)} aria-label="Copiar mensagem"><Icon name={copied === item.id ? 'check' : 'copy'} size={14} />{copied === item.id ? 'Copiado' : 'Copiar'}</button>{item.role === 'user' ? <button type="button" disabled={busy || String(item.id).startsWith('user:')} onClick={() => { setEditing(item); setDraft(item.content); setRetry(null); input.current?.focus() }}><Icon name="edit" size={14} />Editar</button> : <><button type="button" onClick={() => setDocument({ title: conversation?.title || 'Documento DUUK', content: item.content, document_type: mode === 'commercial' ? 'proposal' : mode === 'concept' ? 'concept' : mode === 'script' ? 'script' : 'other' })}><Icon name="document" size={14} />Salvar documento</button>{index === lastAssistant && <button type="button" disabled={busy || !consent || !configured || !conversation?.id} onClick={() => regenerate(index)}><Icon name="refresh" size={14} />Regenerar</button>}</>}</div>}</article>)}
+      {sidebar && <aside className="duuk-ai-sidebar is-open" aria-label="Histórico do DUUK AI">
+        <div className="duuk-ai-sidebar__tabs" role="tablist" aria-label="Biblioteca AI"><button type="button" role="tab" aria-selected={tab === 'conversations'} onClick={() => setTab('conversations')}>Conversas</button><button type="button" role="tab" aria-selected={tab === 'documents'} onClick={() => setTab('documents')}>Documentos</button></div>
+        <div className="duuk-ai-sidebar__list">
+          {tab === 'conversations' ? history.length ? history.map(item => <div key={item.id} className={`duuk-ai-history-item${conversation?.id === item.id ? ' is-active' : ''}`}>
+            <button type="button" onClick={() => open(item)} disabled={busy}><span>{item.title || 'Nova conversa'}</span><small>{dateLabel(item.updated_at || item.created_at)}</small></button>
+            <div><button type="button" aria-label={`Renomear ${item.title}`} onClick={() => { setRenaming(item); setRenameTitle(item.title || '') }} disabled={busy}><Icon name="edit" size={14} /></button><button type="button" aria-label={`Excluir ${item.title}`} onClick={() => setDeleting(item)} disabled={busy}><Icon name="trash" size={14} /></button></div>
+          </div>) : <p className="duuk-ai-sidebar__empty">Suas conversas aparecerão aqui.</p> : <>
+            <button className="duuk-ai-create-document" type="button" onClick={() => setDocument({ title: '', content: '' })}><Icon name="plus" size={15} />Novo documento</button>
+            {documents.length ? documents.map(item => <button className="duuk-ai-document-item" key={item.id} type="button" onClick={() => openDocument(item)}><Icon name="document" size={16} /><span>{item.title}<small>{item.shared ? 'Compartilhado no projeto' : 'Privado'} · {dateLabel(item.updated_at || item.created_at)}</small></span></button>) : <p className="duuk-ai-sidebar__empty">Salve uma resposta ou crie seu primeiro documento.</p>}
+          </>}
+        </div>
+      </aside>}
+      <div className="duuk-ai-chat" inert={sidebar && (embedded || compact) ? true : undefined}>
+        <div className={`duuk-ai-messages${!messages.length ? ' is-empty' : ''}`} ref={scroll} role="log" aria-label="Mensagens da conversa" aria-busy={busy || loading} onScroll={() => { const el = scroll.current; nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100 }}>
+          {loading ? <div className="duuk-ai-loading" role="status"><span /><span /><span /><p>Abrindo sua conversa.</p></div> : !messages.length ? <div className="duuk-ai-welcome">
+            <h2>{embedded ? 'Como posso ajudar?' : 'O que vamos criar?'}</h2>
+            <p>{embedded ? 'Apoio para esta tela e para sua próxima ideia.' : 'Roteiros, conceitos e apoio para a rotina da DUUK.'}</p>
+            <div className="duuk-ai-suggestions">{suggestions.map(item => <button key={item.id} type="button" onClick={() => selectMode(item)}><Icon name={item.icon} size={16} /><span>{item.label}</span><Icon name="right" size={14} /></button>)}</div>
+          </div> : messages.map((item, index) => <article key={item.id || index} className={`duuk-ai-message duuk-ai-message--${item.role}`}>
+            <div className="duuk-ai-message__who"><span>{item.role === 'user' ? 'Você' : 'DUUK AI'}</span>{item.pending && <small>Escrevendo<span className="duuk-ai-writing">…</span></small>}{item.interrupted && <small>Interrompida</small>}</div>
+            {item.content ? <Markdown content={item.content} /> : item.pending ? <div className="duuk-ai-thinking" aria-label="Preparando resposta"><i /><i /><i /></div> : <p className="duuk-ai-message__empty">A resposta não foi concluída.</p>}
+            {!item.pending && item.content && <div className="duuk-ai-message__actions">
+              <button type="button" onClick={() => copy(item.content, item.id)} aria-label="Copiar mensagem" title="Copiar"><Icon name={copied === item.id ? 'check' : 'copy'} size={14} /><span>{copied === item.id ? 'Copiado' : 'Copiar'}</span></button>
+              {item.role === 'user' ? <button type="button" disabled={busy || String(item.id).startsWith('user:')} onClick={() => { setEditing(item); setDraft(item.content); setRetry(null); input.current?.focus() }}><Icon name="edit" size={14} /><span>Editar</span></button> : <>
+                <button type="button" aria-label="Salvar documento" onClick={() => setDocument({ title: conversation?.title || 'Documento DUUK', content: item.content, document_type: mode === 'commercial' ? 'proposal' : mode === 'concept' ? 'concept' : mode === 'script' ? 'script' : 'other' })}><Icon name="document" size={14} /><span>Salvar</span></button>
+                {index === lastAssistant && <button type="button" disabled={busy || !configured || !conversation?.id} onClick={() => regenerate(index)} title="Regenerar"><Icon name="refresh" size={14} /><span>Regenerar</span></button>}
+              </>}
+            </div>}
+          </article>)}
         </div>
         <div className="duuk-ai-compose-area">
-          {status?.configured === false && <div className="duuk-ai-unavailable" role="status"><Icon name="info" size={17} /><p>{status.status_unavailable ? 'Não foi possível consultar a conexão do Gemini. Atualize a página para tentar novamente.' : 'A geração aguarda a configuração segura do Gemini pela administração. Seus históricos e documentos continuam disponíveis.'}</p></div>}
-          {error && <div className="duuk-ai-error" role="alert"><p>{error}</p>{retry && <button type="button" disabled={busy || !consent || !configured} onClick={() => generate(retry.payload, retry.baseMessages)}><Icon name="refresh" size={14} />Tentar novamente</button>}<button type="button" className="admin-icon-button" aria-label="Fechar aviso" onClick={() => setError('')}><Icon name="close" size={15} /></button></div>}
-          <div className="duuk-ai-mode-picker" aria-label="Modo da conversa"><button type="button" aria-pressed={mode === 'free'} onClick={() => setMode('free')}>Livre</button>{modes.map(item => <button type="button" key={item.id} aria-pressed={mode === item.id} onClick={() => setMode(item.id)}><Icon name={item.icon} size={13} />{item.id === 'script' ? 'Roteiro' : item.id === 'concept' ? 'Conceito' : item.id === 'commercial' ? 'Comercial' : 'Ajuda'}</button>)}</div>
-          {editing && <div className="duuk-ai-editing"><Icon name="edit" size={14} /><span>Editar cria uma nova resposta a partir desta mensagem.</span><button type="button" onClick={() => { setEditing(null); setDraft('') }} aria-label="Cancelar edição"><Icon name="close" size={15} /></button></div>}
-          <form className="duuk-ai-composer" onSubmit={submit}><label className="duuk-ai-sr-only" htmlFor={embedded ? 'duuk-ai-message-panel' : 'duuk-ai-message'}>Mensagem para o DUUK AI</label><textarea ref={input} id={embedded ? 'duuk-ai-message-panel' : 'duuk-ai-message'} rows={3} maxLength={12000} value={draft} placeholder={mode === 'help' ? 'O que você precisa fazer na DUUK?' : 'Conte a ideia, compartilhe um briefing anonimizado ou faça uma pergunta…'} onChange={e => { setDraft(e.target.value); if (retry && e.target.value.trim() !== retry.payload.message) setRetry(null) }} onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(e) } }} /><div className="duuk-ai-composer__bottom"><span>{busy ? 'Você pode preparar sua próxima mensagem.' : 'Ctrl / ⌘ + Enter para enviar'}</span>{busy ? <button key="stop" type="button" className="duuk-ai-send duuk-ai-send--stop" onClick={event => { event.preventDefault(); stopGeneration() }} aria-label="Interromper geração"><span />Parar</button> : <button key="send" type="submit" className="duuk-ai-send" disabled={!draft.trim() || !consent || !configured || loading}><Icon name="send" size={17} /><span>Enviar</span></button>}</div></form>
-          <label className="duuk-ai-consent"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} disabled={busy} /><span>Autorizo enviar este texto e o histórico desta conversa ao Google Gemini. No plano gratuito, os dados podem ser usados para melhorar os produtos Google. Use informações fictícias ou anônimas, sem dados pessoais, contratos ou informações financeiras confidenciais. <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Termos de privacidade</a>.</span></label>
-          <p className="duuk-ai-disclaimer">Revise o conteúdo antes de usar. A IA orienta e cria textos; ações no sistema dependem de você.{context && ' Contexto enviado: apenas o nome e a rota desta tela.'}</p>
-          {status?.limits?.requests_per_day && <p className="duuk-ai-usage">{status.usage?.requests_today || 0} / {status.limits.requests_per_day} solicitações hoje{status.limits.tokens_per_day && <> · {Number(status.usage?.tokens_today || 0).toLocaleString('pt-BR')} / {Number(status.limits.tokens_per_day).toLocaleString('pt-BR')} tokens (inclui reservas)</>}. As cotas gratuitas do Google também se aplicam.</p>}
+          {status?.configured === false && <div className="duuk-ai-unavailable" role="status"><Icon name="info" size={16} /><p>{status.status_unavailable ? 'Não foi possível consultar o Gemini. Atualize a página.' : 'A conexão com o Gemini ainda não foi configurada.'}</p>{auth?.profile?.is_super_admin && !status.status_unavailable && <button type="button" onClick={showConfiguration}>Conectar</button>}</div>}
+          {error && <div className="duuk-ai-error" role="alert"><p>{error}</p>{retry && <button type="button" disabled={busy || !configured} onClick={() => requestGeneration(retry.payload, retry.baseMessages)}><Icon name="refresh" size={14} />Tentar novamente</button>}<button type="button" className="admin-icon-button" aria-label="Fechar aviso" onClick={() => setError('')}><Icon name="close" size={15} /></button></div>}
+          {editing && <div className="duuk-ai-editing"><Icon name="edit" size={14} /><span>Editando mensagem</span><button type="button" onClick={() => { setEditing(null); setDraft('') }} aria-label="Cancelar edição"><Icon name="close" size={15} /></button></div>}
+          <form className="duuk-ai-composer" onSubmit={submit}>
+            <label className="duuk-ai-sr-only" htmlFor={embedded ? 'duuk-ai-message-panel' : 'duuk-ai-message'}>Mensagem para o DUUK AI</label>
+            <textarea ref={input} id={embedded ? 'duuk-ai-message-panel' : 'duuk-ai-message'} rows={2} maxLength={12000} value={draft} placeholder={mode === 'help' ? 'O que você precisa fazer?' : 'Escreva uma mensagem…'} onChange={e => { setDraft(e.target.value); if (retry && e.target.value.trim() !== retry.payload.message) setRetry(null) }} onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(e) } }} />
+            <div className="duuk-ai-composer__bottom">
+              <label className="duuk-ai-mode"><span className="duuk-ai-sr-only">Modo da conversa</span><select aria-label="Modo da conversa" value={mode} onChange={event => setMode(event.target.value)}><option value="free">Livre</option>{modes.map(item => <option key={item.id} value={item.id}>{item.id === 'script' ? 'Roteiro' : item.id === 'concept' ? 'Conceito' : item.id === 'commercial' ? 'Comercial' : 'Ajuda com a DUUK'}</option>)}</select><Icon name="down" size={13} /></label>
+              <span className="duuk-ai-keyboard-hint">{busy ? 'Preparar próxima mensagem' : '⌘ / Ctrl + Enter'}</span>
+              {busy ? <button key="stop" type="button" className="duuk-ai-send duuk-ai-send--stop" onClick={event => { event.preventDefault(); stopGeneration() }} aria-label="Interromper geração" title="Interromper"><span /></button> : <button key="send" type="submit" className="duuk-ai-send" aria-label="Enviar" title="Enviar" disabled={!draft.trim() || !configured || loading}><Icon name="send" size={17} /></button>}
+            </div>
+          </form>
+          <div className="duuk-ai-footnote"><button type="button" disabled={busy} onClick={() => { setPrivacyAccepted(false); setPrivacy({ informationOnly: true }) }}><Icon name="lock" size={11} />{consent ? 'Privacidade' : 'Sobre seus dados'}</button><span>Revise antes de usar.</span>
+            {status?.limits?.requests_per_day && <details ref={usage} className="duuk-ai-usage"><summary>Uso <span>{status.usage?.requests_today || 0}/{status.limits.requests_per_day}</span></summary><div><strong>Cotas da DUUK AI</strong><p>{status.usage?.requests_today || 0} de {status.limits.requests_per_day} solicitações hoje.</p>{status.limits.tokens_per_day && <p>{Number(status.usage?.tokens_today || 0).toLocaleString('pt-BR')} de {Number(status.limits.tokens_per_day).toLocaleString('pt-BR')} tokens, incluindo reservas.</p>}<small>As cotas gratuitas do Google também se aplicam.</small></div></details>}
+          </div>
         </div>
       </div>
     </div>
     {renaming && <Modal title="Renomear conversa" onClose={() => setRenaming(null)}><form onSubmit={rename}><div className="duuk-ai-rename"><label className="admin-field"><span>Nome da conversa</span><input autoFocus required maxLength={160} value={renameTitle} onChange={e => { setRenameTitle(e.target.value); if (renaming.error) setRenaming(old => ({ ...old, error: '' })) }} /></label>{renaming.error && <p className="admin-error" role="alert">{renaming.error}</p>}</div><div className="admin-modal__foot"><button type="button" className="admin-button admin-button--secondary" onClick={() => setRenaming(null)}>Cancelar</button><button className="admin-button" disabled={!renameTitle.trim()}>Salvar nome</button></div></form></Modal>}
     {deleting && <ConfirmModal title="Excluir conversa?" message="A conversa e suas mensagens serão excluídas. Os documentos já salvos serão preservados." action="Excluir conversa" onClose={() => setDeleting(null)} onConfirm={remove} />}
     {document && <DocumentEditor key={document.id || 'new'} document={document} conversationId={conversation?.id} onClose={() => setDocument(null)} onSaved={() => refreshList().catch(() => {})} notify={notify} />}
+    {privacy && <Modal title={privacy.payload ? 'Antes de enviar' : 'Privacidade do DUUK AI'} subtitle="Seu conteúdo será processado pelo Google Gemini." onClose={() => { setPrivacy(null); setPrivacyAccepted(false) }}>
+      <form onSubmit={acceptPrivacy} className="duuk-ai-privacy-dialog">
+        <div className="duuk-ai-privacy-dialog__body"><p><strong>No plano gratuito, o Google pode usar as mensagens para melhorar seus produtos.</strong> Envie apenas informações fictícias ou anonimizadas. Não compartilhe dados pessoais, contratos, propostas privadas ou informações financeiras confidenciais.</p><p>A DUUK envia o texto que você escrever e o histórico desta conversa. O histórico fica privado no painel. Dados de clientes e campos de formulários não são enviados automaticamente.{context && ' Para ajuda nesta tela, enviamos somente o módulo e a rota.'}</p><a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Ler os termos do Google Gemini<Icon name="arrow" size={14} /></a>
+          {privacy.payload && <label className="admin-checkbox"><input type="checkbox" required checked={privacyAccepted} onChange={event => setPrivacyAccepted(event.target.checked)} /><span>Li e autorizo o envio das mensagens e do histórico das conversas que eu escolher nesta sessão.</span></label>}
+          {!privacy.payload && <small>{consent ? 'Você autorizou o envio nesta sessão. Pode revogar a autorização abaixo.' : 'Antes do primeiro envio, pediremos sua autorização. Nenhuma mensagem é enviada ao Google automaticamente.'}</small>}
+        </div>
+        <div className="admin-modal__foot">{privacy.payload ? <><button type="button" className="admin-button admin-button--secondary" onClick={() => { setPrivacy(null); setPrivacyAccepted(false) }}>Cancelar</button><button className="admin-button" disabled={!privacyAccepted}>Autorizar e enviar</button></> : <>{consent && <button type="button" className="admin-button admin-button--secondary" onClick={() => { consentRef.current = false; setConsent(false); setPrivacy(null) }}>Revogar autorização</button>}<button type="button" className="admin-button" onClick={() => setPrivacy(null)}>Concluir</button></>}</div>
+      </form>
+    </Modal>}
     {configure && <Modal title="Configurar Google Gemini" subtitle="Somente super administradores podem conectar a API. A chave é validada e guardada criptografada no backend da DUUK." onClose={() => { if (!configuring) { setConfigure(false); setApiKey(''); setFreeTier(false) } }}><form onSubmit={saveConfiguration}><div className="duuk-ai-configuration"><p>Crie uma chave no <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Google AI Studio</a> usando um projeto sem faturamento. A DUUK não ativa cobrança nem troca para um modelo pago quando a cota acaba.</p><label className="admin-field"><span>Chave da API Gemini</span><input type="password" autoComplete="off" spellCheck={false} required minLength={20} value={apiKey} onChange={e => setApiKey(e.target.value)} disabled={configuring} placeholder="Cole a chave somente aqui" /><small>A chave nunca é salva no navegador, no histórico de conversas ou no repositório.</small></label><label className="admin-checkbox"><input type="checkbox" required checked={freeTier} onChange={e => setFreeTier(e.target.checked)} disabled={configuring} /><span>Confirmo que este projeto Gemini não tem faturamento ativado e que a DUUK deve usar somente cotas gratuitas.</span></label>{configurationError && <p className="admin-error" role="alert">{configurationError}</p>}</div><div className="admin-modal__foot"><button type="button" className="admin-button admin-button--secondary" disabled={configuring} onClick={() => { setConfigure(false); setApiKey(''); setFreeTier(false) }}>Cancelar</button><button className="admin-button" disabled={configuring || !freeTier || !apiKey.trim()}>{configuring ? 'Validando modelos…' : 'Conectar Gemini'}</button></div></form></Modal>}
   </section>
 }

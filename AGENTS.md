@@ -1,10 +1,10 @@
 # Fluxo de trabalho da DUUK
 
-## DUUK AI — 1.7.0
+## DUUK AI — 1.7.1
 
 - `/admin/ai` e ajuda contextual exigem a permissão `ai`. As conversas são privadas; documentos só são compartilhados por autorização explícita e pelas permissões atuais do projeto. Não enviar automaticamente registros comerciais, contratos, agenda, financeiro, credenciais ou valores de formulários ao modelo.
 - A Edge Function `duuk-ai` verifica Supabase Auth e permissões no servidor. Usa Gemini oficial (`@google/genai` fixado), Vault e cotas por membro. Não ativar faturamento, contratar planos ou trocar para modelos pagos. Sem retry automático após erro de geração; manter reservas para consumo desconhecido após interrupção.
-- A chave ainda precisa ser conectada por um super administrador no próprio painel, em projeto Google sem billing. Nunca pedir a chave pelo chat. A geração real e sua qualidade só podem ser aprovadas após esse passo. Instruções e limitações: `docs/duuk-ai-setup.md`. Preserve o prompt mestre integral e o manual versionado nos arquivos `_shared/duuk-ai-*.mjs`.
+- Gemini conectado em 9 de outubro de 2026 na conta `duukfilms@gmail.com`, projeto `gen-lang-client-0425131914` no Nível gratuito e sem faturamento configurado no AI Studio. A chave de autenticação fica criptografada no Vault. Preserve suporte às novas chaves Google, sem exigir o prefixo legado. Roteiro, conceito, comercial e ajuda foram validados de verdade com dados fictícios, streaming e histórico persistente. Nunca pedir a chave pelo chat. Instruções e limites: `docs/duuk-ai-setup.md`. Preserve o prompt mestre integral; os complementos de segurança são versionados separadamente no mesmo arquivo e mantêm condições comerciais não confirmadas como `[a definir]`.
 
 ## Site e painel publicados
 
