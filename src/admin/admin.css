@@ -79,6 +79,7 @@
 .admin-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; max-width: 100%; padding: 12px 18px; border: 1px solid transparent; border-radius: 8px; background: var(--gradient); color: var(--black); font-size: 12px; font-weight: 500; line-height: 1.5; text-align: center; transition: background 160ms, border-color 160ms, transform 160ms; }
 .admin-button svg { flex-shrink: 0; }
 .admin-button:hover { filter: brightness(1.08); }
+.admin-button:active:not(:disabled) { transform: translateY(1px); }
 .admin-button--secondary { background: var(--admin-surface); border-color: var(--admin-line); color: var(--admin-ink); }
 .admin-button--secondary:hover { background: var(--admin-raised); border-color: #695144; }
 .admin-demo-banner { display: flex; align-items: center; gap: 12px; padding: 12px 40px; border-bottom: 1px solid var(--admin-line); font-size: 11px; color: var(--admin-muted); }
@@ -136,6 +137,8 @@
 .admin-tip svg { flex-shrink: 0; margin-top: 2px; color: var(--admin-accent); }
 .admin-tip strong { color: #e0d7d0; font-weight: 500; }
 .admin-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 40px; border-top: 1px solid var(--admin-line); color: var(--admin-muted); font-size: 8px; letter-spacing: .1em; }
+.admin-shell:has(.duuk-ai-help) .admin-footer { padding-inline-end: 154px; }
+@media (max-width: 600px) { .admin-shell:has(.duuk-ai-help) .admin-footer { padding-inline-end: max(80px, calc(68px + env(safe-area-inset-right))); } }
 .admin-mobile-reset { display: none; }
 .admin-empty { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 64px 24px; text-align: center; color: #bcb0a6; }
 .admin-empty > svg { padding: 12px; width: 64px; height: 64px; border: 1px solid var(--admin-line); border-radius: 16px; color: var(--admin-accent); background: var(--admin-paper); }
@@ -144,6 +147,8 @@
 .admin-empty .admin-button { margin-top: 8px; }
 .admin-modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100svh - 40px); max-height: calc(100dvh - 40px); margin: auto; padding: 0; border: 1px solid var(--admin-line); border-radius: 16px; background: var(--admin-surface); box-shadow: 0 24px 100px #08080838; overflow-y: auto; overscroll-behavior: contain; }
 .admin-modal::backdrop { background: #080808b8; backdrop-filter: blur(6px); }
+.admin-modal[open] { animation: admin-dialog-enter 180ms cubic-bezier(.22, 1, .36, 1); }
+@keyframes admin-dialog-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 body:has(.admin-modal[open]) { overflow: hidden; }
 .admin-modal--wide { width: min(1050px, calc(100vw - 32px)); }
 .admin-modal__head { position: sticky; top: 0; z-index: 3; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 24px 28px; border-bottom: 1px solid var(--admin-line); background: var(--admin-surface); }
@@ -348,7 +353,7 @@ body:has(.admin-modal[open]) { overflow: hidden; }
   .admin-login__visual, .admin-login__form { padding-inline: 22px; }
   .admin-login__visual h1 { font-size: 38px; }
 }
-@media (prefers-reduced-motion: reduce) { .admin-shell *, .admin-modal * { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .admin-shell *, .admin-modal * { transition: none !important; } .admin-modal[open] { animation: none; } }
 /* DUUK application shell */
 .admin-login { height: 100svh; height: 100dvh; min-height: 0; overflow: hidden; background: radial-gradient(ellipse at 90% 0, #eb4b3f0a, transparent 50%), #080808; }
 .admin-login__visual { position: relative; isolation: isolate; overflow: hidden; min-height: 0; height: 100%; padding: clamp(24px, 4vw, 64px); gap: 24px; }

@@ -18,6 +18,8 @@ import IntegrationsPage from './IntegrationsPage'
 import DrivePage from './DrivePage'
 import AppLogo from './AppLogo'
 import TeamPresence from './TeamPresence'
+import { AdminThemeProvider, ThemeToggle } from './AdminTheme'
+import { useAdminTheme } from './themeContext.mjs'
 import CommercialPage from '../crm/CommercialPages'
 import MessageTemplatesPage from '../crm/WhatsAppMessages'
 import MailPage from '../mail/MailPage'
@@ -32,6 +34,7 @@ import '../office/office.css'
 import '../office/calendar.css'
 import './platform.css'
 import './ai-entry.css'
+import './theme.css'
 const AiPage = lazy(() => import('../ai/AiPage'))
 const aiLoading = <p className="platform-muted" role="status">Abrindo DUUK AI…</p>
 
@@ -230,11 +233,11 @@ function AdminWorkspace() {
   <aside ref={sidebar} className={`admin-sidebar${menuOpen?' is-open':''}`} role={narrow?'dialog':undefined} aria-modal={narrow&&menuOpen?true:undefined} aria-label="Menu DUUK Admin" aria-hidden={narrow&&!menuOpen?true:undefined} inert={narrow&&!menuOpen?true:undefined}>
    <div className="admin-sidebar__drawer-head"><button className="admin-icon-button" aria-label="Fechar menu" onClick={()=>setMenuOpen(false)}><Icon name="close"/></button></div>
    <div className="admin-sidebar__head"><Link className="admin-brand" to="/admin" onClick={()=>setMenuOpen(false)} aria-label="DUUK — visão geral"><img src="/media/duuk-logo-white.png" width="52" height="64" alt="DUUK"/><span>ADMIN<small>O espaço da equipe.</small></span></Link></div>
-   <div className="admin-sidebar__control"><span>NAVEGAÇÃO</span><button className="admin-collapse-toggle" aria-expanded={!collapsed} aria-controls="admin-navigation" aria-label={collapsed?'Expandir menu':'Minimizar menu'} title={collapsed?'Expandir menu':'Minimizar menu'} onClick={toggleSidebar}><Icon name={collapsed?"sidebarOpen":"sidebar"} size={17}/></button></div>
+   <div className="admin-sidebar__control"><span>NAVEGAÇÃO</span><ThemeToggle label/><button className="admin-collapse-toggle" aria-expanded={!collapsed} aria-controls="admin-navigation" aria-label={collapsed?'Expandir menu':'Minimizar menu'} title={collapsed?'Expandir menu':'Minimizar menu'} onClick={toggleSidebar}><Icon name={collapsed?"sidebarOpen":"sidebar"} size={17}/></button></div>
    <div id="admin-navigation" className="admin-sidebar__menu"><nav aria-label="Painel administrativo">{visible.filter(i=>!i.group&&!i.last).map(navItem)}{navGroup('Comercial','briefcase')}{navGroup('Site DUUK','film')}{navGroup('Configurações','settings')}{visible.filter(i=>i.last).map(navItem)}</nav><div className="admin-sidebar__bottom"><Link className="admin-sidebar-profile" to="/admin/configuracoes/perfil" onClick={()=>setMenuOpen(false)}><Avatar profile={auth.profile} online={auth.isOnline(auth.user.id)}/><span><strong>{auth.profile.name}</strong><small>{auth.profile.is_super_admin?'Super administrador':auth.profile.role_name}</small></span></Link><button className="admin-reset" aria-label="Sair da conta" title="Sair da conta" onClick={()=>auth.signOut().catch(cause=>notify(cause.message,true))}><Icon name="logout"/><span>Sair da conta</span></button><span className="admin-sidebar__signature">DUUK® / {currentRelease.version}</span></div></div>
   </aside>
   <div className="admin-workspace" inert={narrow&&menuOpen?true:undefined}>
-   <header className="admin-topbar"><div className="admin-topbar__identity"><button ref={menuButton} className="admin-mobile-toggle admin-icon-button" aria-label="Abrir menu" aria-controls="admin-navigation" aria-expanded={menuOpen} onClick={()=>setMenuOpen(true)}><Icon name="menu" size={22}/></button><img className="admin-header-logo" src="/media/duuk-logo-white.png" width="24" height="30" alt="DUUK"/><div className="admin-environment"><span className="admin-topbar-label">DUUK ADMIN</span><span className="admin-topbar-divider">/</span><span className="admin-topbar-note">{pathname==='/admin/notificacoes'?'Notificações':section.label}</span></div></div><div className="admin-topbar__actions"><TeamPresence/><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16}/></Link><NotificationBell/><Link to="/admin/configuracoes/perfil" aria-label="Meu perfil" title={auth.profile.name}><Avatar profile={auth.profile} size={34} online={auth.isOnline(auth.user.id)}/></Link></div></header>
+   <header className="admin-topbar"><div className="admin-topbar__identity"><button ref={menuButton} className="admin-mobile-toggle admin-icon-button" aria-label="Abrir menu" aria-controls="admin-navigation" aria-expanded={menuOpen} onClick={()=>setMenuOpen(true)}><Icon name="menu" size={22}/></button><img className="admin-header-logo" src="/media/duuk-logo-white.png" width="24" height="30" alt="DUUK"/><div className="admin-environment"><span className="admin-topbar-label">DUUK ADMIN</span><span className="admin-topbar-divider">/</span><span className="admin-topbar-note">{pathname==='/admin/notificacoes'?'Notificações':section.label}</span></div></div><div className="admin-topbar__actions"><ThemeToggle/><TeamPresence/><Link to="/" target="_blank" className="admin-view-site">Ver site<Icon name="arrow" size={16}/></Link><NotificationBell/><Link to="/admin/configuracoes/perfil" aria-label="Meu perfil" title={auth.profile.name}><Avatar profile={auth.profile} size={34} online={auth.isOnline(auth.user.id)}/></Link></div></header>
    <UpdateNotice/>
    {editingSite&&<div className="admin-demo-banner"><span className="admin-demo-tag"><Icon name="check" size={12}/>AO VIVO</span><p>Ao salvar, as alterações são aplicadas ao site público. Projetos em rascunho continuam privados.</p></div>}
    <main className="admin-main"><div className="admin-content-enter" key={pathname}>
@@ -260,6 +263,7 @@ function AdminWorkspace() {
  </div>
 }
 function AdminExperience() {
+ const {theme:colorTheme}=useAdminTheme()
  const auth=useAuth(),[minimum,setMinimum]=useState(false),[covered,setCovered]=useState(true)
  useEffect(()=>{const timer=setTimeout(()=>setMinimum(true),900);return()=>clearTimeout(timer)},[])
  const leaving=minimum&&auth.ready
@@ -270,12 +274,14 @@ function AdminExperience() {
   const publicIcons=existing.filter(node=>!node.href.includes('/admin-assets/'))
   existing.forEach(node=>node.remove())
   const tags=[['icon','/admin-assets/favicon.ico'],['icon','/admin-assets/icon-32.png'],['apple-touch-icon','/admin-assets/icon-180.png'],['manifest','/admin-assets/manifest.webmanifest']].map(([rel,href])=>{const link=document.createElement('link');link.rel=rel;link.href=href;if(href.endsWith('.png'))link.type='image/png';document.head.append(link);return link})
-  const theme=document.createElement('meta');theme.name='theme-color';theme.content='#080808';document.head.append(theme)
-  return()=>{tags.forEach(tag=>tag.remove());theme.remove();if(publicIcons.length)publicIcons.forEach(node=>document.head.append(node));else{const link=document.createElement('link');link.rel='icon';link.type='image/png';link.href='/favicon.png';document.head.append(link)}}
+  const publicTheme=Array.from(document.querySelectorAll('meta[name="theme-color"]'));publicTheme.forEach(node=>node.remove())
+  const theme=document.createElement('meta');theme.name='theme-color';theme.content='#080808';theme.dataset.duukAdminThemeMeta='';document.head.append(theme)
+  return()=>{tags.forEach(tag=>tag.remove());theme.remove();publicTheme.forEach(node=>document.head.append(node));if(publicIcons.length)publicIcons.forEach(node=>document.head.append(node));else{const link=document.createElement('link');link.rel='icon';link.type='image/png';link.href='/favicon.png';document.head.append(link)}}
  },[])
+ useEffect(()=>{const meta=document.querySelector('meta[data-duuk-admin-theme-meta]');if(meta)meta.content=colorTheme==='light'?'#f6f3ef':'#080808'},[colorTheme])
  return <>
-  {auth.ready&&<div className="admin-experience" inert={covered} aria-hidden={covered||undefined}>{auth.isAdmin?<NotificationProvider><AdminWorkspace/></NotificationProvider>:<LoginPage/>}</div>}
+  {auth.ready&&<div className="admin-experience" inert={covered} aria-hidden={covered||undefined}>{auth.isAdmin?<NotificationProvider><AdminWorkspace/></NotificationProvider>:<><div className="admin-theme-login"><ThemeToggle/></div><LoginPage/></>}</div>}
   {covered&&<BrandLoader leaving={leaving}/>}
  </>
 }
-export default function AdminPage() {return <PwaProvider><AdminExperience/></PwaProvider>}
+export default function AdminPage() {return <AdminThemeProvider><PwaProvider><AdminExperience/></PwaProvider></AdminThemeProvider>}

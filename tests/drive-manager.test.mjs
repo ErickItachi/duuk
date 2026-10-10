@@ -103,6 +103,21 @@ test('renomear e editar descrição de PDF assinado altera somente metadados e p
  assert.deepEqual(patches[0].body, { name: change.desired.name, description: change.desired.description })
 })
 
+test('renomear pasta mantém ID, pai e marcadores e recupera resposta perdida sem criar outra pasta', async () => {
+ const { target, file } = await folderTarget(), fixture = googleFixture([file]), before = clone(file), change = { action: 'folder_update', target, desired: { name: 'Pasta renomeada', description: 'Documentos da equipe' } }
+ fixture.loseNextUpdate()
+ await assert.rejects(() => updateManagedItem(context(fixture), change), /Resposta perdida/)
+ const result = await updateManagedItem(context(fixture), change)
+ assert.equal(result.drive_id, file.id)
+ assert.equal(result.name, change.desired.name)
+ assert.equal(result.description, change.desired.description)
+ assert.deepEqual(fixture.files.get(file.id).parents, before.parents)
+ assert.deepEqual(fixture.files.get(file.id).appProperties, before.appProperties)
+ assert.equal(fixture.files.size, 1)
+ assert.equal(fixture.calls.filter(call => call.method === 'POST').length, 0)
+ assert(fixture.calls.filter(call => call.method === 'PATCH').every(call => !call.query.has('addParents') && !call.query.has('removeParents')))
+})
+
 test('mover usa o pai atual do Google e repete a operação sem duplicar ou voltar à pasta antiga', async () => {
  const { target, file } = await folderTarget(undefined, undefined, { parents: ['externally-moved-parent'] }), destination = await folderTarget('custom:destination', 'destination-fixture'), fixture = googleFixture([file, destination.file]), change = { action: 'folder_move', target, parent: { id: 'custom:destination', drive_id: 'destination-fixture' } }
  fixture.loseNextUpdate()

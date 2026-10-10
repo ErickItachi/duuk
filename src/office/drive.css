@@ -67,4 +67,14 @@
 .drive-pending-changes ul { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 9px; }.drive-pending-changes li { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 12px; border-top: 1px solid var(--admin-line); }.drive-pending-changes li > span { min-width: 0; overflow-wrap: anywhere; font-size: 12px; line-height: 1.7; }.drive-pending-changes li > button { flex-shrink: 0; }
 @media (max-width: 400px) { .drive-pending-changes { padding: 18px 20px; }.drive-pending-changes li { flex-wrap: wrap; }.drive-pending-changes li > button { width: 100%; justify-content: center; } }
 .drive-page { min-width: 0; }
+.drive-folder-card { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; }
+.drive-folder-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-top: 9px; border-top: 1px solid var(--admin-line); min-width: 0; }
+.drive-folder-actions > .admin-text-button { gap: 7px; min-height: 44px; text-decoration: none; }
+.drive-current-folder { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; min-width: 0; padding: 18px 24px; border-bottom: 1px solid var(--admin-line); }
+.drive-current-folder > div:first-child { display: grid; gap: 5px; min-width: 0; flex: 1 1 200px; overflow-wrap: anywhere; }
+.drive-current-folder small { color: var(--admin-muted); font-size: 10px; }
+.drive-current-folder strong { font-size: 14px; font-weight: 500; }
+.drive-current-folder-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+@media (max-width: 760px) { .drive-current-folder { padding-inline: 20px; } }
+@media (max-width: 480px) { .drive-current-folder-actions { width: 100%; } .drive-current-folder-actions > .admin-button { flex: 1; min-width: 0; } }
 @media (max-width: 767px) { .drive-page .admin-title-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }.drive-page .admin-title-actions > .admin-button:last-child { grid-column: 1 / -1; }.drive-page .admin-title-actions > .admin-button, .drive-page .admin-title-actions .admin-refresh > .admin-button { width: 100%; min-width: 0; justify-content: center; }.drive-page .admin-title-actions .admin-refresh { min-width: 0; } }

@@ -1,0 +1,10 @@
+.signing-verification { width: min(100%, 520px); margin: 32px auto; box-sizing: border-box; }
+.signing-verification > h1 { margin: 10px 0 18px; font-size: clamp(28px, 5vw, 42px); line-height: 1.12; }
+.signing-verification > h1 span { color: var(--admin-accent); }
+.signing-verification__mark { display: grid; place-items: center; width: 50px; height: 50px; margin-bottom: 28px; border: 1px solid var(--admin-line); border-radius: 15px; color: var(--admin-accent); background: var(--admin-raised); }
+.signing-verification .office-form { padding: 22px 0 0; gap: 20px; }
+.signing-verification .admin-button { width: 100%; justify-content: center; }
+.signing-verification__code { text-align: center; font-size: 24px !important; font-variant-numeric: tabular-nums; letter-spacing: .2em; }
+.signing-verification__notice { margin: 0; color: var(--admin-muted); overflow-wrap: anywhere; }
+.signing-verification__foot { padding-top: 22px; margin: 24px 0 0; border-top: 1px solid var(--admin-line); }
+@media (max-width: 560px) { .signing-verification { margin: 12px auto; padding: 22px 18px; } .signing-verification__mark { margin-bottom: 22px; } }

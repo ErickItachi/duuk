@@ -1,0 +1,144 @@
+/* Scoped to the Admin lifetime. The public site and signing links keep their own theme. */
+[data-duuk-admin-theme] {
+  --admin-ink: #fff8f3;
+  --admin-muted: #b8aea7;
+  --admin-line: #302a26;
+  --admin-paper: #080808;
+  --admin-surface: #141311;
+  --admin-raised: #1b1917;
+  --admin-accent: #eb4b3f;
+  --admin-focus: #b8aea7;
+}
+.admin-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 10px;
+  width: 40px;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--admin-muted, #b8aea7);
+  cursor: pointer;
+  transition: color 180ms, background 180ms, border-color 180ms;
+}
+.admin-theme-toggle:hover { color: var(--admin-ink); background: var(--admin-raised); border-color: var(--admin-line); }
+.admin-theme-toggle:focus-visible { outline: 2px solid var(--admin-focus); outline-offset: 3px; }
+.admin-theme-toggle > svg { flex-shrink: 0; }
+.admin-theme-toggle--label { display: none; }
+.admin-theme-login { position: fixed; z-index: 10; top: max(16px, env(safe-area-inset-top)); right: max(18px, env(safe-area-inset-right)); }
+.admin-theme-login .admin-theme-toggle { background: var(--admin-surface); border-color: var(--admin-line); box-shadow: 0 4px 20px #0002; }
+
+[data-duuk-admin-theme="light"],
+[data-duuk-admin-theme="light"] :is(.admin-shell, .admin-modal) {
+  --admin-ink: #26211d;
+  --admin-muted: #6d6259;
+  --admin-line: #d8cfc6;
+  --admin-paper: #f6f3ef;
+  --admin-surface: #fffefd;
+  --admin-raised: #efe9e3;
+  --admin-accent: #b43d2f;
+  --admin-focus: #827367;
+  --admin-success: #326a43;
+  color-scheme: light;
+}
+[data-duuk-admin-theme="light"] body { background: var(--admin-paper); }
+[data-duuk-admin-theme="light"] :is(.admin-shell, .admin-modal) { color: var(--admin-ink); }
+[data-duuk-admin-theme="light"] :is(.admin-shell, .admin-modal) ::selection { background: #ed705433; color: var(--admin-ink); }
+
+/* The original white DUUK mark remains on the same dark backdrop. */
+[data-duuk-admin-theme="light"] .admin-sidebar {
+  --admin-ink: #fff8f3;
+  --admin-muted: #b8aea7;
+  --admin-line: #302a26;
+  --admin-paper: #080808;
+  --admin-surface: #141311;
+  --admin-raised: #1b1917;
+  --admin-accent: #eb4b3f;
+  --admin-focus: #b8aea7;
+  color-scheme: dark;
+  background: #080808;
+}
+[data-duuk-admin-theme="light"] .admin-header-logo { box-sizing: content-box; padding: 5px; border-radius: 7px; background: #080808; }
+[data-duuk-admin-theme="light"] .admin-login { background: radial-gradient(ellipse at 90% 0, #eb4b3f08, transparent 55%), var(--admin-paper); }
+[data-duuk-admin-theme="light"] .admin-login__visual { --admin-accent: #eb4b3f; }
+[data-duuk-admin-theme="light"] .office-dashboard-title { --admin-ink: #fff8f3; --admin-muted: #c4b8ae; --admin-line: #ffffff3b; --admin-accent: #ed7054; --admin-focus: #c4b8ae; }
+[data-duuk-admin-theme="light"] :is(.admin-field > span, .admin-label, .admin-checkbox, .admin-tip strong, .admin-status, .mail-row.is-unread .mail-row__main h3, .mail-editor .tiptap) { color: var(--admin-ink); }
+[data-duuk-admin-theme="light"] :is(.admin-empty, .platform-row small, .admin-project-summary p span, .admin-topbar-divider) { color: var(--admin-muted); }
+[data-duuk-admin-theme="light"] :is(.admin-shell, .admin-modal) :is(input, textarea)::placeholder { color: var(--admin-muted); }
+[data-duuk-admin-theme="light"] :is(.admin-field textarea, .platform-permission select, .office-document) { background: var(--admin-raised); }
+[data-duuk-admin-theme="light"] .admin-field input[type=file]::file-selector-button { background: #e3d9cf; color: var(--admin-ink); }
+[data-duuk-admin-theme="light"] :is(.admin-text-button, .admin-device, .admin-login__tag, .calendar-integration__icon, .calendar-integration__privacy svg, .crm-stage, .office-month-title:hover, .office-date-input svg, .office-event-kicker, .office-trash-note svg, .office-day-dot, .drive-panel__head h3 svg, .mail-list .admin-empty > svg, .mail-compose__copies button[aria-pressed=true], .mail-editor .tiptap a, .mail-attachment-list li > svg, .mail-file-card > svg) { color: var(--admin-accent); }
+[data-duuk-admin-theme="light"] :is(.admin-filter-tabs button.is-active, .admin-status--draft, .admin-demo-tag, .platform-selection > button.is-active, .office-badge.is-pending, .drive-chip.is-pending, .mail-folders nav button.is-active, .mail-editor__toolbar button[aria-pressed=true]) { color: var(--admin-accent); background: #eb4b3f0e; border-color: #dca795; }
+[data-duuk-admin-theme="light"] :is(.admin-icon-button--danger:hover, .admin-error, .drive-chip.is-error, .drive-feedback.is-error) { color: #a2372b; }
+[data-duuk-admin-theme="light"] .admin-error { background: #fbeee7; border-color: #e3b4a6; }
+[data-duuk-admin-theme="light"] :is(.drive-chip.is-synced, .admin-status--presence.is-online) { color: var(--admin-success); background: #edf4ed; border-color: #bed0bd; }
+[data-duuk-admin-theme="light"] .admin-avatar { background: #e9ddd2; border-color: var(--admin-line); color: #8e422e; }
+[data-duuk-admin-theme="light"] .admin-sidebar .admin-avatar { background: #29221e; border-color: #ffffff10; color: #ffae89; }
+[data-duuk-admin-theme="light"] .admin-avatar-presence > i { border-color: var(--admin-surface); }
+[data-duuk-admin-theme="light"] .admin-sidebar .admin-avatar-presence > i { border-color: #0d0c0b; }
+[data-duuk-admin-theme="light"] :is(.team-presence__trigger, .team-presence__list strong) { color: var(--admin-ink); }
+[data-duuk-admin-theme="light"] .team-presence__trigger:is(:hover, [aria-expanded=true]) { color: var(--admin-ink); background: var(--admin-raised); border-color: #aa9382; }
+[data-duuk-admin-theme="light"] .team-presence__popover { background: var(--admin-surface); box-shadow: 0 18px 55px #34241820; }
+[data-duuk-admin-theme="light"] .team-presence__popover > a { color: var(--admin-accent); }
+[data-duuk-admin-theme="light"] .platform-switch { background: #c6b9ad; border-color: #b3a294; }
+[data-duuk-admin-theme="light"] .platform-switch > span { background: #fffefd; }
+[data-duuk-admin-theme="light"] .platform-switch.is-on { background: var(--admin-accent); border-color: var(--admin-accent); }
+[data-duuk-admin-theme="light"] .platform-switch.is-on > span { background: #fffefd; }
+[data-duuk-admin-theme="light"] :is(.admin-query-skeleton > span, .crm-bar > span) { background: #b4a18c14; }
+[data-duuk-admin-theme="light"] .admin-query-skeleton > span::after { background: linear-gradient(90deg, transparent, #b4a18c20, transparent); }
+[data-duuk-admin-theme="light"] :is(.admin-update-notice, .admin-connection) { background: #f9ece3; border-color: #dec2ae; }
+[data-duuk-admin-theme="light"] .admin-connection { box-shadow: 0 12px 40px #34241820; }
+[data-duuk-admin-theme="light"] .admin-toast { background: var(--admin-surface); border-color: var(--admin-line); color: var(--admin-ink); box-shadow: 0 8px 32px #34241820; }
+[data-duuk-admin-theme="light"] .admin-toast .admin-icon-button { color: var(--admin-muted); }
+[data-duuk-admin-theme="light"] .admin-toast--error { background: #fbeee7; border-color: #e3b4a6; color: #a2372b; }
+[data-duuk-admin-theme="light"] .admin-modal { box-shadow: 0 24px 100px #34241830; }
+[data-duuk-admin-theme="light"] .admin-modal::backdrop { background: #19110dc2; }
+
+/* Calendar, CRM and the mail composer contain purposeful status accents. */
+[data-duuk-admin-theme="light"] .office-days > button.is-outside { color: var(--admin-muted); background: #e8e1d955; }
+[data-duuk-admin-theme="light"] .office-day-event { background: #c2ac9412; }
+[data-duuk-admin-theme="light"] :is(.office-day-event.is-delivery i, .office-event-card.is-delivery .office-event-mark) { background: #645950; }
+[data-duuk-admin-theme="light"] .office-event-responsible { color: var(--admin-accent) !important; }
+[data-duuk-admin-theme="light"] .office-timeline { background: repeating-linear-gradient(to top, transparent 0, transparent 47px, #5e4a3720 48px, transparent 49px); }
+[data-duuk-admin-theme="light"] .crm-kanban-column { background: #efe9e355; }
+[data-duuk-admin-theme="light"] .crm-kanban-column header > span { background: #d8cfc655; }
+[data-duuk-admin-theme="light"] .crm-overdue { color: #a2372b !important; }
+[data-duuk-admin-theme="light"] :is(.crm-drop-slot, .crm-drag-handle:active, .crm-kanban-card .crm-kanban-saving) { color: var(--admin-accent); }
+[data-duuk-admin-theme="light"] .crm-drop-slot.is-visible { background: #f9e9df; }
+[data-duuk-admin-theme="light"] .crm-kanban-ghost { background: var(--admin-surface); color: var(--admin-ink); box-shadow: 0 18px 48px #34241830; }
+[data-duuk-admin-theme="light"] .crm-kanban-ghost > :is(span, small) { color: var(--admin-muted); }
+[data-duuk-admin-theme="light"] .mail-avatar { color: #8e422e; background: #efe1d5; border-color: #decebe; }
+[data-duuk-admin-theme="light"] :is(.mail-row:hover, .mail-folders nav button:hover, .mail-editor__toolbar) { background: #b4a18c09; }
+[data-duuk-admin-theme="light"] .mail-attachments { border-color: #bfa58e; }
+[data-duuk-admin-theme="light"] :is(.crm-whatsapp-recipient > svg, .crm-whatsapp-missing > p, .crm-whatsapp-feedback, .crm-message-card > div > svg, .crm-message-variables > button, .drive-library-error, .drive-trash-action) { color: var(--admin-accent); }
+[data-duuk-admin-theme="light"] .drive-library-pdf { background: #e1d8cf; }
+[data-duuk-admin-theme="light"] .duuk-ai-help { background: var(--admin-surface); border-color: #c7b09b; box-shadow: 0 5px 20px #34241818; }
+[data-duuk-admin-theme="light"] .duuk-ai-help svg { color: var(--admin-accent); }
+[data-duuk-admin-theme="light"] .duuk-ai-help:hover { background: #f1e4d9; border-color: #a57a59; }
+
+/* These selectors also cover the lazy-loaded AI panel and its modal variants. */
+[data-duuk-admin-theme="light"] .duuk-ai { --ai-coral: #ed7054; --ai-peach: #a6422b; background: var(--admin-surface); }
+[data-duuk-admin-theme="light"] .duuk-ai-header { background: var(--admin-surface); }
+[data-duuk-admin-theme="light"] .duuk-ai-sidebar { background: var(--admin-paper); }
+[data-duuk-admin-theme="light"] :is(.duuk-ai-composer, .duuk-ai-message--user, .duuk-ai-action, .duuk-ai-action.is-finished, .duuk-ai-menu > div, .duuk-ai-usage > div, .duuk-ai-markdown pre, .duuk-ai-markdown code, .duuk-ai-mode option) { background: var(--admin-raised); border-color: var(--admin-line); }
+[data-duuk-admin-theme="light"] :is(.duuk-ai-header .admin-icon-button:hover, .duuk-ai-menu > summary:hover, .duuk-ai-menu > div button:hover, .duuk-ai-sidebar__tabs button[aria-selected=true], .duuk-ai-history-item:hover, .duuk-ai-history-item.is-active, .duuk-ai-history-item > div button:hover, .duuk-ai-document-item:hover, .duuk-ai-suggestions button:hover, .duuk-ai-mode select:hover) { background: #e7dbce; }
+[data-duuk-admin-theme="light"] .duuk-ai-suggestions button { border-color: var(--admin-line); }
+[data-duuk-admin-theme="light"] :is(.duuk-ai-header .admin-icon-button, .duuk-ai-menu > summary, .duuk-ai-history-item small, .duuk-ai-message__who small, .duuk-ai-message__actions button, .duuk-ai-action__heading > span, .duuk-ai-action__summary > span, .duuk-ai-action__note, .duuk-ai-agenda-result span, .duuk-ai-agenda-result small, .duuk-ai-mode select, .duuk-ai-mode > svg, .duuk-ai-keyboard-hint, .duuk-ai-footnote, .duuk-ai-footnote > span, .duuk-ai-usage small) { color: var(--admin-muted); }
+[data-duuk-admin-theme="light"] :is(.duuk-ai-document-item svg, .duuk-ai-suggestions button > svg, .duuk-ai-message__who, .duuk-ai-message--user .duuk-ai-message__who, .duuk-ai-markdown code, .duuk-ai-action__buttons .admin-text-button, .duuk-ai-footnote > button, .duuk-ai-usage > summary span, .duuk-ai-editing, .duuk-ai-configuration a, .duuk-ai-privacy-dialog a, .duuk-ai-versions > button span:last-child) { color: var(--ai-peach, #a6422b); }
+[data-duuk-admin-theme="light"] :is(.duuk-ai-action__fields, .duuk-ai-agenda-result > div) { border-color: var(--admin-line); }
+[data-duuk-admin-theme="light"] .duuk-ai-action__completed p { color: var(--admin-success); }
+[data-duuk-admin-theme="light"] .duuk-ai-composer textarea::placeholder { color: var(--admin-muted); }
+[data-duuk-admin-theme="light"] :is(.duuk-ai-error, .duuk-ai-unavailable) { background: #f5e9dd; border-color: #d7b89c; color: #80492a; }
+[data-duuk-admin-theme="light"] .duuk-ai-error .admin-icon-button { color: #80492a; }
+[data-duuk-admin-theme="light"] .duuk-ai-send:disabled { background: #cba38a; }
+[data-duuk-admin-theme="light"] .duuk-ai-send--stop { background: #d7c4b1; color: #704322; }
+[data-duuk-admin-theme="light"] .duuk-ai-send--stop:hover { background: #c8ae95; }
+
+@media (max-width: 1023px) {
+  .admin-topbar__actions > .admin-theme-toggle { display: none; }
+  .admin-sidebar__control > .admin-theme-toggle--label { display: flex; width: auto; justify-content: flex-start; padding-inline: 8px; min-height: 40px; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) { .admin-theme-toggle { transition: none; } }

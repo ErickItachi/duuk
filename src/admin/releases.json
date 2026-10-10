@@ -1,5 +1,21 @@
 [
   {
+    "version": "1.9.0",
+    "date": "2026-10-10",
+    "title": "Mais conforto e segurança no administrativo",
+    "new": [
+      "Modo claro com preferência por conta e aparelho, mantendo a identidade da DUUK.",
+      "Novos links de assinatura confirmam o acesso ao e-mail do participante com um código de seis dígitos.",
+      "Saudação com frases animadas, opção de pausar e respeito à redução de movimento."
+    ],
+    "improved": [
+      "Formulários, diálogos e navegação revisados em celulares, tablets e computadores, com transições suaves."
+    ],
+    "fixed": [
+      "Ações explícitas para renomear pastas, incluindo a pasta aberta no Google Drive."
+    ]
+  },
+  {
     "version": "1.8.0",
     "date": "2026-10-09",
     "title": "DUUK AI: ações no administrativo",

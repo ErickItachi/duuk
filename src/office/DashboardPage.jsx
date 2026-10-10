@@ -9,6 +9,7 @@ import { localDay } from '../crm/model'
 import { eventCategories, eventTime } from './calendarModel.js'
 import { brl, contractStatuses, dateLabel, expenseTotals, metricSummary, today } from './model'
 import { useQuery } from './useQuery'
+import StudioGreeting from './StudioGreeting'
 
 function StatCard({ label, icon, value, note }) {return <div><div className="office-stat-heading"><span>{label}</span><Icon name={icon} size={20}/></div><strong className={String(value).length>15?'office-value-long':undefined}>{value}</strong><small className="office-stat-note">{note}</small></div>}
 const shortcuts=[['crm.dashboard','users','Comercial','Uma conversa pode ser o próximo filme.','/admin/comercial'],['agenda','calendar','Agenda','Da próxima gravação à última entrega.','/admin/agenda'],['contracts','document','Contratos','Prepare documentos e acompanhe assinaturas.','/admin/contratos'],['finance','wallet','Financeiro','Organize os custos de cada produção.','/admin/financeiro'],['insights','chart','Insights','Veja como as pessoas encontram a DUUK.','/admin/insights'],['site','film','Portfólio','Dê espaço às suas próximas histórias.','/admin/portfolio'],['site','home','Abertura','Escolha a primeira cena do site.','/admin/inicio']]
@@ -22,8 +23,7 @@ export default function DashboardPage() {
  const {data,error,reload}=useQuery(query)
  const totals=expenseTotals(data?.expenses||[]),metrics=metricSummary(data?.metrics||[]),pending=(data?.contracts||[]).filter(c=>['pending','partial'].includes(c.status))
  const upcoming=(data?.events||[]).filter(e=>e.end_date>=today()&&!['done','cancelled'].includes(e.status)).sort((a,b)=>a.start_date.localeCompare(b.start_date)||(a.start_time||'').localeCompare(b.start_time||'')).slice(0,4)
- const hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',hour12:false}).format(new Date())),greeting=hour<12?'Bom dia':hour<18?'Boa tarde':'Boa noite'
- return <><div className="admin-page-title office-dashboard-title"><div><p className="admin-eyebrow">SEU ESTÚDIO. SUAS HISTÓRIAS.</p><h1>{greeting},<br/>{auth.profile.name.split(' ')[0]}<span>.</span></h1><p>Vamos colocar as próximas ideias em cena?</p></div><RefreshButton onRefresh={reload}/></div>{error&&<p className="admin-error" role="alert">{error}</p>}
+ return <><div className="admin-page-title office-dashboard-title"><div><StudioGreeting name={auth.profile.name}/></div><RefreshButton onRefresh={reload}/></div>{error&&<p className="admin-error" role="alert">{error}</p>}
  <div className="admin-stats office-dashboard-stats">
  {auth.hasPermission('finance')&&<StatCard label="Despesas deste mês" icon="wallet" value={data?brl(totals.total):'…'} note="Vencimentos do mês atual"/>}
  {auth.hasPermission('contracts')&&<StatCard label="Contratos aguardando assinatura" icon="document" value={data?pending.length:'…'} note="Aguardando aceite"/>}

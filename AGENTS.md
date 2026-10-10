@@ -67,3 +67,11 @@ O usuário autorizou publicar o painel administrativo em produção e aplicar as
 - Organizar pastas/arquivos usa metadados da API oficial e lixeira reversível, sem DELETE definitivo, compartilhamento público ou alteração de bytes. A pasta DUUK não pode ser movida ou enviada à lixeira. Permissões de origem das pastas permanecem ao mover; mutações em uma árvore exigem acesso ao conteúdo inteiro.
 - Pastas/arquivos na lixeira têm tombstones: o worker não pode recriá-los. Restaurar uma pasta não restaura descendentes enviados individualmente à lixeira. Originais e evidências do Supabase nunca são excluídos pelo módulo Drive.
 - O Google Drive é o último item do menu e utiliza a logo oficial local. Não amplie o escopo drive.file para listar arquivos pessoais da conta.
+
+## Conforto e confirmação de assinatura — 1.9.0
+
+- O usuário autorizou código por e-mail pelo Titan existente, sem novo serviço pago. Novos convites devem exigir confirmação de seis dígitos no destinatário definido pelo administrador; nunca permitir que quem recebe escolha outra caixa. Convites legados preservam os sete dias anteriores. A confirmação prova acesso ao e-mail, não identidade civil.
+- Migrações incrementais sign-email-verification.sql e sign-email-verification-integrity.sql; segredos no Vault, RPCs privadas, limites de tentativas/reenvios e evidências duráveis. Preserve assinatura transacional, PDFs originais, revisão e fila do Drive. Nenhum SMS/API WhatsApp automático foi contratado.
+- Modo claro é preferência local por conta/aparelho, com escuro padrão e logo branca original sobre fundo escuro. Remova escopo do tema ao sair do Admin; preserve o site público.
+- Saudação animada pode ser pausada, suspende em aba oculta e respeita movimento reduzido. Não cubra o rodapé/Sobre com ajuda flutuante. A renomeação de pastas usa a API e permissões já existentes do Drive.
+- Consulte docs/admin-1.9-validation.md para instalação e resultados. Mantenha atualização explícita da PWA e proteção de formulários pendentes.

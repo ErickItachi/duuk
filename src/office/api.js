@@ -39,8 +39,11 @@ export async function signRequest(body) {
     },
   );
   const data = await response.json();
-  if (!response.ok)
-    throw new Error(data.error || "Não foi possível abrir o documento.");
+  if (!response.ok) {
+    const failure = new Error(data.error || "Não foi possível abrir o documento.");
+    failure.status = response.status;
+    throw failure;
+  }
   return data;
 }
 const check = (result) => {

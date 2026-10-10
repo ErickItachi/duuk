@@ -49,6 +49,16 @@ begin
  insert into public.duuk_user_permissions(user_id,permission,allowed) values(outsider,'drive',true);
  if duuk_private.drive_folder_can_access(outsider,fixture_child_key) then raise exception 'Pasta confidencial exposta';end if;
  begin perform public.duuk_drive_backend('file',jsonb_build_object('user_id',outsider,'document_id',file_id));raise exception 'Download da pasta confidencial exposto';exception when sqlstate 'PT403' then null;end;
+ payload:=jsonb_build_object('user_id',actor,'request_id',gen_random_uuid(),'action','folder_update','id',fixture_parent_key,'revision',(select revision from public.duuk_drive_folders where key=fixture_parent_key),'name','Pasta renomeada','description','Documentos da equipe');
+ prepared:=public.duuk_drive_manage_backend('prepare',payload);scope:=jsonb_build_object('generation',prepared->>'generation','lease_id',prepared->>'lease_id','change_id',prepared->>'change_id');
+ perform public.duuk_drive_manage_backend('check',scope);
+ result:=public.duuk_drive_manage_backend('commit',scope||jsonb_build_object('result',jsonb_build_object('drive_id',prepared->'target'->>'drive_id','name','Pasta renomeada','description','Documentos da equipe','parent_drive_id',prepared->'parent'->>'drive_id')));
+ if public.duuk_drive_manage_backend('prepare',payload)->'completed' is distinct from result then raise exception 'Replay duplicou rename';end if;
+ listing:=public.duuk_drive_manage_backend('browse',jsonb_build_object('user_id',actor,'folder_id',fixture_parent_key));
+ if listing->'folder'->>'name'<>'Pasta renomeada' or listing->'folder'->>'description'<>'Documentos da equipe' then raise exception 'Rename não aparece na pasta atual';end if;
+ if (select parent_key from public.duuk_drive_folders where key=fixture_child_key)<>fixture_parent_key then raise exception 'Rename rompeu relação de pasta filha';end if;
+ if (select drive_id from public.duuk_drive_folders where key=fixture_parent_key) is distinct from prepared->'target'->>'drive_id' then raise exception 'Rename substituiu ID do Google';end if;
+ begin perform public.duuk_drive_manage_backend('prepare',payload||jsonb_build_object('request_id',gen_random_uuid(),'revision',(result->>'revision')::integer,'name',repeat('a',91)));raise exception 'Nome maior que limite aceito';exception when sqlstate 'PT400' then null;end;
  if (select source_sha256 from public.duuk_drive_documents where id=file_id)<>repeat('a',64) then raise exception 'Hash alterado';end if;
 end $$;
 select 'PASS: Drive folders, private RPC, replay, pending create, cycles, revisions, shared lease, inherited trash, restore, permissions and immutable sources' as result;

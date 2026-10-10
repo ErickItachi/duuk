@@ -1,5 +1,6 @@
 import { admin, checked, database, handler, HttpError, json, readBody, readJson, sha256, signedUrl, text, uuid } from '../_shared/http.ts'
 import { fieldsFor, PDFDocument, renderSigned } from '../_shared/pdf.ts'
+import { normalizeSigningEmail } from '../_shared/sign-verification.mjs'
 
 handler(async(req,headers)=>{
   const db=database(),user=await admin(req,db)
@@ -29,14 +30,17 @@ handler(async(req,headers)=>{
   const contract=checked(await db.from('duuk_contracts').select('*').eq('id',id).maybeSingle())
   if(!contract)throw new HttpError('Contrato não encontrado.',404)
   if(body.action==='details'){
-    const signatures=checked(await db.from('duuk_contract_signatures').select('id,party,signer_name,signed_at,consent,ip_address,user_agent,field_values').eq('contract_id',id).order('signed_at'))
-    const invites=checked(await db.from('duuk_contract_invites').select('party,expires_at,revoked_at,signed_at').eq('contract_id',id).order('created_at',{ascending:false}))
+    const signatures=checked(await db.from('duuk_contract_signatures').select('id,party,signer_name,signed_at,consent,ip_address,user_agent,field_values,verification_method,verified_email,email_verified_at,verification_challenge_id').eq('contract_id',id).order('signed_at'))
+    const invites=checked(await db.from('duuk_contract_invites').select('party,expires_at,revoked_at,signed_at,verification_required,recipient_email').eq('contract_id',id).order('created_at',{ascending:false}))
     return json({contract,signatures,invites,original_url:await signedUrl(db,contract.original_path),signed_url:await signedUrl(db,contract.signed_path)},headers)
   }
   if(body.action==='fields')return json(await audited('fields',id,db.rpc('duuk_office_fields',{target:id,document:fieldsFor(body.fields,contract.pages),revision:body.version})),headers)
   if(body.action==='invite'){
+    let recipient:string
+    try { recipient=normalizeSigningEmail(body.email || (body.party==='client' ? contract.client_email : user.email)) }
+    catch { throw new HttpError('Defina um e-mail válido para este participante antes de gerar o link.') }
     const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('')
-    const result=await audited('invite',id,db.rpc('duuk_office_invite',{target:id,side:body.party,digest:await sha256(token),revision:body.version}))
+    const result=await audited('invite',id,db.rpc('duuk_office_invite_verified',{target:id,side:body.party,digest:await sha256(token),revision:body.version,recipient}))
     return json({...result,url:`https://www.duukfilms.com/assinar/${token}`},headers)
   }
   if(body.action==='cancel')return json(await audited('cancel',id,db.rpc('duuk_office_cancel',{target:id,revision:body.version})),headers)
