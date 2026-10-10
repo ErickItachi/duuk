@@ -28,7 +28,7 @@ Instalação: aplicar `supabase/sign-email-verification.sql`, depois `supabase/s
 - Deno: type check de duuk-sign/duuk-office e teste de PDF com evidência longa, paginação e preservação da página original aprovados.
 - SQL real com rollback: novo/legado, RLS/grants, destinatário, estados de entrega/replay, cooldown, limites por convite/e-mail/global, cinco tentativas persistidas, validade do código/prova, limite de provas, revogação, lixeira, assinatura idempotente e evidências com método NULL. A fixture de pastas do Drive também passou.
 - Navegador real, dados interceptados: 459 verificações do painel em 27 rotas, formulários e fluxos adicionais; 320, 375, 390, 430, 768, 1024, 1440 px e paisagem 844 × 390. Nenhum overflow de página/diálogo, erro JavaScript ou gravação externa. Tema claro passou também em 72 verificações, login, persistência, troca entre abas, preservação de formulário e saída ao site.
-- Fluxo público de assinatura com API/SMTP interceptados: oito dimensões, bloqueio pré-código, erro de código, PDF, desenho, aceite, assinatura, download, expiração da prova, recarga e link revogado. Nenhuma assinatura real foi criada.
+- Fluxo público de assinatura com API/SMTP interceptados: oito dimensões, bloqueio pré-código, erro de código, PDF, desenho, aceite, assinatura, download, expiração da prova e recarga. Nenhuma assinatura real foi criada.
 - PWA: atualização real de service worker 1.8.0 → 1.9.0, espera explícita, proteção de formulário pendente, outra aba preservada e ausência de respostas privadas no Cache Storage.
 
 As verificações de layout utilizam Chromium compatível com a máquina, não um iPhone físico. Não foram feitas assinaturas reais de clientes. A entrega SMTP foi validada na própria caixa contato@duukfilms.com com um PDF técnico temporário, sem assinar documentos de clientes. O pedido repetido recuperou o mesmo desafio sem reenviar. A publicação é conferida separadamente no domínio após o push.
@@ -37,3 +37,14 @@ As verificações de layout utilizam Chromium compatível com a máquina, não u
 
 As duas migrações foram aplicadas. duuk-sign versão 6 e duuk-office versão 9 estão ACTIVE. O advisor não encontrou novo apontamento nessas tabelas/funções; avisos informativos anteriores de RLS bloqueado e a proteção de senhas dependente do plano permanecem, sem alterar o plano gratuito. A varredura de 61 arquivos alterados/compilados não encontrou chaves Google, chaves de serviço Supabase, JWT service_role ou chaves privadas.
 
+## Validação real das integrações
+
+O código foi aceito pelo SMTP e recebido de verdade em contato@duukfilms.com. Um código incorreto foi recusado; o correto confirmou o e-mail e liberou o PDF privado com HTTP 200. O banco confirmou um único desafio, uma tentativa incorreta e uma confirmação, sem reenvio no replay. Nenhuma assinatura real foi registrada. O PDF técnico temporário ficou fora da sincronização do Drive durante o teste.
+
+A API oficial do Drive também passou em criação e renomeação de uma pasta técnica vazia. O novo nome foi confirmado pelo Google e pelo banco; a pasta de teste foi depois enviada à lixeira, preservando as pastas e documentos existentes.
+
+## Publicação e atualização
+
+Commit de implementação `1e2accc815986b22202883b2440d8ed008969488` enviado para origin/main. A Vercel concluiu o deploy `EW5ACbimww5A5F3RP9BzeAzM3TTK`; domínio /admin e site público responderam HTTP 200. admin-version.json confirmou 1.9.0, build `7d32522346c4e0e1cc46`. A sessão real continuou autenticada; o botão reconheceu 1.9.0 a partir da 1.8.0 e Atualizar agora concluiu a troca. O worker ativo respondeu com o mesmo build e não havia respostas privadas no Cache Storage. Tema claro e meta único foram confirmados no domínio, com a logo original.
+
+O link técnico publicado mostrou confirmação de e-mail sem expor PDF/campos antes do código. Revogar durante essa tela levou ao aviso para solicitar novo link, sem permitir novo envio. O contrato técnico, PDF original, convites, provas e fila temporária foram removidos; consultas no banco e no Storage confirmaram a limpeza. Nenhum contrato existente foi alterado ou assinado. A pasta vazia de teste do Drive permanece apenas na lixeira reversível.
