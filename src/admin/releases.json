@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.9.1",
+    "date": "2026-10-10",
+    "title": "Aparência e saudação ajustadas",
+    "fixed": [
+      "Acesso ao modo claro visível no topo e no menu do celular, com indicação do modo que será ativado."
+    ],
+    "improved": [
+      "Saudação animada automática, sem botão de play ou pausa."
+    ]
+  },
+  {
     "version": "1.9.0",
     "date": "2026-10-10",
     "title": "Mais conforto e segurança no administrativo",

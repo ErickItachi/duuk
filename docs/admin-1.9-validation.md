@@ -2,6 +2,12 @@
 
 Data: 10 de outubro de 2026. Trabalho realizado no checkout `duuk-admin-live`, branch `feature/duuk-platform`, preservando o checkout original e a versão publicada 1.8.0.
 
+## Ajuste de aparência — 1.9.1
+
+O controle de tema do celular era ocultado tanto no topo quanto pelo contêiner do menu. O ajuste reexibe os dois acessos, identifica o modo que será ativado e acrescenta texto no desktop e no login. A logo e a preferência por conta/aparelho foram preservadas. A saudação agora alterna automaticamente sem controles de play/pausa, mantendo suspensão em aba oculta e respeito à redução de movimento.
+
+Validação local do incremento: 116 testes Node aprovados e um opt-in anterior ignorado; lint sem novos avisos (três anteriores); build de produção aprovado. Navegador com APIs interceptadas: 38 verificações, sem erros JavaScript, em 320, 375, 390, 430, 480, 680, 768, 1024 e 1440 px. Troca de tema, persistência após recarregar, acesso pelo menu, login com formulário preservado, pipeline, animação automática e movimento reduzido passaram. A marca e o botão do login não se sobrepõem em 320 px. Nenhum dado externo foi gravado. O incremento usa o versionamento e o mecanismo de atualização existentes.
+
 ## Recursos
 
 O tema claro fica no topo do desktop e no início do menu do celular. A preferência é separada por conta e aparelho e sincroniza entre abas. A marca branca original continua sobre fundo escuro. O tema, os ícones e a cor da barra do navegador são restaurados ao sair do administrativo; as páginas públicas não receberam alterações.

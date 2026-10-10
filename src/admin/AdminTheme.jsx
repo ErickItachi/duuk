@@ -41,8 +41,8 @@ export function ThemeToggle({ label = false }) {
   const light = theme === 'light'
   const title = light ? 'Ativar modo escuro' : 'Ativar modo claro'
   const ThemeIcon = light ? Moon : Sun
-  return <button type="button" className={`admin-theme-toggle${label ? ' admin-theme-toggle--label' : ''}`} onClick={() => change(light ? 'dark' : 'light')} aria-label="Modo claro" aria-pressed={light} title={title}>
+  return <button type="button" className={`admin-theme-toggle${label ? ' admin-theme-toggle--label' : ''}`} onClick={() => change(light ? 'dark' : 'light')} aria-label={title} title={title}>
     <ThemeIcon size={18} strokeWidth={1.6} aria-hidden="true" />
-    {label && <span>{light ? 'Modo claro' : 'Modo escuro'}</span>}
+    {label && <span>{light ? 'Modo escuro' : 'Modo claro'}</span>}
   </button>
 }

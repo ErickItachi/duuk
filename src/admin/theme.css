@@ -15,7 +15,7 @@
   justify-content: center;
   flex-shrink: 0;
   gap: 10px;
-  width: 40px;
+  width: 44px;
   min-height: 44px;
   padding: 8px;
   border: 1px solid transparent;
@@ -27,7 +27,8 @@
 .admin-theme-toggle:hover { color: var(--admin-ink); background: var(--admin-raised); border-color: var(--admin-line); }
 .admin-theme-toggle:focus-visible { outline: 2px solid var(--admin-focus); outline-offset: 3px; }
 .admin-theme-toggle > svg { flex-shrink: 0; }
-.admin-theme-toggle--label { display: none; }
+.admin-theme-toggle--label { width: auto; padding-inline: 12px; font-size: 11px; white-space: nowrap; }
+.admin-sidebar__control > .admin-theme-toggle--label { display: none; }
 .admin-theme-login { position: fixed; z-index: 10; top: max(16px, env(safe-area-inset-top)); right: max(18px, env(safe-area-inset-right)); }
 .admin-theme-login .admin-theme-toggle { background: var(--admin-surface); border-color: var(--admin-line); box-shadow: 0 4px 20px #0002; }
 
@@ -138,7 +139,15 @@
 [data-duuk-admin-theme="light"] .duuk-ai-send--stop:hover { background: #c8ae95; }
 
 @media (max-width: 1023px) {
-  .admin-topbar__actions > .admin-theme-toggle { display: none; }
-  .admin-sidebar__control > .admin-theme-toggle--label { display: flex; width: auto; justify-content: flex-start; padding-inline: 8px; min-height: 40px; font-size: 11px; }
+  .admin-topbar__actions > .admin-theme-toggle { width: 44px; padding: 8px; }
+  .admin-topbar__actions > .admin-theme-toggle > span { display: none; }
+  .admin-sidebar__control { display: flex; }
+  .admin-sidebar__control > .admin-theme-toggle--label { display: inline-flex; justify-content: flex-start; padding-inline: 8px; }
+  .admin-sidebar__control > .admin-collapse-toggle { display: none; }
+  .admin-topbar__identity { flex: 1; }
+  .admin-environment { overflow: hidden; }
+  .admin-topbar-note { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+@media (max-width: 680px) { .admin-topbar .admin-view-site { display: none; } }
+@media (max-width: 430px) { .admin-topbar .admin-environment { display: none; } }
 @media (prefers-reduced-motion: reduce) { .admin-theme-toggle { transition: none; } }

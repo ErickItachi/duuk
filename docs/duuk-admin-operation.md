@@ -1,8 +1,12 @@
 # Operação do DUUK Admin
 
+## Aparência e saudação — 1.9.1
+
+O botão de tema está visível no topo do celular e do desktop, no menu do celular e na entrada de login. O texto indica o modo que será ativado. O acesso mobile anterior era ocultado pelo contêiner do menu; a versão 1.9.1 corrige essa precedência sem alterar a preferência por conta/aparelho. As frases da saudação alternam automaticamente, sem botão de play/pausa; continuam respeitando movimento reduzido e aba oculta. A atualização usa o fluxo explícito da PWA, preservando formulários pendentes.
+
 ## Conforto e confirmação por e-mail — 1.9.0
 
-O painel oferece modo claro, saudação animada com pausa, renomeação explícita de pastas e ajustes de responsividade. Novos links de assinatura exigem código de seis dígitos pelo Titan, vinculado ao e-mail definido pelo administrador; convites anteriores continuam válidos até expirar. A confirmação registra acesso à caixa, sem identificação civil. Instalação, limites e testes estão em [admin-1.9-validation.md](admin-1.9-validation.md).
+O painel oferece modo claro, saudação animada, renomeação explícita de pastas e ajustes de responsividade. Novos links de assinatura exigem código de seis dígitos pelo Titan, vinculado ao e-mail definido pelo administrador; convites anteriores continuam válidos até expirar. A confirmação registra acesso à caixa, sem identificação civil. Instalação, limites e testes estão em [admin-1.9-validation.md](admin-1.9-validation.md).
 
 ## DUUK AI — 1.8.0
 
