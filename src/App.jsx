@@ -57,7 +57,7 @@ function AppRoutes() {
 
   return (
     <>
-      <Suspense fallback={<BrandLoader />}>
+      <Suspense fallback={<BrandLoader film={/^\/admin(?:\/|$)/.test(location.pathname)} />}>
         <div
           className={location.pathname.startsWith('/admin') ? 'route-view route-view--admin' : 'route-view'}
           key={location.pathname.startsWith('/admin') ? 'admin' : location.pathname}

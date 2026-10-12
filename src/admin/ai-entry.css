@@ -1,12 +1,30 @@
-.duuk-ai-help { position: fixed; right: 24px; bottom: 24px; z-index: 50; display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 10px 15px; border: 1px solid #514032; border-radius: 999px; background: #17130f; box-shadow: 0 5px 20px #0004; }
+.duuk-ai-help { position: fixed; right: 24px; bottom: 24px; z-index: 50; display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 46px; padding: 10px 17px 10px 13px; border: 1px solid #8c6045; border-radius: 999px; background: linear-gradient(120deg, #302118, #17130f); color: var(--admin-ink); box-shadow: 0 5px 20px #0004; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; isolation: isolate; transition: border-color .2s, box-shadow .2s, background .2s; }
+.duuk-ai-help::before { content: ''; position: absolute; z-index: -1; inset: -5px; border: 1px solid #eb8e626b; border-radius: inherit; pointer-events: none; opacity: 0; animation: duuk-ai-invite 9s ease-out 1.5s 3; }
+.duuk-ai-help__spark { display: grid; place-items: center; flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%; background: #f28b6120; }
 .duuk-ai-help svg { color: #e2a27b; }
-.duuk-ai-help:hover { background: #2a1d13; border-color: #876044; }
-.admin-modal:has(.duuk-ai--embedded) { inset: 20px 20px 20px auto; margin: 0; width: min(600px, calc(100vw - 40px)); max-width: calc(100vw - 40px); height: calc(100dvh - 40px); max-height: calc(100dvh - 40px); border-radius: 14px; overflow: hidden; }
-.admin-modal:has(.duuk-ai--embedded)[open] { display: flex; flex-direction: column; }
-.admin-modal:has(.duuk-ai--embedded) > .admin-modal__head { display: none; }
-.admin-modal:has(.duuk-ai--embedded) > .duuk-ai--embedded { min-height: 0; flex: 1; overflow: hidden; }
+.duuk-ai-help__label { font-size: 11px; font-weight: 550; letter-spacing: .025em; }
+.duuk-ai-help:hover { background: #2a1d13; border-color: #cb8960; box-shadow: 0 7px 24px #0005; }
+.duuk-ai-help:focus-visible { outline: 2px solid var(--admin-focus, #baaca1); outline-offset: 4px; }
+.duuk-ai-help.is-dragging { cursor: grabbing; box-shadow: 0 9px 28px #0006; }
+.duuk-ai-help.is-dragging::before { animation: none; }
+.duuk-ai-floating-hint { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.admin-modal.duuk-ai-floating-dialog { inset: auto 24px 76px auto; margin: 0; width: min(600px, calc(100vw - 40px)); max-width: calc(100vw - 40px); height: min(760px, calc(100dvh - 104px)); max-height: calc(100dvh - 40px); padding: 0; border-radius: 17px; overflow: hidden; box-shadow: 0 22px 90px #0005; animation: duuk-ai-dialog-in .24s cubic-bezier(.2, .75, .25, 1) both; }
+.admin-modal.duuk-ai-floating-dialog[open] { display: flex; flex-direction: column; }
+.admin-modal.duuk-ai-floating-dialog > .duuk-ai--embedded { min-height: 0; flex: 1; overflow: hidden; }
+.duuk-ai-floating-dialog.is-dragging { animation: none; }
+.duuk-ai-dragbar { display: flex; justify-content: center; flex-shrink: 0; min-height: 25px; border-bottom: 1px solid var(--admin-line); background: var(--admin-surface, #17130f); }
+.duuk-ai-drag-handle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 25px; width: 100%; padding: 3px 12px; color: var(--admin-muted); font-size: 9px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.duuk-ai-drag-handle:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--admin-focus); }
+.duuk-ai-floating-dialog.is-dragging .duuk-ai-drag-handle { cursor: grabbing; }
+@keyframes duuk-ai-invite { 0%, 18%, 100% { opacity: 0; transform: scale(.98); } 3% { opacity: .65; } 12% { opacity: 0; transform: scale(1.1); } }
+@keyframes duuk-ai-dialog-in { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 600px) {
-  .duuk-ai-help { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 44px; height: 44px; padding: 0; justify-content: center; }
-  .duuk-ai-help span { display: none; }
-  .admin-modal:has(.duuk-ai--embedded) { inset: var(--duuk-ai-viewport-top, 0px) 0 auto; width: 100%; max-width: 100%; height: var(--duuk-ai-viewport-height, 100dvh); max-height: var(--duuk-ai-viewport-height, 100dvh); border-radius: 0; }
+  .duuk-ai-help { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 48px; height: 48px; padding: 0; }
+  .duuk-ai-help__label { display: none; }
+  .admin-modal.duuk-ai-floating-dialog { inset: var(--duuk-ai-viewport-top, 0px) 0 auto; width: 100%; max-width: 100%; height: var(--duuk-ai-viewport-height, 100dvh); max-height: var(--duuk-ai-viewport-height, 100dvh); border-radius: 0; animation-name: duuk-ai-dialog-mobile-in; }
+}
+@keyframes duuk-ai-dialog-mobile-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .duuk-ai-help, .admin-modal.duuk-ai-floating-dialog { transition: none; animation: none; }
+  .duuk-ai-help::before { animation: none; }
 }

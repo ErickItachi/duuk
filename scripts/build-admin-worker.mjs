@@ -24,7 +24,7 @@ const source = await readFile(
   "utf8",
 );
 const worker =
-  `const BUILD=${JSON.stringify(metadata.build_id)};\nconst SHELL=${JSON.stringify(html)};\nconst ASSETS=${JSON.stringify([...assets, ...fonts, ...icons, "/media/duuk-logo-white.png"])};\n` +
+  `const BUILD=${JSON.stringify(metadata.build_id)};\nconst SHELL=${JSON.stringify(html)};\nconst ASSETS=${JSON.stringify([...assets, ...fonts, ...icons, "/media/duuk-logo-white.png", "/admin-assets/loading-duuk-poster.jpg"])};\n` +
   source;
 await writeFile(new URL("admin-sw.js", root), worker);
 await writeFile(new URL("admin-version.json", root), JSON.stringify(metadata));

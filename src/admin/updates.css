@@ -1,0 +1,22 @@
+.platform-about__status { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 9px; min-width: 0; width: 100%; padding-top: 16px; border-top: 1px solid var(--admin-line); color: var(--admin-muted); font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.platform-about__status svg { flex: 0 0 auto; margin-top: 2px; color: var(--admin-accent); }
+.platform-about__status span { min-width: 0; }
+.platform-release-current { margin-top: 24px; padding: clamp(22px, 3vw, 32px); }
+.platform-release-current > .admin-eyebrow { margin-bottom: 12px; }
+.release-notes__title { color: var(--admin-ink); font-family: 'Inter Tight', Inter, sans-serif; font-size: clamp(22px, 3vw, 28px); line-height: 1.25; letter-spacing: -.035em; margin: 0 0 24px; }
+.release-notes > section + section { margin-top: 24px; }
+.release-notes section h3 { display: flex; align-items: center; gap: 9px; margin: 0 0 12px; font-family: Inter, sans-serif; font-size: 12px; letter-spacing: .01em; font-weight: 600; }
+.release-notes section h3 svg { color: var(--admin-accent); flex-shrink: 0; }
+.release-notes section ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.75; overflow-wrap: anywhere; }
+.release-notes section li::marker { color: var(--admin-accent); }
+.admin-release-content { padding: clamp(20px, 4vw, 28px); }
+.admin-update-notice { flex-wrap: wrap; }
+.admin-update-notice__actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.admin-update-notice > .admin-update-notice__actions { flex: 0 1 auto; }
+.admin-update-notice__actions .admin-button { min-height: 42px; white-space: normal; }
+@media (max-width: 767px) {
+  .admin-update-notice > .admin-update-notice__actions { flex-basis: 100%; }
+  .admin-update-notice__actions > button { flex: 1; padding-inline: 12px; }
+  .admin-update-notice > div:not(.admin-update-notice__actions) { flex-basis: calc(100% - 36px); }
+  .platform-about__actions > .admin-button { flex: 1 1 100%; }
+}

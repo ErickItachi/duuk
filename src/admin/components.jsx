@@ -10,7 +10,7 @@ export function Icon({ name, size = 18, ...props }) {
   return <Component size={size} strokeWidth={1.6} aria-hidden="true" {...props} />
 }
 
-export function RefreshButton({ onRefresh, label = 'Atualizar', compact = false, disabled = false }) {
+export function RefreshButton({ onRefresh, label = 'Atualizar', compact = false, disabled = false, inlineFeedback = false }) {
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
   const button = useRef(null)
@@ -38,7 +38,7 @@ export function RefreshButton({ onRefresh, label = 'Atualizar', compact = false,
     }
     if (alive.current) { setStatus(message); setBusy(false); running.current = false; feedbackTimer.current = setTimeout(() => { if (alive.current) setStatus('') }, 6000) }
   }
-  return <span className="admin-refresh"><button ref={button} type="button" className={compact ? 'admin-icon-button' : 'admin-button admin-button--secondary'} aria-label={label} aria-busy={busy} disabled={busy || disabled} onClick={refresh}><Icon name="refresh" />{!compact && label}</button><small role="status">{status}</small></span>
+  return <span className={`admin-refresh${inlineFeedback ? ' admin-refresh--inline' : ''}`}><button ref={button} type="button" className={compact ? 'admin-icon-button' : 'admin-button admin-button--secondary'} aria-label={label} aria-busy={busy} disabled={busy || disabled} onClick={refresh}><Icon name="refresh" />{!compact && label}</button><small role="status">{status}</small></span>
 }
 
 export function Modal({ title, subtitle, children, onClose, wide = false }) {

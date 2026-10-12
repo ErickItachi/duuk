@@ -1,5 +1,22 @@
 [
   {
+    "version": "1.9.2",
+    "date": "2026-10-11",
+    "title": "Um administrativo mais leve e com a cara da DUUK",
+    "new": [
+      "Tela de carregamento com a animação em vídeo da DUUK, automática e sem som.",
+      "Novidades das atualizações disponíveis no painel, com fechamento imediato."
+    ],
+    "improved": [
+      "Modo claro mais harmônico, com menu claro, melhor contraste e a logo original sobre as cores da DUUK.",
+      "Ajuda DUUK AI móvel e animações discretas, com janela ajustável no computador."
+    ],
+    "fixed": [
+      "Retorno de atualização dentro do banner, sem cortar a mensagem.",
+      "Status de atualização em Sobre com espaço e indicação correta da verificação."
+    ]
+  },
+  {
     "version": "1.9.1",
     "date": "2026-10-10",
     "title": "Aparência e saudação ajustadas",

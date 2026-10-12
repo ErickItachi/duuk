@@ -23,7 +23,7 @@ export default function DashboardPage() {
  const {data,error,reload}=useQuery(query)
  const totals=expenseTotals(data?.expenses||[]),metrics=metricSummary(data?.metrics||[]),pending=(data?.contracts||[]).filter(c=>['pending','partial'].includes(c.status))
  const upcoming=(data?.events||[]).filter(e=>e.end_date>=today()&&!['done','cancelled'].includes(e.status)).sort((a,b)=>a.start_date.localeCompare(b.start_date)||(a.start_time||'').localeCompare(b.start_time||'')).slice(0,4)
- return <><div className="admin-page-title office-dashboard-title"><div><StudioGreeting name={auth.profile.name}/></div><RefreshButton onRefresh={reload}/></div>{error&&<p className="admin-error" role="alert">{error}</p>}
+ return <><div className="admin-page-title office-dashboard-title"><div><StudioGreeting name={auth.profile.name}/></div><RefreshButton onRefresh={reload} inlineFeedback/></div>{error&&<p className="admin-error" role="alert">{error}</p>}
  <div className="admin-stats office-dashboard-stats">
  {auth.hasPermission('finance')&&<StatCard label="Despesas deste mês" icon="wallet" value={data?brl(totals.total):'…'} note="Vencimentos do mês atual"/>}
  {auth.hasPermission('contracts')&&<StatCard label="Contratos aguardando assinatura" icon="document" value={data?pending.length:'…'} note="Aguardando aceite"/>}

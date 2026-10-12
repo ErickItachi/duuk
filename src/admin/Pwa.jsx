@@ -4,9 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { PageTitle } from "./forms";
 import { Icon } from "./components";
 import BrandLoader from "../components/BrandLoader";
+import { ReleaseNotes, ReleaseUpdates } from './ReleaseNotes';
+import { useAuth } from '../content/AuthContext';
 
 import { PwaContext, usePwa, currentRelease, installedBuild } from "./pwaState";
 export function PwaProvider({ children }) {
+  const auth = useAuth();
   const [available, setAvailable] = useState(null),
     [checking, setChecking] = useState(false),
     [message, setMessage] = useState(""),
@@ -15,12 +18,19 @@ export function PwaProvider({ children }) {
     [connection, setConnection] = useState(""),
     [registration, setRegistration] = useState(null),
     [installPrompt, setInstallPrompt] = useState(null);
+  const [checkStatus, setCheckStatus] = useState('idle'),
+    [actionMessage, setActionMessage] = useState(''),
+    [notes, setNotes] = useState(null);
+  const checkInFlight = useRef(false);
   const requested = useRef(false),
     timeout = useRef(null),
     navigate = useNavigate();
-  const check = useCallback(async () => {
-    if (!import.meta.env.PROD) return;
+  const check = useCallback(async (manual = false) => {
+    if (!import.meta.env.PROD || checkInFlight.current) return;
+    checkInFlight.current = true;
+    if (manual === true) setActionMessage('');
     setChecking(true);
+    setCheckStatus('checking');
     setMessage("");
     try {
       const response = await fetch("/admin-version.json", {
@@ -29,17 +39,23 @@ export function PwaProvider({ children }) {
       });
       if (!response.ok) throw new Error();
       const metadata = await response.json();
+      if (typeof metadata.version !== 'string' || typeof metadata.build_id !== 'string') throw new Error();
       if (metadata.build_id !== installedBuild) {
         setAvailable(metadata);
+        setCheckStatus('available');
         setMessage(`DUUK Admin ${metadata.version} disponível.`);
       } else {
         setAvailable(null);
+        setCheckStatus('current');
         setMessage("Você está usando a versão mais recente.");
       }
-      await registration?.update();
+      // A worker transport failure must not invalidate a successful version check.
+      await registration?.update().catch(() => {});
     } catch {
+      setCheckStatus('error');
       setMessage("Não foi possível verificar. Confira sua conexão.");
     } finally {
+      checkInFlight.current = false;
       setChecking(false);
     }
   }, [registration]);
@@ -162,16 +178,17 @@ export function PwaProvider({ children }) {
   const update = async () => {
     if (requested.current || updating) return;
     if (dirtyForms.size) {
-      setMessage(
+      setActionMessage(
         "Salve ou descarte as alterações pendentes antes de atualizar.",
       );
       return;
     }
     if (offline) {
-      setMessage("Reconecte antes de atualizar o aplicativo.");
+      setActionMessage("Reconecte antes de atualizar o aplicativo.");
       return;
     }
     setUpdating("Preparando atualização…");
+    setActionMessage('');
     requested.current = true;
     try {
       await registration?.update();
@@ -208,7 +225,7 @@ export function PwaProvider({ children }) {
         timeout.current = setTimeout(() => {
           requested.current = false;
           setUpdating("");
-          setMessage(
+          setActionMessage(
             "A atualização não concluiu. Verifique sua conexão e tente novamente.",
           );
         }, 15000);
@@ -216,7 +233,7 @@ export function PwaProvider({ children }) {
     } catch (cause) {
       requested.current = false;
       setUpdating("");
-      setMessage(cause.message || "Não foi possível atualizar agora.");
+      setActionMessage(cause.message || "Não foi possível atualizar agora.");
     }
   };
   const install = async () => {
@@ -230,7 +247,10 @@ export function PwaProvider({ children }) {
       value={{
         available,
         checking,
-        message,
+        message: actionMessage || message,
+        hasActionMessage: !!actionMessage,
+        checkStatus,
+        openNotes: release => setNotes({ userId: auth.user?.id, release }),
         updating,
         offline,
         check,
@@ -241,6 +261,7 @@ export function PwaProvider({ children }) {
       }}
     >
       {children}
+      <ReleaseUpdates open={notes} onOpen={setNotes} onClose={() => setNotes(null)} />
       {offline && (
         <div className="admin-connection" role="status">
           <Icon name="wifi" />
@@ -268,7 +289,7 @@ export function PwaProvider({ children }) {
         </div>
       )}
       {updating && (
-        <BrandLoader label={updating} detail="Atualizando DUUK Admin" />
+        <BrandLoader label={updating} detail="Atualizando DUUK Admin" film />
       )}
     </PwaContext.Provider>
   );
@@ -283,13 +304,18 @@ export function UpdateNotice() {
         <strong>Uma atualização está disponível</strong>
         <p>{pwa.message || "Atualize o aplicativo quando estiver pronto."}</p>
       </div>
-      <button
+      <div className="admin-update-notice__actions"><button
+        className="admin-button admin-button--secondary"
+        onClick={() => pwa.openNotes(pwa.available)}
+      >
+        Ver novidades
+      </button><button
         className="admin-button admin-button--secondary"
         onClick={pwa.update}
         disabled={!!pwa.updating || pwa.checking}
       >
         Atualizar app
-      </button>
+      </button></div>
     </div>
   );
 }
@@ -319,17 +345,12 @@ export function AboutAdminPage() {
               currentRelease.date + "T12:00:00-03:00",
             ).toLocaleDateString("pt-BR")}
           </small>
-          <p className="platform-muted">
-            {pwa.available
-              ? `Nova versão: ${pwa.available.version}`
-              : "Aplicativo atualizado"}
-          </p>
         </div>
         <div className="platform-about__actions">
           <button
             className="admin-button admin-button--secondary"
             disabled={pwa.checking}
-            onClick={pwa.check}
+            onClick={() => pwa.check(true)}
             aria-busy={pwa.checking}
           >
             <Icon
@@ -359,11 +380,15 @@ export function AboutAdminPage() {
             </button>
           )}
         </div>
-        {pwa.message && (
-          <p className="platform-muted" role="status">
-            {pwa.message}
-          </p>
-        )}
+        <div className="platform-about__status" role="status" aria-live="polite">
+          <Icon name={pwa.checking ? 'refresh' : pwa.hasActionMessage ? 'info' : pwa.checkStatus === 'current' ? 'check' : pwa.checkStatus === 'error' ? 'wifi' : 'info'} size={17} className={pwa.checking ? 'is-spinning' : ''} />
+          <span>{pwa.checking ? 'Verificando a versão disponível…' : pwa.message || 'Confira se há uma nova versão disponível para o aplicativo.'}</span>
+        </div>
+      </section>
+      <section className="admin-panel platform-release-current">
+        <p className="admin-eyebrow">NESTA VERSÃO · {currentRelease.version}</p>
+        <ReleaseNotes release={currentRelease} />
+        {pwa.available && <button className="admin-text-button" type="button" onClick={() => pwa.openNotes(pwa.available)}>Ver novidades da versão {pwa.available.version}<Icon name="arrow" size={16} /></button>}
       </section>
     </>
   );

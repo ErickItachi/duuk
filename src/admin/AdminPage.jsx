@@ -8,7 +8,7 @@ import BrandLoader from '../components/BrandLoader'
 import { youtubeId } from '../content/youtube'
 import { validMediaUrl, MEDIA_PREFIX } from '../content/model'
 import { getImageSources } from '../media'
-import { ConfirmModal, Icon, MediaField, Modal } from './components'
+import { ConfirmModal, Icon, MediaField } from './components'
 import { Avatar } from './forms'
 import { PwaProvider, AboutAdminPage, UpdateNotice } from './Pwa'
 import { currentRelease } from './pwaState'
@@ -20,6 +20,7 @@ import AppLogo from './AppLogo'
 import TeamPresence from './TeamPresence'
 import { AdminThemeProvider, ThemeToggle } from './AdminTheme'
 import { useAdminTheme } from './themeContext.mjs'
+import { AiFloatingDialog, AiFloatingLauncher } from './AiFloating'
 import CommercialPage from '../crm/CommercialPages'
 import MessageTemplatesPage from '../crm/WhatsAppMessages'
 import MailPage from '../mail/MailPage'
@@ -255,8 +256,8 @@ function AdminWorkspace() {
     </Routes>}
    </div></main><footer className="admin-footer"><span>DUUK / SÃO PAULO</span><span>Seu estúdio. Seu ritmo.</span><Link to="/admin/configuracoes/sobre">v{currentRelease.version}</Link></footer>
   </div>
-  {auth.hasPermission('ai')&&pathname!=='/admin/ai'&&<button type="button" className="duuk-ai-help admin-button admin-button--secondary" aria-label="Ajuda com DUUK AI" title="Ajuda com DUUK AI" onClick={()=>setAiOpen(true)}><Icon name="spark"/><span>DUUK AI</span></button>}
-  {aiOpen&&auth.hasPermission('ai')&&<Modal title="DUUK AI" subtitle="AJUDA / CRIAÇÃO" wide onClose={closeAi}><Suspense fallback={aiLoading}><AiPage embedded context={pathname} notify={notify} onDirtyChange={setAiDirty} onClose={closeAi}/></Suspense></Modal>}
+  {auth.hasPermission('ai')&&pathname!=='/admin/ai'&&<AiFloatingLauncher userId={auth.user.id} onOpen={()=>setAiOpen(true)}/>}
+  {aiOpen&&auth.hasPermission('ai')&&<AiFloatingDialog userId={auth.user.id} onClose={closeAi}><Suspense fallback={aiLoading}><AiPage embedded context={pathname} notify={notify} onDirtyChange={setAiDirty} onClose={closeAi}/></Suspense></AiFloatingDialog>}
   {aiDiscard&&<ConfirmModal title="Fechar DUUK AI?" message="Há um texto ainda não enviado ou uma resposta em andamento. O histórico já salvo será preservado." action="Fechar" onConfirm={async()=>{setAiOpen(false);setAiDiscard(false);setAiDirty(false)}} onClose={()=>setAiDiscard(false)}/>}
   {destination&&<ConfirmModal title="Sair sem salvar?" message="Existem alterações pendentes nesta página. Salve antes de continuar ou descarte ao sair." action="Sair sem salvar" onClose={()=>setDestination(null)} onConfirm={()=>navigate(destination)}/>}
   {toast&&<div className={`admin-toast${toast.failed?' admin-toast--error':''}`} role={toast.failed?'alert':'status'}><Icon name={toast.failed?'close':'check'}/><span>{toast.message}</span><button className="admin-icon-button" aria-label="Fechar aviso" onClick={()=>setToast(null)}><Icon name="close" size={16}/></button></div>}
@@ -265,7 +266,7 @@ function AdminWorkspace() {
 function AdminExperience() {
  const {theme:colorTheme}=useAdminTheme()
  const auth=useAuth(),[minimum,setMinimum]=useState(false),[covered,setCovered]=useState(true)
- useEffect(()=>{const timer=setTimeout(()=>setMinimum(true),900);return()=>clearTimeout(timer)},[])
+ useEffect(()=>{const timer=setTimeout(()=>setMinimum(true),1200);return()=>clearTimeout(timer)},[])
  const leaving=minimum&&auth.ready
  useEffect(()=>{if(!leaving)return;const timer=setTimeout(()=>setCovered(false),matchMedia('(prefers-reduced-motion: reduce)').matches?0:360);return()=>clearTimeout(timer)},[leaving])
  useEffect(()=>{
@@ -278,10 +279,10 @@ function AdminExperience() {
   const theme=document.createElement('meta');theme.name='theme-color';theme.content='#080808';theme.dataset.duukAdminThemeMeta='';document.head.append(theme)
   return()=>{tags.forEach(tag=>tag.remove());theme.remove();publicTheme.forEach(node=>document.head.append(node));if(publicIcons.length)publicIcons.forEach(node=>document.head.append(node));else{const link=document.createElement('link');link.rel='icon';link.type='image/png';link.href='/favicon.png';document.head.append(link)}}
  },[])
- useEffect(()=>{const meta=document.querySelector('meta[data-duuk-admin-theme-meta]');if(meta)meta.content=colorTheme==='light'?'#f6f3ef':'#080808'},[colorTheme])
+ useEffect(()=>{const meta=document.querySelector('meta[data-duuk-admin-theme-meta]');if(meta)meta.content=colorTheme==='light'?'#f7f4f0':'#080808'},[colorTheme])
  return <>
   {auth.ready&&<div className="admin-experience" inert={covered} aria-hidden={covered||undefined}>{auth.isAdmin?<NotificationProvider><AdminWorkspace/></NotificationProvider>:<><div className="admin-theme-login"><ThemeToggle label/></div><LoginPage/></>}</div>}
-  {covered&&<BrandLoader leaving={leaving}/>}
+  {covered&&<BrandLoader leaving={leaving} film/>}
  </>
 }
 export default function AdminPage() {return <AdminThemeProvider><PwaProvider><AdminExperience/></PwaProvider></AdminThemeProvider>}
