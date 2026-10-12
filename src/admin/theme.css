@@ -43,28 +43,26 @@
   --admin-accent: #a8392d;
   --admin-focus: #8a796b;
   --admin-success: #326a43;
-  --admin-brand-background: linear-gradient(135deg, #eb4b3f, #f18a58);
   color-scheme: light;
 }
 [data-duuk-admin-theme="light"] body { background: var(--admin-paper); }
 [data-duuk-admin-theme="light"] :is(.admin-shell, .admin-modal) { color: var(--admin-ink); }
 [data-duuk-admin-theme="light"] :is(.admin-shell, .admin-modal) ::selection { background: #ed705433; color: var(--admin-ink); }
 
-/* Keep the original white mark intact, framed by the DUUK palette. */
+/* The user requested the original transparent mark in black for light mode. */
 [data-duuk-admin-theme="light"] .admin-sidebar {
   background: var(--admin-surface);
   color: var(--admin-ink);
   border-right-color: var(--admin-line);
 }
-[data-duuk-admin-theme="light"] .admin-sidebar__head .admin-brand img {
-  box-sizing: border-box;
-  width: 56px;
-  height: 66px;
-  padding: 9px;
-  border-radius: 12px;
-  background: var(--admin-brand-background);
+[data-duuk-admin-theme="light"] :is(.admin-sidebar .admin-brand img, .admin-header-logo) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  filter: brightness(0);
 }
-[data-duuk-admin-theme="light"] .admin-header-logo { box-sizing: content-box; padding: 5px; border-radius: 7px; background: var(--admin-brand-background); }
 [data-duuk-admin-theme="light"] .admin-sidebar .admin-brand > span { border-color: var(--admin-line); color: var(--admin-ink); }
 [data-duuk-admin-theme="light"] .admin-sidebar :is(.admin-brand small, .admin-sidebar__control > span, .admin-sidebar__label, .admin-sidebar__signature, .admin-reset, .admin-demo-card p) { color: var(--admin-muted); }
 [data-duuk-admin-theme="light"] .admin-sidebar :is(nav a, .admin-nav-group > button) { color: #675b52; }

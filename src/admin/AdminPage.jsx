@@ -266,7 +266,7 @@ function AdminWorkspace() {
 function AdminExperience() {
  const {theme:colorTheme}=useAdminTheme()
  const auth=useAuth(),[minimum,setMinimum]=useState(false),[covered,setCovered]=useState(true)
- useEffect(()=>{const timer=setTimeout(()=>setMinimum(true),1200);return()=>clearTimeout(timer)},[])
+ useEffect(()=>{const timer=setTimeout(()=>setMinimum(true),900);return()=>clearTimeout(timer)},[])
  const leaving=minimum&&auth.ready
  useEffect(()=>{if(!leaving)return;const timer=setTimeout(()=>setCovered(false),matchMedia('(prefers-reduced-motion: reduce)').matches?0:360);return()=>clearTimeout(timer)},[leaving])
  useEffect(()=>{
@@ -282,7 +282,7 @@ function AdminExperience() {
  useEffect(()=>{const meta=document.querySelector('meta[data-duuk-admin-theme-meta]');if(meta)meta.content=colorTheme==='light'?'#f7f4f0':'#080808'},[colorTheme])
  return <>
   {auth.ready&&<div className="admin-experience" inert={covered} aria-hidden={covered||undefined}>{auth.isAdmin?<NotificationProvider><AdminWorkspace/></NotificationProvider>:<><div className="admin-theme-login"><ThemeToggle label/></div><LoginPage/></>}</div>}
-  {covered&&<BrandLoader leaving={leaving} film/>}
+  {covered&&<BrandLoader leaving={leaving}/>}
  </>
 }
 export default function AdminPage() {return <AdminThemeProvider><PwaProvider><AdminExperience/></PwaProvider></AdminThemeProvider>}

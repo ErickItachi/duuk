@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.9.3",
+    "date": "2026-10-11",
+    "title": "Mais leveza, com a marca da DUUK",
+    "improved": [
+      "Carregamento simples da DUUK, com animação automática e sem vídeo.",
+      "Logo preta com fundo transparente no modo claro, preservando o desenho original."
+    ],
+    "fixed": [
+      "Mantidos os ajustes de contraste, das mensagens de atualização e da ajuda DUUK AI móvel."
+    ]
+  },
+  {
     "version": "1.9.2",
     "date": "2026-10-11",
     "title": "Um administrativo mais leve e com a cara da DUUK",

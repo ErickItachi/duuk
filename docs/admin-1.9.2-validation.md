@@ -22,4 +22,12 @@ As verificações locais de interface usam respostas isoladas/interceptadas. Nen
 
 ## Publicação
 
-Build esperado: `aa4c828464eceb062dff`. O resultado do push, deploy e conferência do domínio será registrado após a publicação. Validações de produção ainda não estão aprovadas nesta etapa.
+Commit `22204837f2ce7ff0e6d5de9e8d5026625a589467` enviado a `origin/main`; Vercel concluída com sucesso. Domínio confirmou 1.9.2/build `aa4c828464eceb062dff`, Admin e site público com HTTP 200. Vídeo publicado tinha bytes idênticos ao asset validado, tipo `video/mp4` e resposta Range 206. O worker confirmou build/poster corretos, sem MP4 no precache.
+
+A sessão autenticada confirmou a atualização explícita 1.9.1 → 1.9.2, preservou o login e exibiu automaticamente as novidades. Sobre confirmou a versão mais recente. Depois desta publicação, o usuário pediu retirar o vídeo e deixar a logo sem caixa de fundo; a correção 1.9.3 substitui esses dois tratamentos visuais, mantendo as demais melhorias.
+
+## Verificação da correção 1.9.3
+
+O usuário autorizou renderizar o PNG branco em preto no modo claro. O arquivo original continua intacto; a marca do menu/cabeçalho usa brightness(0), sem fundo, borda, padding, sombra ou faixa coral. No escuro e no site público o filtro não se aplica.
+
+Build e lint novamente aprovados, com os avisos preexistentes. A marca passou em 320/390/768/1024/1440 px e menu recolhido, sem overflow/erros JavaScript; modo escuro confirmou ausência de filtro. As 25 verificações no preview de produção passaram para banner, Sobre, novidades, persistência/fechamento offline, proteção de formulários e carregamento simples em 320 × 900, 1440 × 900 e 844 × 390, sem vídeo ou botão e respeitando movimento reduzido. Nenhuma gravação externa foi feita. A validação da publicação usa novamente a versão/build do domínio e a atualização explícita da sessão autenticada.

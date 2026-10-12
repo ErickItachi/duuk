@@ -156,3 +156,9 @@ Modo claro agora inclui menu claro e superfícies mais leves, com contraste revi
 Novidades surgem para versões disponíveis e recém-instaladas, por conta, versão e aparelho. X, Escape e Continuar fecham imediatamente; o aceite fica local e tem fallback em memória, sem RPC ou bloqueio por conexão/permissão. A abertura automática aguarda formulários pendentes, outra janela e carregamento. Sobre mostra as notas atuais; o aviso de atualização permite reabrir as disponíveis. A instalação continua explícita e conserva o bloqueio de formulários não salvos e os caches privados existentes.
 
 A ajuda DUUK AI pode ser movida por toque, mouse ou setas. Posições são locais e separadas por conta; viewport, teclado e rodapé limitam o movimento. A janela do computador tem alça de arraste; no celular permanece em tela cheia. Arrastar não dispara abertura, e rascunhos continuam exigindo confirmação antes de fechar.
+
+## Carregamento e marca — 1.9.3
+
+Após ver a 1.9.2 publicada, o usuário pediu retirar o vídeo de carregamento. A marca e a animação discreta anteriores foram restauradas; não há vídeo, áudio, botão de play ou poster adicional. O loader e o fallback do site público voltaram aos arquivos anteriores. Os assets de filme também foram removidos.
+
+O usuário autorizou explicitamente exibir o PNG branco em preto no modo claro. O arquivo original permanece intacto, com forma e transparência preservadas; brightness(0) afeta somente a marca do menu/cabeçalho do Admin. Não há badge, padding ou caixa de fundo, e o menu/cabeçalho ficam claros. No escuro e no site público a marca continua branca. Novidades, correções do banner/Sobre, refinamentos de contraste e movimento da ajuda DUUK AI permanecem. A publicação segue o mesmo fluxo de atualização explícita da PWA; confira a versão/build no domínio e no worker depois do push.

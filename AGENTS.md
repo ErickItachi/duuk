@@ -18,7 +18,7 @@ O usuário autorizou publicar o painel administrativo em produção e aplicar as
 
 - O painel fica em `https://www.duukfilms.com/admin`, protegido por Supabase Auth e autorização no servidor.
 - Não inclua links, botões ou avisos sobre o painel nas páginas públicas da DUUK.
-- Preserve a logo original em `public/media/duuk-logo-white.png`, sem redesenhar, recolorir ou acrescentar outra marca. O administrativo usa a paleta e a tipografia do site da DUUK; verifique celular, tablet e desktop, incluindo menu, modais e PDFs.
+- Preserve a logo original em `public/media/duuk-logo-white.png`, sem redesenhar ou acrescentar outra marca. O usuário autorizou exibir esse PNG em preto somente no modo claro do Admin (11/10/2026); preserve o arquivo original e a transparência. O administrativo usa a paleta e a tipografia do site da DUUK; verifique celular, tablet e desktop, incluindo menu, modais e PDFs.
 - Salvar um projeto ou a abertura deve atualizar o site público numa única transação, sem um segundo botão de publicar. Projetos com status rascunho/arquivado continuam privados.
 - Mantenha Supabase no plano gratuito. Não contrate serviços, aumente planos ou habilite cobrança. O usuário aceitou links do YouTube para vídeos grandes, inclusive na abertura, mantendo uploads diretos com limites gratuitos.
 - Senhas e chaves de serviço não podem entrar no repositório nem no navegador.
@@ -72,13 +72,13 @@ O usuário autorizou publicar o painel administrativo em produção e aplicar as
 
 - O usuário autorizou código por e-mail pelo Titan existente, sem novo serviço pago. Novos convites devem exigir confirmação de seis dígitos no destinatário definido pelo administrador; nunca permitir que quem recebe escolha outra caixa. Convites legados preservam os sete dias anteriores. A confirmação prova acesso ao e-mail, não identidade civil.
 - Migrações incrementais sign-email-verification.sql e sign-email-verification-integrity.sql; segredos no Vault, RPCs privadas, limites de tentativas/reenvios e evidências duráveis. Preserve assinatura transacional, PDFs originais, revisão e fila do Drive. Nenhum SMS/API WhatsApp automático foi contratado.
-- Modo claro é preferência local por conta/aparelho, com escuro padrão e logo branca original, preservando seus pixels; no modo claro a marca usa uma base da paleta coral/laranja, sem caixa preta. Remova escopo do tema ao sair do Admin; preserve o site público.
+- Modo claro é preferência local por conta/aparelho, com escuro padrão e PNG branco original preservado. Em 11/10/2026, o usuário autorizou explicitamente exibir esse PNG preto no modo claro; use brightness(0) somente na marca do menu/cabeçalho administrativo, preservando transparência e desenho, sem caixa de fundo. No escuro e no site público mantenha a branca. Remova escopo do tema ao sair do Admin; preserve o site público.
 - Saudação animada é automática, sem botão de play/pausa; suspende em aba oculta e respeita movimento reduzido. Não cubra o rodapé/Sobre com ajuda flutuante. A renomeação de pastas usa a API e permissões já existentes do Drive.
 - Consulte docs/admin-1.9-validation.md para instalação e resultados. Mantenha atualização explícita da PWA e proteção de formulários pendentes.
 
 ## Aparência e atualizações — 1.9.2
 
 - O modo claro inclui menu, formulários, agenda, e-mail, Drive e IA, mantendo a marca e a paleta DUUK.
-- A animação de carregamento fornecida pelo usuário está otimizada em public/admin-assets/loading-duuk.mp4. Reproduza sem som, controles ou gesto de play; use o poster estático para movimento reduzido/falha de vídeo. O site público mantém seu carregamento anterior.
+- Após a publicação 1.9.2, o usuário pediu retirar o vídeo e a caixa de fundo da logo. O carregamento voltou à marca original e à animação discreta anterior, automática e sem botão de play. Não reintroduza o vídeo. O site público mantém seu carregamento anterior.
 - Ajuda DUUK AI pode ser movida por toque, mouse ou setas, com posição por conta/aparelho e limites do viewport/rodapé. A janela tem alça de movimento no desktop; celular mantém tela cheia e teclado visível. Preserve permissão, contexto, foco e confirmação dos rascunhos.
 - Feedback de Atualizar dentro do banner deve permanecer no fluxo para não ser cortado. Status de Sobre ocupa a largura útil; confirmar versão depende de metadados reais, sem afirmar atualização antes da consulta.

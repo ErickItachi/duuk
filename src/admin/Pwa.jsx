@@ -289,7 +289,7 @@ export function PwaProvider({ children }) {
         </div>
       )}
       {updating && (
-        <BrandLoader label={updating} detail="Atualizando DUUK Admin" film />
+        <BrandLoader label={updating} detail="Atualizando DUUK Admin" />
       )}
     </PwaContext.Provider>
   );
