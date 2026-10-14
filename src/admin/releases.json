@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.11.0",
+    "date": "2026-10-14",
+    "title": "Sua conta conectada ao Financeiro",
+    "improved": [
+      "Extratos com margens, filtros e cartões de saldo ajustados para celular, tablet e computador.",
+      "Após importar um arquivo, o painel abre o mês das movimentações automaticamente."
+    ],
+    "new": [
+      "Remoção de importações pela própria tela, com confirmação e preservação das receitas e despesas.",
+      "Meu Pluggy integrado para consultar saldo, movimentações por mês e exportar CSV, usando o conector gratuito de dados próprios."
+    ]
+  },
+  {
     "version": "1.10.1",
     "date": "2026-10-14",
     "title": "Extratos e uma troca de tema mais discreta",

@@ -28,3 +28,6 @@ export async function bankCandidates(row) {
 export async function reconcileBank(row,operation,payload,requestId) {
  return check(await supabase.rpc('duuk_reconcile_bank_transaction',{transaction_id:row.id,expected_version:row.version,operation,payload:{...payload,request_id:requestId}}))
 }
+export async function removeBankImport(record) {
+ return check(await supabase.rpc('duuk_remove_bank_import',{import_id:record.id,expected_created_at:record.created_at}))
+}
