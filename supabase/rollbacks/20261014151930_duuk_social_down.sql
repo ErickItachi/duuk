@@ -1,4 +1,4 @@
--- Reverts supabase/migrations/20261014151930_duuk_social.sql and 20261014160000_duuk_social_functions.sql
+-- Reverts supabase/migrations/20261014151930_duuk_social.sql and 20261014203900_duuk_social_functions.sql
 -- (DUUK Social Media, Admin 2.0).
 -- Use it only to remove the module, after rolling the Admin back to a version without Social Media.
 -- It touches nothing that existed before that migration. It removes only what the migration created:

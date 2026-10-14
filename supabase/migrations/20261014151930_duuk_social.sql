@@ -1,5 +1,5 @@
 -- DUUK Social Media (Admin 2.0), part 1: schema and storage. Part 2 (functions, RPCs, cron) is
--- 20261014160000_duuk_social_functions.sql. Instagram API with Instagram Login, official Graph API only.
+-- 20261014203900_duuk_social_functions.sql. Instagram API with Instagram Login, official Graph API only.
 -- Additive and reversible (supabase/rollbacks/20261014151930_duuk_social_down.sql):
 --  * new permission key `social`, granted to no group (super administrators keep full access);
 --  * Meta app secret and account tokens only in Vault, read by the duuk-social Edge Function
