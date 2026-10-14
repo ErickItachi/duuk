@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon, RefreshButton } from '../admin/components'
 import { EmptyState } from '../admin/forms'
@@ -16,7 +16,7 @@ const firstName = name => String(name || '').trim().split(/\s+/)[0]
 
 // What needs attention today, built from the widgets the member can open.
 function Digest({ items, loading, settled }) {
-  if (items.length) return <ul className="dashboard-digest" role="list" aria-label="Pendências de hoje">{items.map(item => <li key={item.key}>
+  if (items.length) return <ul className="dashboard-digest" role="list" aria-label="Pendências de hoje">{items.map((item, index) => <li key={item.key} style={{ '--i': index }}>
     <Link className={item.tone === 'danger' ? 'is-danger' : undefined} to={item.to}><Icon name={item.icon} />{item.text}</Link>
   </li>)}</ul>
   if (loading) return <div className="dashboard-digest" aria-hidden="true"><span className="ds-skeleton" /><span className="ds-skeleton" /></div>
@@ -83,14 +83,19 @@ export default function DashboardPage() {
   }
 
   return <div className="duuk-dashboard">
-    <header className="dashboard-head">
+    {/* Banner: always the dark film look, so the original white logo is shown as it is in both themes. */}
+    <header className="dashboard-head dashboard-hero">
+      <span className="dashboard-hero__art" aria-hidden="true"><i className="is-coral" /><i className="is-orange" /><i className="dashboard-hero__strip" /></span>
       <StudioGreeting name={auth.profile?.name || ''} />
-      <RefreshButton onRefresh={refresh} />
+      <div className="dashboard-hero__side">
+        <img className="dashboard-hero__logo" src="/media/duuk-logo-white.png" alt="" width="718" height="886" />
+        <RefreshButton onRefresh={refresh} />
+      </div>
       {digestSources.length > 0 && <Digest items={digest} loading={digestSources.some(source => source.data == null && !source.error)} settled={digestSources.every(source => source.data != null)} />}
     </header>
     {layout.columns[0].length
       ? <div className={`dashboard-grid dashboard-grid--${layout.kind}`}>
-        {layout.columns.map((keys, index) => <div className="dashboard-column" key={index}>{keys.map(key => <Fragment key={key}>{cards[key]}</Fragment>)}</div>)}
+        {layout.columns.map((keys, index) => <div className="dashboard-column" key={index}>{keys.map((key, order) => <div className="dashboard-enter" key={key} style={{ '--i': order * 2 + index }}>{cards[key]}</div>)}</div>)}
       </div>
       : <div className="ds-card dashboard-card"><EmptyState icon="grid" title="Nenhum módulo liberado para você">Quando um administrador liberar o acesso a agenda, comercial, contratos, financeiro, Social Media ou site, os resumos aparecem aqui.</EmptyState></div>}
   </div>

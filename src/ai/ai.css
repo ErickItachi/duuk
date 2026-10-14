@@ -223,7 +223,7 @@
 .duuk-ai-mode > svg { position: absolute; right: 10px; color: var(--ds-text-3); pointer-events: none; }
 .duuk-ai-keyboard-hint { display: inline-flex; flex: 1; align-items: center; justify-content: flex-end; gap: 4px; min-width: 0; overflow: hidden; color: var(--ds-text-3); font-size: var(--ds-text-xs); white-space: nowrap; }
 .duuk-ai-keyboard-hint > span { margin-left: 2px; }
-.duuk-ai-send { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; margin-left: auto; border: 1px solid transparent; border-radius: var(--ds-radius-md); background: var(--ds-primary); color: var(--ds-on-primary); transition: background-color var(--ds-duration-1), color var(--ds-duration-1), transform var(--ds-duration-1) var(--ds-ease-out); }
+.duuk-ai-send { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; margin-left: auto; border: 1px solid transparent; border-radius: var(--ds-radius-md); background: var(--ds-accent); color: var(--ds-on-accent); transition: background-color var(--ds-duration-1), color var(--ds-duration-1), transform var(--ds-duration-1) var(--ds-ease-out); }
 .duuk-ai-send:hover:not(:disabled) { background: var(--ds-primary-hover); }
 .duuk-ai-send:active:not(:disabled) { transform: scale(.94); }
 .duuk-ai-send:disabled { background: var(--ds-surface-3); color: var(--ds-text-disabled); }

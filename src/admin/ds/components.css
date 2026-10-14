@@ -7,13 +7,14 @@
   min-height: var(--ds-control-md); max-width: 100%;
   padding: 0 var(--ds-space-4);
   border: 1px solid transparent; border-radius: var(--ds-radius-md);
-  background: var(--ds-primary); color: var(--ds-on-primary);
-  font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); line-height: 1.25; text-align: center; text-decoration: none; white-space: nowrap;
+  background: var(--ds-accent); color: var(--ds-on-accent);
+  font-size: var(--ds-text-md); font-weight: var(--ds-weight-semibold); line-height: 1.25; text-align: center; text-decoration: none; white-space: nowrap;
   transition: background-color var(--ds-duration-1) var(--ds-ease-out), border-color var(--ds-duration-1) var(--ds-ease-out), color var(--ds-duration-1) var(--ds-ease-out), transform var(--ds-duration-1) var(--ds-ease-out), opacity var(--ds-duration-1);
   -webkit-tap-highlight-color: transparent;
 }
 .admin-button svg { flex-shrink: 0; width: 16px; height: 16px; }
-.admin-button:hover:not(:disabled) { background: var(--ds-primary-hover); }
+.admin-button:hover:not(:disabled) { background: var(--ds-accent-hover); }
+.admin-button:not(:is(.admin-button--secondary, .admin-button--ghost, .admin-button--danger)):hover:not(:disabled) { box-shadow: 0 6px 18px -8px var(--ds-accent); }
 .admin-button:active:not(:disabled) { transform: scale(.98); }
 .admin-button:disabled { opacity: .45; }
 .admin-button[aria-busy="true"] { cursor: progress; }
@@ -52,7 +53,7 @@
   transition: text-decoration-color var(--ds-duration-1), color var(--ds-duration-1);
 }
 .admin-text-button svg { flex-shrink: 0; width: 15px; height: 15px; }
-.admin-text-button:hover { text-decoration-color: currentColor; }
+.admin-text-button:hover { color: var(--ds-accent-text); text-decoration-color: currentColor; }
 .admin-text-button:disabled { opacity: .45; text-decoration: none; }
 .admin-text-button--danger { color: var(--ds-danger); }
 
@@ -151,7 +152,7 @@
 .admin-input-prefix:focus-within { border-color: var(--ds-focus); box-shadow: 0 0 0 3px var(--ds-selected); }
 .admin-checkbox, .admin-check { display: flex; align-items: center; gap: 10px; min-height: 36px; color: var(--ds-text); font-size: var(--ds-text-base); cursor: pointer; }
 .admin-check { color: var(--ds-text-2); font-size: var(--ds-text-md); min-height: 32px; }
-:is(.admin-shell, .admin-modal, .admin-login) input:is([type=checkbox], [type=radio]) { width: 16px; height: 16px; flex-shrink: 0; margin: 0; accent-color: var(--ds-text); cursor: pointer; }
+:is(.admin-shell, .admin-modal, .admin-login) input:is([type=checkbox], [type=radio]) { width: 16px; height: 16px; flex-shrink: 0; margin: 0; accent-color: var(--ds-accent); cursor: pointer; }
 .admin-password { position: relative; display: flex; align-items: center; width: 100%; min-width: 0; }
 .admin-password input { padding-right: 46px !important; }
 .admin-password > button { position: absolute; right: 2px; }
@@ -187,7 +188,8 @@
   transition: color var(--ds-duration-1), border-color var(--ds-duration-2) var(--ds-ease-out);
 }
 .admin-language-tabs button:hover, .ds-tabs :is(button, a):hover { color: var(--ds-text); }
-.admin-language-tabs button.is-active, .ds-tabs :is(button, a):is(.is-active, [aria-selected="true"], [aria-current="page"]) { color: var(--ds-text); border-bottom-color: var(--ds-text); }
+.admin-language-tabs button.is-active, .ds-tabs :is(button, a):is(.is-active, [aria-selected="true"], [aria-current="page"]) { color: var(--ds-text); border-bottom-color: var(--ds-accent); }
+.ds-segmented button:is([aria-pressed="true"], [aria-checked="true"], [aria-selected="true"], .is-active) svg, .admin-filter-tabs button:is(.is-active, [aria-pressed="true"]) svg { color: var(--ds-accent-text); }
 
 /* ---------- Lists and toolbars ---------- */
 .admin-list-toolbar, .ds-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--ds-space-3); padding: var(--ds-space-3) var(--ds-space-4); }

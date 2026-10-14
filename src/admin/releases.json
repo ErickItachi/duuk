@@ -1,5 +1,18 @@
 [
   {
+    "version": "2.1.0",
+    "date": "2026-10-14",
+    "title": "Mais DUUK: laranja, movimento e uma abertura nova",
+    "new": [
+      "Banner na Visão geral com a luz coral e laranja da DUUK, a logo original e as pendências do dia."
+    ],
+    "improved": [
+      "O laranja da DUUK agora marca botões principais, o item aberto no menu, abas, chaves e destaques.",
+      "Animações em todo o painel: páginas e listas entram em sequência, números contam até o valor e gráficos crescem ao abrir.",
+      "Tela de carregamento nova, com a logo original, luz da marca e barra de progresso real, sem espera artificial."
+    ]
+  },
+  {
     "version": "2.0.0",
     "date": "2026-10-14",
     "title": "Um DUUK Admin novo, e o Instagram no mesmo lugar",

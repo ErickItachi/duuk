@@ -32,7 +32,7 @@
 .office-months button:hover { border-color: var(--ds-border-strong); background: var(--ds-hover); }
 /* The accent marks only the current month; the chosen month is the neutral inverse. */
 .office-months button.is-current { border-color: var(--ds-accent-line); }
-.office-months button.is-selected { border-color: var(--ds-primary); background: var(--ds-primary); color: var(--ds-on-primary); }
+.office-months button.is-selected { border-color: var(--ds-accent); background: var(--ds-accent); color: var(--ds-on-accent); }
 
 /* A button that opens the calendar but reads like the other fields. */
 .office-date-input {

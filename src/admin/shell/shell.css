@@ -18,8 +18,37 @@
 .ds-skip-link:focus-visible { transform: none; }
 
 .admin-main { flex: 1; width: 100%; max-width: var(--ds-content-max); margin: 0 auto; padding: var(--ds-space-8) var(--ds-gutter) var(--ds-space-12); outline: none; }
-.admin-content-enter { min-width: 0; animation: ds-content-in var(--ds-duration-4) var(--ds-ease-out) both; }
+.admin-content-enter { min-width: 0; animation: ds-content-in var(--ds-duration-4) var(--ds-ease-out) backwards; }
 @keyframes ds-content-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* 2.1 motion: page sections rise in order, list rows follow, and the place you are in is marked with a short gesture.
+   Every animation fills backwards only, so nothing keeps a transform once it ends. */
+.admin-content-enter > * { animation: ds-rise 480ms var(--ds-ease-out) backwards; }
+.admin-content-enter > :nth-child(2) { animation-delay: 60ms; }
+.admin-content-enter > :nth-child(3) { animation-delay: 120ms; }
+.admin-content-enter > :nth-child(4) { animation-delay: 180ms; }
+.admin-content-enter > :nth-child(n+5) { animation-delay: 220ms; }
+.admin-page-title h1 > span:last-child { display: inline-block; animation: ds-dot-in 620ms 260ms var(--ds-ease-spring) backwards; }
+.ds-table tbody tr:nth-child(-n+12), .admin-list > li:nth-child(-n+12) { animation: ds-row-in 380ms var(--ds-ease-out) backwards; }
+.ds-table tbody tr:nth-child(1), .admin-list > li:nth-child(1) { animation-delay: 108ms; }
+.ds-table tbody tr:nth-child(2), .admin-list > li:nth-child(2) { animation-delay: 136ms; }
+.ds-table tbody tr:nth-child(3), .admin-list > li:nth-child(3) { animation-delay: 164ms; }
+.ds-table tbody tr:nth-child(4), .admin-list > li:nth-child(4) { animation-delay: 192ms; }
+.ds-table tbody tr:nth-child(5), .admin-list > li:nth-child(5) { animation-delay: 220ms; }
+.ds-table tbody tr:nth-child(6), .admin-list > li:nth-child(6) { animation-delay: 248ms; }
+.ds-table tbody tr:nth-child(7), .admin-list > li:nth-child(7) { animation-delay: 276ms; }
+.ds-table tbody tr:nth-child(8), .admin-list > li:nth-child(8) { animation-delay: 304ms; }
+.ds-table tbody tr:nth-child(9), .admin-list > li:nth-child(9) { animation-delay: 332ms; }
+.ds-table tbody tr:nth-child(10), .admin-list > li:nth-child(10) { animation-delay: 360ms; }
+.ds-table tbody tr:nth-child(11), .admin-list > li:nth-child(11) { animation-delay: 388ms; }
+.ds-table tbody tr:nth-child(12), .admin-list > li:nth-child(12) { animation-delay: 416ms; }
+.ds-nav__item.active::before { animation: ds-indicator-in 280ms var(--ds-ease-out) backwards; }
+.ds-nav__item.active > svg { animation: ds-icon-pop 360ms var(--ds-ease-spring) backwards; }
+.ds-bottom-nav__item.active .ds-bottom-nav__icon { animation: ds-icon-pop 360ms var(--ds-ease-spring) backwards; }
+@keyframes ds-rise { from { opacity: 0; transform: translateY(12px); } }
+@keyframes ds-row-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes ds-dot-in { from { opacity: 0; transform: scale(.2) translateY(-6px); } }
+@keyframes ds-indicator-in { from { transform: scaleY(0); } }
+@keyframes ds-icon-pop { 0% { transform: scale(.82); } 60% { transform: scale(1.1); } 100% { transform: none; } }
 .ds-live-banner { margin-bottom: var(--ds-space-5); }
 .ds-live-banner p { margin: 0; }
 .ds-live-banner > svg { color: var(--ds-text-2) !important; }
@@ -61,8 +90,8 @@
 .ds-nav__item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .ds-nav__item:hover { background: var(--ds-hover); color: var(--ds-text); }
 .ds-nav__item:hover > svg { color: var(--ds-text-2); }
-.ds-nav__item.active { background: var(--ds-selected); color: var(--ds-text); }
-.ds-nav__item.active > svg { color: var(--ds-text); }
+.ds-nav__item.active { background: var(--ds-accent-soft); color: var(--ds-text); }
+.ds-nav__item.active > svg { color: var(--ds-accent-text); }
 /* The accent marks only where you are. */
 .ds-nav__item.active::before { content: ''; position: absolute; top: 8px; bottom: 8px; left: -8px; width: 2px; border-radius: 0 2px 2px 0; background: var(--ds-accent); }
 .ds-nav__item:active { background: var(--ds-active); }
@@ -170,7 +199,8 @@ html.ds-theme-switching .ds-theme-toggle__icon { transition: transform var(--ds-
 .ds-bottom-nav__icon svg, .ds-bottom-nav__icon .integration-app-logo { width: 21px; height: 21px; }
 .ds-bottom-nav__label { max-width: 100%; overflow: hidden; font-size: 10.5px; font-weight: var(--ds-weight-medium); letter-spacing: .01em; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .ds-bottom-nav__item.active, .ds-bottom-nav__item[aria-expanded="true"] { color: var(--ds-text); }
-.ds-bottom-nav__item.active .ds-bottom-nav__icon { background: var(--ds-selected); }
+.ds-bottom-nav__item.active .ds-bottom-nav__icon svg { color: var(--ds-accent-text); }
+.ds-bottom-nav__item.active .ds-bottom-nav__icon { background: var(--ds-accent-soft); }
 .ds-bottom-nav__item:active .ds-bottom-nav__icon { transform: scale(.92); }
 
 /* ---------- Drawer (tablet and phone menu) ---------- */
@@ -249,7 +279,7 @@ html.ds-theme-switching .ds-theme-toggle__icon { transition: transform var(--ds-
 .ds-settings__link svg { flex-shrink: 0; color: var(--ds-text-3); }
 .ds-settings__link:hover { background: var(--ds-hover); color: var(--ds-text); }
 .ds-settings__link.active { background: var(--ds-selected); color: var(--ds-text); }
-.ds-settings__link.active svg { color: var(--ds-text); }
+.ds-settings__link.active svg { color: var(--ds-accent-text); }
 .ds-settings__content { min-width: 0; }
 
 /* ---------- AI launcher sits above the phone tab bar ---------- */
@@ -307,6 +337,6 @@ html.ds-theme-switching .ds-theme-toggle__icon { transition: transform var(--ds-
 
 @media (prefers-reduced-motion: reduce) {
   .admin-shell.ds-app { transition: none; }
-  .admin-content-enter { animation: none; }
+  .admin-content-enter, .admin-content-enter > *, .admin-page-title h1 > span:last-child, .ds-table tbody tr, .admin-list > li, .ds-nav__item.active::before, .ds-nav__item.active > svg, .ds-bottom-nav__item.active .ds-bottom-nav__icon { animation: none !important; }
   .ds-theme-toggle__icon, html.ds-theme-switching .ds-theme-toggle__icon { transition: none !important; }
 }

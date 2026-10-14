@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from '../../admin/components'
 import { Avatar, EmptyState, ErrorState } from '../../admin/forms'
@@ -8,6 +9,27 @@ import { FinancePrivacy, Money, PrivacyToggle } from '../../finance/privacy'
 import { captionLine, channelLabel, compactMoney, dayLabel, dayNumber, monthName, monthShort, plural, shortDate, sinceLabel, socialFormats, timeOf, whenLabel } from './model'
 
 const lower = text => text.charAt(0).toLowerCase() + text.slice(1)
+const prefersReduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// Counts up to the real figure when it first appears or changes. Readers get the final value
+// right away; with reduced motion the number simply shows.
+function CountUp({ value, format = number => number.toLocaleString('pt-BR') }) {
+  const [shown, setShown] = useState(0)
+  const from = useRef(0)
+  const [reduced] = useState(prefersReduced)
+  useEffect(() => {
+    if (reduced) return
+    const start = performance.now(), origin = from.current, duration = 900
+    let frame = requestAnimationFrame(function step(now) {
+      const progress = Math.min(1, (now - start) / duration), eased = 1 - Math.pow(1 - progress, 3)
+      setShown(Math.round(origin + (value - origin) * eased))
+      if (progress < 1) frame = requestAnimationFrame(step)
+      else from.current = value
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [value, reduced])
+  return <><span className="ds-visually-hidden">{format(value)}</span><span aria-hidden="true">{format(reduced ? value : shown)}</span></>
+}
 
 // Card frame: title, an optional tool (privacy eye) and the "Ver tudo" link to the module.
 export function DashboardCard({ id, title, icon, to, area, tools, state, children }) {
@@ -141,11 +163,11 @@ export function PipelineCard({ state, view, day, clientLink, canCreateLead }) {
       if (!view.open) return <EmptyState icon="pipeline" title="Nenhuma negociação em andamento" action={canCreateLead && <Link className="admin-button admin-button--secondary admin-button--sm" to="/admin/comercial/clientes?novo=lead"><Icon name="plus" />Novo lead</Link>}>{view.won + view.lost ? `Fechadas: ${view.won} · Perdidas: ${view.lost}.` : 'Cadastre um lead para acompanhar o funil comercial.'}</EmptyState>
       return <>
         <div className="dashboard-figures">
-          <p className="dashboard-figure"><strong>{view.open.toLocaleString('pt-BR')}</strong><span>{view.open === 1 ? 'negociação em andamento' : 'negociações em andamento'}</span></p>
-          {view.value > 0 && <p className="dashboard-figure"><strong>{brl(view.value)}</strong><span>em valor estimado{view.unvalued > 0 && ` · ${view.unvalued} sem valor`}</span></p>}
+          <p className="dashboard-figure"><strong><CountUp value={view.open} /></strong><span>{view.open === 1 ? 'negociação em andamento' : 'negociações em andamento'}</span></p>
+          {view.value > 0 && <p className="dashboard-figure"><strong><CountUp value={view.value} format={brl} /></strong><span>em valor estimado{view.unvalued > 0 && ` · ${view.unvalued} sem valor`}</span></p>}
         </div>
         <Group label="Por etapa">
-          <ul className="dashboard-stages" role="list">{view.stages.map(stage => <li key={stage.key} className={stage.count ? undefined : 'is-empty'}>
+          <ul className="dashboard-stages" role="list">{view.stages.map((stage, index) => <li key={stage.key} className={stage.count ? undefined : 'is-empty'} style={{ '--i': index }}>
             <span className="dashboard-stages__label">{stage.label}</span>
             <span className="dashboard-stages__bar" aria-hidden="true">{stage.count > 0 && <i style={{ width: `${stage.count / view.max * 100}%` }} />}</span>
             <span className="dashboard-stages__count">{stage.count}<span className="ds-visually-hidden"> {stage.count === 1 ? 'negociação' : 'negociações'}{stage.value > 0 && `, ${brl(stage.value)} estimados`}</span></span>
@@ -281,7 +303,7 @@ function Spark({ series, peak, day }) {
   const max = Math.max(peak.value, 1), current = series.at(-1)
   return <figure className="dashboard-spark">
     <div className="dashboard-spark__bars" role="img" aria-label={`Visualizações por dia nos últimos ${series.length} dias. Maior movimento em ${shortDate(peak.day)}, com ${peak.value.toLocaleString('pt-BR')}. Hoje, até agora: ${current.value.toLocaleString('pt-BR')}.`}>
-      {series.map(point => <span key={point.day} className={point.day === day ? 'is-today' : undefined} style={{ height: point.value ? `max(2px, ${point.value / max * 100}%)` : 0 }} title={`${shortDate(point.day)}${point.day === day ? ' (hoje)' : ''}: ${plural(point.value, 'visualização', 'visualizações')}`} />)}
+      {series.map((point, index) => <span key={point.day} className={point.day === day ? 'is-today' : undefined} style={{ '--i': index, height: point.value ? `max(2px, ${point.value / max * 100}%)` : 0 }} title={`${shortDate(point.day)}${point.day === day ? ' (hoje)' : ''}: ${plural(point.value, 'visualização', 'visualizações')}`} />)}
     </div>
     <figcaption className="dashboard-spark__axis" aria-hidden="true"><span>{shortDate(series[0].day)}</span><span>Hoje</span></figcaption>
   </figure>
@@ -305,7 +327,7 @@ export function SiteCard({ insights, site, state, view, content, day }) {
   return <DashboardCard id="site" title="Site" icon="globe" to={insights ? '/admin/insights' : '/admin/portfolio'} area={insights ? 'Insights do site' : 'Portfólio'} state={insights ? state : undefined}>
     {insights && <Loaded state={state} what="os acessos do site" rows={2}>{() => view.totals.view || view.totals.play || view.totals.contact
       ? <div className="dashboard-site">
-        <p className="dashboard-figure"><strong>{view.totals.view.toLocaleString('pt-BR')}</strong><span>visualizações de páginas · 30 dias</span></p>
+        <p className="dashboard-figure"><strong><CountUp value={view.totals.view} /></strong><span>visualizações de páginas · 30 dias</span></p>
         {view.max > 0 && <Spark series={view.series} peak={view.peak} day={day} />}
         <dl className="dashboard-mini">
           <div><dt>Aberturas de filmes</dt><dd>{view.totals.play.toLocaleString('pt-BR')}</dd></div>

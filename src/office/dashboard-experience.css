@@ -20,6 +20,57 @@
 .dashboard-digest__calm { display: flex; align-items: center; gap: var(--ds-space-2); color: var(--ds-text-2); font-size: var(--ds-text-md); }
 .dashboard-digest__calm svg { flex-shrink: 0; width: 16px; height: 16px; color: var(--ds-success); }
 
+/* ---------- Banner (2.1): a dark film frame with the DUUK coral → orange light ---------- */
+/* The banner keeps the dark palette in both themes; its own tokens make every child (chips, button) follow. */
+.dashboard-hero {
+  --ds-text: #f4f1ee; --ds-text-2: #c9c2bc; --ds-text-3: #9a928b;
+  --ds-surface: rgb(255 255 255 / 6%); --ds-surface-2: rgb(255 255 255 / 10%); --ds-hover: rgb(255 255 255 / 8%); --ds-active: rgb(255 255 255 / 12%);
+  --ds-border: rgb(255 255 255 / 12%); --ds-border-strong: rgb(255 255 255 / 22%);
+  --ds-accent: #f5824a; --ds-accent-hover: #ff9663; --ds-accent-text: #ff9a66; --ds-on-accent: #160a04;
+  --ds-danger: #ff8a7a; --ds-success: #5fd39b; --ds-focus: #e8e2dc; --ds-skeleton: rgb(255 255 255 / 9%); --ds-skeleton-shine: rgb(255 255 255 / 6%);
+  position: relative; isolation: isolate; overflow: hidden;
+  padding: var(--ds-space-8) var(--ds-space-8) var(--ds-space-6);
+  border: 1px solid #2a211c; border-radius: var(--ds-radius-xl);
+  background: #0c0a09; color: var(--ds-text); color-scheme: dark;
+  box-shadow: 0 24px 60px -32px rgb(235 75 63 / 45%);
+  animation: dashboard-hero-in 560ms var(--ds-ease-out) backwards;
+}
+.dashboard-hero::before { content: ''; position: absolute; z-index: 2; inset: 0 0 auto; height: 2px; background: var(--ds-brand-gradient, linear-gradient(100deg, #eb4b3f, #ed6f4d 45%, #f0945b)); }
+.dashboard-hero > :not(.dashboard-hero__art) { position: relative; z-index: 1; }
+.dashboard-hero__art { position: absolute; z-index: 0; inset: 0; pointer-events: none; }
+.dashboard-hero__art > i:not(.dashboard-hero__strip) { position: absolute; width: 520px; height: 520px; border-radius: 50%; filter: blur(70px); opacity: .55; will-change: transform; }
+.dashboard-hero__art > .is-coral { top: -300px; right: 4%; background: radial-gradient(circle, #eb4b3f 0%, transparent 65%); animation: dashboard-glow-a 16s ease-in-out infinite alternate; }
+.dashboard-hero__art > .is-orange { right: -180px; bottom: -340px; background: radial-gradient(circle, #f0945b 0%, transparent 62%); animation: dashboard-glow-b 19s ease-in-out infinite alternate; }
+/* Film perforations along the bottom edge, drifting slowly like a reel. */
+.dashboard-hero__strip { position: absolute; right: 0; bottom: 10px; left: 0; height: 6px; opacity: .14; background: repeating-linear-gradient(90deg, #f4f1ee 0 10px, transparent 10px 26px); -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); animation: dashboard-reel 2.6s linear infinite; }
+.dashboard-hero .studio-greeting__title { font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.035em; }
+.dashboard-hero .studio-greeting__dot { color: #f0945b; }
+.dashboard-hero .studio-greeting__cursor { background: #f0945b; }
+.dashboard-hero__side { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: var(--ds-space-4); align-self: stretch; }
+.dashboard-hero__logo { display: block; width: 42px; height: auto; animation: dashboard-logo-in 700ms 120ms var(--ds-ease-out) backwards; }
+.dashboard-hero .dashboard-digest { margin-top: var(--ds-space-2); }
+.dashboard-hero .dashboard-digest > li { animation: dashboard-chip-in 420ms calc(180ms + var(--i, 0) * 55ms) var(--ds-ease-out) backwards; }
+.dashboard-hero .dashboard-digest a { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.dashboard-hero .dashboard-digest a:hover { border-color: rgb(240 148 91 / 55%); }
+.dashboard-hero .dashboard-digest a:not(.is-danger) svg { color: #f0945b; }
+@keyframes dashboard-hero-in { from { opacity: 0; transform: translateY(10px) scale(.992); } to { opacity: 1; transform: none; } }
+@keyframes dashboard-logo-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes dashboard-chip-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes dashboard-glow-a { from { transform: translate(0, 0) scale(1); } to { transform: translate(-90px, 40px) scale(1.15); } }
+@keyframes dashboard-glow-b { from { transform: translate(0, 0) scale(1.05); } to { transform: translate(-120px, -30px) scale(.9); } }
+@keyframes dashboard-reel { to { background-position-x: 26px; } }
+
+/* ---------- Cards enter one after another ---------- */
+.dashboard-enter { min-width: 0; animation: dashboard-card-in 520ms calc(140ms + var(--i, 0) * 70ms) var(--ds-ease-out) backwards; }
+@keyframes dashboard-card-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.dashboard-card { transition: border-color var(--ds-duration-2) var(--ds-ease-out), box-shadow var(--ds-duration-3) var(--ds-ease-out), transform var(--ds-duration-3) var(--ds-ease-out); }
+@media (hover: hover) {
+  .dashboard-card:hover { border-color: var(--ds-border-strong); box-shadow: var(--ds-shadow-md); transform: translateY(-2px); }
+  .dashboard-action:hover svg { color: var(--ds-accent-text); transform: translateX(1px) scale(1.08); }
+}
+.dashboard-action svg { transition: color var(--ds-duration-1), transform var(--ds-duration-2) var(--ds-ease-spring); }
+.dashboard-card__head h2 svg { color: var(--ds-accent-text); }
+
 /* ---------- Grid: columns keep reading order equal to visual order ---------- */
 .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--ds-space-4); }
 .dashboard-grid--split { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--ds-space-5); }
@@ -173,6 +224,9 @@ a.dashboard-balance:hover { border-color: var(--ds-border-strong); }
 /* ---------- Phone ---------- */
 @media (max-width: 767px) {
   .duuk-dashboard { gap: var(--ds-space-5); }
+  .dashboard-hero { padding: var(--ds-space-6) var(--ds-space-5) var(--ds-space-5); border-radius: var(--ds-radius-lg); }
+  .dashboard-hero .studio-greeting__title { font-size: 28px; }
+  .dashboard-hero__logo { width: 30px; }
   .dashboard-head { gap: var(--ds-space-3) var(--ds-space-4); }
   .dashboard-head > .admin-refresh { margin-top: 0; }
   .dashboard-grid { gap: var(--ds-space-3); }
@@ -187,3 +241,20 @@ a.dashboard-balance:hover { border-color: var(--ds-border-strong); }
   .dashboard-row.is-compact { min-height: 48px; }
   .dashboard-card .admin-error .admin-text-button { min-height: 40px; }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-hero, .dashboard-hero__logo, .dashboard-hero .dashboard-digest > li, .dashboard-enter, .dashboard-hero__art > i { animation: none; }
+  .dashboard-card, .dashboard-card:hover { transform: none; }
+}
+
+/* ---------- Charts grow in (2.1) ---------- */
+.dashboard-stages__bar i { background: linear-gradient(90deg, var(--ds-coral, var(--ds-accent)), var(--ds-accent)); transform-origin: left; animation: dashboard-bar-x 700ms calc(300ms + var(--i, 0) * 60ms) var(--ds-ease-out) backwards; }
+.dashboard-spark__bars span { transform-origin: bottom; animation: dashboard-bar-y 600ms calc(200ms + var(--i, 0) * 18ms) var(--ds-ease-out) backwards; }
+.dashboard-spark__bars span.is-today { animation-name: dashboard-bar-y, dashboard-pulse; animation-duration: 600ms, 2.4s; animation-delay: calc(200ms + var(--i, 0) * 18ms), 1.4s; animation-iteration-count: 1, infinite; animation-timing-function: var(--ds-ease-out), ease-in-out; }
+@keyframes dashboard-bar-x { from { transform: scaleX(0); } }
+@keyframes dashboard-bar-y { from { transform: scaleY(0); } }
+@keyframes dashboard-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-stages__bar i, .dashboard-spark__bars span { animation: none; }
+}
+

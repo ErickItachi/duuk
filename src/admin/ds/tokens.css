@@ -1,5 +1,6 @@
 /* DUUK Admin 2.0 design tokens. Admin only: the institutional site keeps its own system.
-   Neutral surfaces carry the interface; the DUUK coral is a single, sparing accent. */
+   Neutral surfaces carry the interface; the DUUK orange (from the site's coral → orange) marks
+   actions, the current place and highlights. */
 
 @font-face { font-family: 'DUUK Inter'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(/fonts/inter-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'DUUK Inter'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(/fonts/inter-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
@@ -34,10 +35,14 @@
   --ds-primary: #ededed;
   --ds-primary-hover: #ffffff;
   --ds-on-primary: #0a0a0a;
-  --ds-accent: #f05a4b;
-  --ds-accent-soft: rgb(240 90 75 / 12%);
-  --ds-accent-line: rgb(240 90 75 / 32%);
-  --ds-on-accent: #ffffff;
+  --ds-accent: #f5824a;
+  --ds-accent-hover: #ff9663;
+  --ds-accent-soft: rgb(245 130 74 / 13%);
+  --ds-accent-line: rgb(245 130 74 / 36%);
+  --ds-accent-text: #ff9a66;
+  --ds-on-accent: #160a04;
+  --ds-coral: #eb4b3f;
+  --ds-brand-gradient: linear-gradient(100deg, #eb4b3f 0%, #ed6f4d 45%, #f0945b 100%);
   --ds-focus: #c8c8c8;
   /* Status (always paired with an icon or text) */
   --ds-success: #4cc38a;
@@ -53,7 +58,7 @@
   --ds-chart-1: #ededed;
   --ds-chart-2: #8b8b8b;
   --ds-chart-3: #4d4d4d;
-  --ds-chart-accent: #f05a4b;
+  --ds-chart-accent: #f5824a;
   --ds-chart-grid: #1f1f1f;
   /* Elevation */
   --ds-shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
@@ -88,10 +93,14 @@
   --ds-primary: #0a0a0a;
   --ds-primary-hover: #262626;
   --ds-on-primary: #fafafa;
-  --ds-accent: #cf3a2c;
-  --ds-accent-soft: rgb(207 58 44 / 8%);
-  --ds-accent-line: rgb(207 58 44 / 28%);
+  --ds-accent: #c2410c;
+  --ds-accent-hover: #a8380a;
+  --ds-accent-soft: rgb(234 88 12 / 9%);
+  --ds-accent-line: rgb(234 88 12 / 30%);
+  --ds-accent-text: #b33d0b;
   --ds-on-accent: #ffffff;
+  --ds-coral: #d63a2f;
+  --ds-brand-gradient: linear-gradient(100deg, #d63a2f 0%, #e05a35 45%, #ea7a3c 100%);
   --ds-focus: #404040;
   --ds-success: #16794a;
   --ds-success-soft: rgb(22 121 74 / 9%);
@@ -105,7 +114,7 @@
   --ds-chart-1: #0a0a0a;
   --ds-chart-2: #737373;
   --ds-chart-3: #c4c4c4;
-  --ds-chart-accent: #cf3a2c;
+  --ds-chart-accent: #ea580c;
   --ds-chart-grid: #efefef;
   --ds-shadow-sm: 0 1px 2px rgb(0 0 0 / 6%);
   --ds-shadow-md: 0 8px 24px rgb(0 0 0 / 8%), 0 0 0 1px rgb(0 0 0 / 5%);

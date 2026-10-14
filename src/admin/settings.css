@@ -43,8 +43,8 @@
 /* Switch: neutral track, the knob position and the label carry the state. */
 .settings-switch { position: relative; display: inline-flex; align-items: center; flex-shrink: 0; width: 40px; height: 24px; padding: 2px; border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-full); background: var(--ds-surface-3); transition: background-color var(--ds-duration-2) var(--ds-ease-out), border-color var(--ds-duration-2) var(--ds-ease-out); -webkit-tap-highlight-color: transparent; }
 .settings-switch > span { width: 18px; height: 18px; border-radius: 50%; background: var(--ds-text-3); box-shadow: var(--ds-shadow-sm); transition: transform var(--ds-duration-2) var(--ds-ease-out), background-color var(--ds-duration-2) var(--ds-ease-out); }
-.settings-switch[aria-checked="true"] { border-color: var(--ds-primary); background: var(--ds-primary); }
-.settings-switch[aria-checked="true"] > span { background: var(--ds-on-primary); transform: translateX(16px); }
+.settings-switch[aria-checked="true"] { border-color: var(--ds-accent); background: var(--ds-accent); }
+.settings-switch[aria-checked="true"] > span { background: #fff; transform: translateX(16px); }
 .settings-switch:hover:not([aria-disabled="true"]) { border-color: var(--ds-text-3); }
 .settings-switch[aria-checked="true"]:hover:not([aria-disabled="true"]) { border-color: var(--ds-primary-hover); background: var(--ds-primary-hover); }
 .settings-switch[aria-disabled="true"] { opacity: .5; cursor: progress; }
