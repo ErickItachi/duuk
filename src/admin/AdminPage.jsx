@@ -45,6 +45,7 @@ import './settings.css'
 import './ai-entry.css'
 import './shell/shell.css'
 const AiPage = lazy(() => import('../ai/AiPage'))
+const SocialPage = lazy(() => import('../social/SocialPage'))
 const aiLoading = <LoadingPanel label="Abrindo DUUK AI…" />
 
 const sitePages = ['/admin/portfolio', '/admin/inicio', '/admin/midias']
@@ -141,7 +142,7 @@ function AdminWorkspace() {
     if (url.origin === window.location.origin && url.pathname + url.search !== window.location.pathname + window.location.search) { event.preventDefault(); setDestination(url.pathname + url.search) }
   }
   const navigated = () => { focusMain.current = true; setMenuOpen(false) }
-  const contentKey = pathname.startsWith('/admin/configuracoes') ? '/admin/configuracoes' : pathname
+  const contentKey = pathname.startsWith('/admin/configuracoes') ? '/admin/configuracoes' : pathname.startsWith('/admin/social') ? '/admin/social' : pathname
 
   return <div className={`admin-shell ds-app${rail ? ' is-rail' : ''}${collapsed && desktop ? ' is-collapsed' : ''}`} onClickCapture={guardNavigation}>
     <a className="ds-skip-link" href="#admin-main">Pular para o conteúdo</a>
@@ -156,6 +157,7 @@ function AdminWorkspace() {
           {!ready && editingSite ? <LoadingPanel label="Carregando o conteúdo do site…" /> : <Routes>
             <Route index element={<DashboardPage />} />
             <Route path="ai" element={guarded('ai', <Suspense fallback={aiLoading}><AiPage notify={notify} /></Suspense>)} />
+            <Route path="social/*" element={guarded('social', <Suspense fallback={<LoadingPanel label="Abrindo Social Media…" />}><SocialPage notify={notify} /></Suspense>)} />
             <Route path="drive" element={guarded('drive', <DrivePage notify={notify} />)} />
             <Route path="portfolio" element={guarded('site', <ProjectList notify={notify} />)} />
             <Route path="inicio" element={guarded('site', <HomeEditor notify={notify} />)} />

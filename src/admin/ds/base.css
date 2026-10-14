@@ -52,3 +52,7 @@ html.ds-theme-switching *, html.ds-theme-switching *::before, html.ds-theme-swit
     scroll-behavior: auto !important;
   }
 }
+
+/* The page behind the admin (overscroll, short screens) follows the admin theme; the attribute only
+   exists while the admin is mounted, so the public site keeps its own black background. */
+:root[data-duuk-admin-theme], :root[data-duuk-admin-theme] body { background: var(--ds-bg); }

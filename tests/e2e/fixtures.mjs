@@ -57,7 +57,42 @@ function bankTransactions() {
 }
 const overview = { months: overviewMonths, today: TODAY, account: { id: 'account', label: 'Conta de teste', last_four: '0000', balance_cents: 1843275 }, transactions: bankTransactions(), complete: true, provider_updated_at: iso(TODAY, '09:12:00'), provider_status: 'UPDATED', queried_at: iso(TODAY, '10:00:00'), warning: null, cards: [{ id: 'card', label: 'Cartão de teste', last_four: '0000', brand: 'MASTERCARD', balance_cents: 384520, limit_cents: 1500000, available_cents: 1115480, minimum_cents: 57678, close_date: shift(13), due_date: shift(20) }], investments: [{ id: 'inv-1', label: 'Renda fixa de teste', type: 'FIXED_INCOME', balance_cents: 2540000 }] }
 
-const socialAccount = { id: 'social-account-1', ig_user_id: '17840000000000000', username: 'duuk.teste', name: 'DUUK (teste)', profile_picture_url: null, account_type: 'BUSINESS', followers_count: 1284, follows_count: 312, media_count: 86, status: 'active', permissions: ['instagram_business_basic', 'instagram_business_content_publish', 'instagram_business_manage_insights'], token_expires_at: shift(52, '12:00:00'), last_checked_at: shift(0, '09:00:00'), last_error: null, owner_kind: 'duuk', connected_at: shift(-8, '10:00:00') }
+const socialAccount = { id: 'social-account-1', ig_user_id: '17840000000000000', username: 'duuk.teste', name: 'DUUK (teste)', profile_picture_url: null, account_type: 'BUSINESS', followers_count: 1284, follows_count: 312, media_count: 86, status: 'active', permissions: ['instagram_business_basic', 'instagram_business_content_publish', 'instagram_business_manage_insights'], token_expires_at: shift(52, '12:00:00'), last_checked_at: shift(0, '09:00:00'), last_error: null, owner_kind: 'duuk', connected_at: shift(-8, '10:00:00'), token_refreshed_at: shift(-8, '10:00:00'), app_scoped_id: null, client_id: null, connected_by: user.id, disconnected_at: null, version: 3, provider: 'instagram', created_at: shift(-8, '10:00:00'), updated_at: shift(0, '09:00:00') }
+// Social Media: library files, posts in every state, daily follower snapshots and what the
+// Instagram API would answer. Thumbnails are inline SVG so the sweep never leaves the machine.
+const tile = (shade, label) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320"><rect width="320" height="320" fill="${shade}"/><text x="24" y="44" font-family="sans-serif" font-size="22" fill="#f5f5f5">${label}</text></svg>`)}`
+const socialMedia = [
+  ['Bastidores — set Aurora', 'image', 1080, 1350, null, ['bastidores', 'aurora']],
+  ['Still campanha Norte Bikes', 'image', 1080, 1080, null, ['campanha']],
+  ['Making of — Café Horizonte', 'video', 1080, 1920, 28400, ['reel', 'making-of']],
+  ['Equipe no estúdio', 'image', 1080, 1350, null, []],
+  ['Detalhe de luz', 'image', 1080, 1350, null, ['luz']],
+  ['Teaser institucional', 'video', 1080, 1920, 14200, ['teaser']],
+].map(([title, kind, width, height, duration, tags], index) => ({ id: `social-media-${index + 1}`, owner_id: user.id, kind, mime_type: kind === 'video' ? 'video/mp4' : 'image/jpeg', storage_path: `${user.id}/media-${index + 1}.${kind === 'video' ? 'mp4' : 'jpg'}`, poster_path: kind === 'video' ? `${user.id}/poster-${index + 1}.jpg` : null, width, height, duration_ms: duration, size_bytes: kind === 'video' ? 18400000 + index * 1000 : 820000 + index * 40000, title, alt_text: kind === 'image' ? `Imagem fictícia: ${title.toLowerCase()}` : '', tags, version: 1, created_at: shift(-6 + index, '10:00:00'), updated_at: shift(-6 + index, '10:00:00') }))
+const socialPosts = [
+  { format: 'image', status: 'scheduled', caption: 'Bastidores da gravação com o Atelier Aurora. Luz natural, figurino e muito café. #bastidores #producao', scheduled_at: shift(1, '18:30:00'), media: [1] },
+  { format: 'reel', status: 'scheduled', caption: 'Making of do filme para o Café Horizonte. Do roteiro ao último take.', scheduled_at: shift(3, '12:00:00'), media: [3], share_to_feed: true },
+  { format: 'carousel', status: 'draft', caption: 'Uma semana de estúdio em quatro quadros.', scheduled_at: null, media: [4, 5, 2] },
+  { format: 'image', status: 'published', caption: 'Still da campanha Norte Bikes, já no ar.', scheduled_at: shift(-2, '17:00:00'), published_at: shift(-2, '17:00:41'), permalink: 'https://www.instagram.com/p/EXEMPLO1/', media: [2] },
+  { format: 'reel', status: 'failed', caption: 'Teaser do novo filme institucional.', scheduled_at: shift(-1, '20:00:00'), last_error: 'O Instagram recusou o vídeo: a duração mínima de um Reel é de 3 segundos.', media: [6] },
+  { format: 'story', status: 'scheduled', caption: '', scheduled_at: shift(0, '19:00:00'), media: [5] },
+].map((post, index) => ({ id: `social-post-${index + 1}`, account_id: socialAccount.id, format: post.format, status: post.status, caption: post.caption, share_to_feed: post.share_to_feed ?? true, scheduled_at: post.scheduled_at, published_at: post.published_at || null, permalink: post.permalink || null, ig_media_id: post.status === 'published' ? '17900000000000001' : null, last_error: post.last_error || null, last_error_code: post.last_error ? 'invalid' : null, attempts: post.status === 'failed' ? 1 : 0, next_attempt_at: null, created_by: user.id, updated_by: user.id, publish_requested_by: null, client_request_id: `request-${index + 1}`, version: 2, created_at: shift(-5, '11:00:00'), updated_at: shift(-index, '11:00:00'), __media: post.media }))
+const socialPostMedia = socialPosts.flatMap(post => post.__media.map((number, position) => ({ post_id: post.id, media_id: `social-media-${number}`, position, alt_text: socialMedia[number - 1].alt_text })))
+for (const post of socialPosts) delete post.__media
+const socialSnapshots = Array.from({ length: 30 }, (_, index) => index).filter(index => index !== 11 && index !== 12).map(index => ({ account_id: socialAccount.id, day: shift(index - 29), followers_count: 1180 + Math.round(index * 3.4 + (index % 4) * 2), follows_count: 310 + (index % 3), media_count: 80 + Math.floor(index / 5) }))
+const socialEvents = [
+  { post_id: 'social-post-5', kind: 'failed', message: 'O Instagram recusou o vídeo: a duração mínima de um Reel é de 3 segundos.', created_at: shift(-1, '20:01:12') },
+  { post_id: 'social-post-5', kind: 'processing', message: 'Enviado ao Instagram; aguardando o processamento do vídeo.', created_at: shift(-1, '20:00:20') },
+  { post_id: 'social-post-5', kind: 'scheduled', message: 'Agendada para publicação automática', created_at: shift(-3, '15:00:00') },
+  { post_id: 'social-post-4', kind: 'published', message: 'Publicada no Instagram', created_at: shift(-2, '17:00:41') },
+  { post_id: 'social-post-1', kind: 'scheduled', message: 'Agendada para publicação automática', created_at: shift(-1, '10:00:00') },
+].map((event, index) => ({ id: `social-event-${index + 1}`, account_id: socialAccount.id, actor_id: user.id, ...event }))
+const socialRecent = Array.from({ length: 12 }, (_, index) => ({ id: `1790000000000${String(index).padStart(4, '0')}`, caption: ['Still da campanha Norte Bikes, já no ar.', 'Bastidores do set.', 'Novo filme institucional.', 'Equipe DUUK em ação.'][index % 4], media_type: index % 3 === 1 ? 'VIDEO' : index % 5 === 2 ? 'CAROUSEL_ALBUM' : 'IMAGE', media_product_type: index % 3 === 1 ? 'REELS' : 'FEED', media_url: index % 3 === 1 ? null : tile(['#2a2a2a', '#3a3a3a', '#1f1f1f', '#454545'][index % 4], `#${index + 1}`), thumbnail_url: index % 3 === 1 ? tile('#303030', `Reel ${index + 1}`) : null, permalink: `https://www.instagram.com/p/EXEMPLO${index + 1}/`, timestamp: shift(-2 - index * 3, '17:00:00'), like_count: 40 + index * 13 % 90, comments_count: index % 4 }))
+const socialInsights = days => ({ days, since: shift(-days, '10:00:00'), until: shift(0, '10:00:00'), fetched_at: shift(0, '09:55:00'),
+  account: { reach: 820 * days, views: 2140 * days, accounts_engaged: 31 * days, total_interactions: 54 * days, likes: 41 * days, comments: 4 * days, shares: 5 * days, saves: 4 * days, replies: null, profile_links_taps: 2 * days },
+  media: socialRecent.map((item, index) => ({ ...item, metrics: index === 7 ? null : { reach: 900 + index * 211 % 1500, views: 1800 + index * 377 % 4100, likes: item.like_count, comments: item.comments_count, shares: index % 5, saved: index % 6, total_interactions: item.like_count + item.comments_count + index % 5 + index % 6, ...(item.media_product_type === 'REELS' ? { ig_reels_avg_watch_time: 6400 + index * 300 } : {}) } })) })
+const socialStatus = { configured: true, app_id: '1234567890123', app_mode: 'development', access_level: 'standard', version: 4, configured_at: shift(-8, '09:40:00'), can_configure: true, accounts: [socialAccount], redirect_uri: 'https://www.duukfilms.com/admin/social/conexao', scopes: ['instagram_business_basic', 'instagram_business_content_publish', 'instagram_business_manage_insights'], graph_version: 'v23.0', deauthorize_url: 'https://ilohuxhyfqikjlvoarts.supabase.co/functions/v1/duuk-social/deauthorize', data_deletion_url: 'https://ilohuxhyfqikjlvoarts.supabase.co/functions/v1/duuk-social/data-deletion' }
+
 
 export function tables() {
   return {
@@ -81,8 +116,11 @@ export function tables() {
     duuk_whatsapp_templates: [{ id: 'wa-1', seed_key: null, title: 'Primeiro contato', body: 'Olá, {{nome}}! Aqui é da DUUK.', active: true, version: 1, created_by: user.id, created_at: shift(-9), updated_at: shift(-9) }],
     duuk_drive_documents: [],
     duuk_social_accounts: [socialAccount],
-    duuk_social_posts: [],
-    duuk_social_media: [],
+    duuk_social_posts: socialPosts,
+    duuk_social_post_media: socialPostMedia,
+    duuk_social_media: socialMedia,
+    duuk_social_snapshots: socialSnapshots,
+    duuk_social_events: socialEvents,
   }
 }
 
@@ -107,7 +145,12 @@ export const functions = {
   'duuk-pluggy': { status: { configured: true, version: 3 }, overview, statement: body => ({ month: body.month, account: overview.account, transactions: overview.transactions.filter(item => item.posted_date.startsWith(body.month)), complete: true }) },
   'duuk-ai': { status: { configured: true, consent: { accepted: true, version: 'test' }, consent_version: 'test', quota: { remaining: 20, limit: 25 } }, list: { conversations: [{ id: 'conversation-1', title: 'Roteiro para campanha fictícia', mode: 'script', updated_at: shift(-1, '15:00:00') }] }, documents: { documents: [] }, projects: { projects: [] } },
   'duuk-social': body => {
-    if (body.action === 'status') return { configured: true, app_configured: true, redirect_uri: 'https://ilohuxhyfqikjlvoarts.supabase.co/functions/v1/duuk-social/oauth', accounts: [socialAccount], can_configure: true }
+    if (body.action === 'status') return socialStatus
+    if (body.action === 'overview') return { limit: { used: 3, total: 100, window_hours: 24 }, recent: socialRecent, fetched_at: shift(0, '09:58:00') }
+    if (body.action === 'insights') return socialInsights([7, 14, 28].includes(Number(body.days)) ? Number(body.days) : 7)
+    if (body.action === 'refresh_account') return { account: socialAccount }
+    // Connecting and publishing would leave the machine; the sweep never follows them.
+    if (['connect_start', 'connect_finish', 'publish_now', 'configure_app', 'remove_app', 'disconnect'].includes(body.action)) return { __status: 409, body: { error: 'Ação real desativada nos testes isolados.' } }
     return undefined
   },
 }
