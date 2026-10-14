@@ -5,6 +5,22 @@ import { Avatar } from "../admin/forms";
 import { brl } from "../office/model";
 import { stages, stageLabel } from "./model";
 
+// Stage progress, drawn like a filling circle so the funnel position never depends on color.
+export function StageIcon({ stage, size = 14 }) {
+  if (stage === "won") return <Icon name="checkCircle" size={size} className="crm-stage-icon" />;
+  if (stage === "lost") return <Icon name="xCircle" size={size} className="crm-stage-icon" />;
+  const step = Math.max(0, stages.findIndex(([key]) => key === stage));
+  const length = 2 * Math.PI * 2.25;
+  return (
+    <svg className="crm-stage-icon" width={size} height={size} viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4" strokeOpacity=".45" />
+      {step > 0 && (
+        <circle cx="7" cy="7" r="2.25" stroke="currentColor" strokeWidth="4.5" strokeDasharray={`${(step / 7) * length} ${length}`} transform="rotate(-90 7 7)" />
+      )}
+    </svg>
+  );
+}
+
 const reducedMotion = () =>
   matchMedia("(prefers-reduced-motion: reduce)").matches;
 const ghostTransform = (session) => {
@@ -224,6 +240,7 @@ export default function PipelineBoard({
       <div
         ref={board}
         className={`crm-kanban${dragging ? " is-dragging" : ""}`}
+        role="region"
         aria-label="Pipeline de oportunidades"
         aria-describedby="pipeline-help"
       >
@@ -231,6 +248,7 @@ export default function PipelineBoard({
           .filter(([key]) => !stage || key === stage)
           .map(([key, label]) => {
             const highlighted = over === key && activeClient?.stage !== key;
+            const count = clients.filter((client) => client.stage === key).length;
             return (
               <section
                 className={`crm-kanban-column${highlighted ? " is-drop-target" : ""}`}
@@ -252,12 +270,16 @@ export default function PipelineBoard({
                 }}
               >
                 <header>
+                  <StageIcon stage={key} />
                   <h2>{label}</h2>
-                  <span>
-                    {clients.filter((client) => client.stage === key).length}
+                  <span className="crm-kanban-count">
+                    {count}
+                    <span className="ds-visually-hidden">
+                      {count === 1 ? " oportunidade" : " oportunidades"}
+                    </span>
                   </span>
                 </header>
-                <div>
+                <div className="crm-kanban-column__cards">
                   <div
                     className={`crm-drop-slot${highlighted ? " is-visible" : ""}`}
                     aria-hidden="true"
@@ -265,6 +287,7 @@ export default function PipelineBoard({
                     <Icon name="plus" size={16} />
                     Soltar em {label.toLowerCase()}
                   </div>
+                  {count === 0 && <p className="crm-kanban-empty">Nenhuma oportunidade</p>}
                   {clients
                     .filter((client) => client.stage === key)
                     .map((client) => {
@@ -296,13 +319,18 @@ export default function PipelineBoard({
                           onDragEnd={clearDrag}
                         >
                           <div className="crm-kanban-card__head">
-                            <button
-                              className="crm-client-button"
-                              onClick={() => onOpen(client)}
-                            >
-                              <h3>{client.name}</h3>
+                            <div className="crm-kanban-card__title">
+                              <h3>
+                                <button
+                                  type="button"
+                                  className="crm-kanban-card__open"
+                                  onClick={() => onOpen(client)}
+                                >
+                                  {client.name}
+                                </button>
+                              </h3>
                               <p>{client.company || "Oportunidade"}</p>
-                            </button>
+                            </div>
                             <button
                               type="button"
                               className="crm-drag-handle admin-icon-button"
@@ -322,12 +350,15 @@ export default function PipelineBoard({
                               <Icon name="grip" size={18} />
                             </button>
                           </div>
-                          <strong>{brl(client.estimated_cents)}</strong>
-                          <small className="crm-person">
-                            <Avatar profile={owner} size={22} />
-                            {owner?.name || "Sem responsável"}
-                          </small>
+                          <div className="crm-kanban-card__meta">
+                            <small className="crm-person">
+                              <Avatar profile={owner} size={20} />
+                              <span>{owner?.name || "Sem responsável"}</span>
+                            </small>
+                            <strong>{brl(client.estimated_cents)}</strong>
+                          </div>
                           <select
+                            className="ds-input ds-select"
                             aria-label={`Etapa de ${client.name}`}
                             value={client.stage}
                             disabled={!!pendingId}
@@ -374,7 +405,10 @@ export default function PipelineBoard({
             <strong>{activeClient.name}</strong>
             <span>{activeClient.company || "Oportunidade"}</span>
             <b>{brl(activeClient.estimated_cents)}</b>
-            <small>{over ? stageLabel(over) : "Escolha uma etapa"}</small>
+            <small>
+              <Icon name="arrow" size={14} />
+              {over ? stageLabel(over) : "Escolha uma etapa"}
+            </small>
           </div>,
           document.body,
         )}

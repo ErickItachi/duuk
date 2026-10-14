@@ -1,86 +1,258 @@
+/* Google Drive 2.0: the library page, its dialogs, the contract and client panels, and the
+   integration card. Colors come only from tokens; the official Drive logo is the only brand color. */
+
+/* ---------- Shared pieces (contracts, clients, shell and finance logos) ---------- */
+.integration-app-logo { display: block; flex-shrink: 0; object-fit: contain; filter: none; }
 .drive-panel, .drive-document, .drive-documents { min-width: 0; }
-.drive-panel__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.drive-panel__tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2); min-width: 0; }
 .drive-panel__tools .admin-refresh { margin: 0; }
-.drive-upload { display: grid; gap: 12px; min-width: 0; padding-top: 16px; border-top: 1px solid var(--admin-line); }
+.drive-panel__alert { align-items: center; }
+.drive-panel__alert > span { flex: 1 1 14rem; min-width: 0; }
+.drive-panel__alert .admin-text-button { min-height: 32px; }
+.drive-panel__loading { display: grid; gap: var(--ds-space-2); }
+.drive-panel__loading .ds-skeleton { height: 64px; }
+.drive-upload { display: grid; gap: var(--ds-space-3); min-width: 0; padding-top: var(--ds-space-4); border-top: 1px solid var(--ds-border); }
 .drive-upload .admin-field { min-width: 0; margin: 0; }
-.drive-upload .admin-field small { color: var(--admin-muted); font-weight: 400; }
+.drive-upload .admin-field small { color: var(--ds-text-3); font-weight: var(--ds-weight-regular); }
 .drive-upload .admin-button { justify-self: start; max-width: 100%; white-space: normal; }
-.drive-upload > small { font-size: 11px; line-height: 1.7; }
-.drive-integration__refresh { display: flex; justify-content: flex-end; margin-top: 18px; }
-.drive-integration__quota-note { margin: 7px 0 0; color: var(--admin-muted); font-size: 10px; line-height: 1.6; }
+.drive-upload > small { font-size: var(--ds-text-sm); line-height: 1.6; }
+
+/* ---------- Library page ---------- */
+.drive-page { min-width: 0; }
+.drive-account { display: flex; align-items: center; gap: var(--ds-space-3); min-width: 0; margin-bottom: var(--ds-space-4); padding: var(--ds-space-3) var(--ds-space-4); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: var(--ds-shadow-sm); }
+.drive-account__logo { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-surface-2); }
+.drive-account__text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.drive-account__text strong { font-size: var(--ds-text-base); font-weight: var(--ds-weight-medium); overflow-wrap: anywhere; }
+.drive-account__status { display: inline-flex; align-items: center; gap: var(--ds-space-2); color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+.drive-account__status i { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--ds-text-3); }
+.drive-account__status.is-connected i { background: var(--ds-success); box-shadow: 0 0 0 3px var(--ds-success-soft); }
+.drive-account__manage { flex-shrink: 0; }
+.drive-account__manage svg { width: 15px; height: 15px; }
+
+.drive-pending { margin-bottom: var(--ds-space-4); }
+.drive-pending__body { flex: 1 1 16rem; min-width: 0; }
+.drive-pending__body > p { margin: 0; }
+.drive-pending ul { display: grid; gap: var(--ds-space-2); margin: var(--ds-space-3) 0 0; padding: 0; list-style: none; }
+.drive-pending li { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); padding-top: var(--ds-space-2); border-top: 1px solid color-mix(in srgb, var(--ds-warning) 22%, transparent); }
+.drive-pending li > span { min-width: 0; overflow-wrap: anywhere; }
+.drive-pending li > .admin-button { flex-shrink: 0; }
+
+.drive-library { min-width: 0; overflow: visible; }
+.drive-library__tabs { padding: 0 var(--ds-space-5); }
+.drive-library__tabs.ds-tabs button { min-height: 48px; }
+.drive-library__state { padding: var(--ds-space-4) var(--ds-space-5) 0; }
+.drive-library__content { min-width: 0; }
+
+.drive-location { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ds-space-2) var(--ds-space-4); min-width: 0; padding: var(--ds-space-3) var(--ds-space-5) 0; }
+.drive-breadcrumbs { flex: 1 1 16rem; min-width: 0; }
+.drive-breadcrumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin: 0 0 0 calc(var(--ds-space-2) * -1); padding: 0; list-style: none; }
+.drive-breadcrumbs li { display: inline-flex; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
+.drive-breadcrumbs li > svg { flex-shrink: 0; color: var(--ds-text-3); }
+.drive-breadcrumbs button { display: inline-flex; align-items: center; gap: var(--ds-space-2); min-width: 0; max-width: 100%; min-height: 32px; padding: 0 var(--ds-space-2); border: 0; border-radius: var(--ds-radius-sm); background: none; color: var(--ds-text-2); font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); text-align: left; transition: background-color var(--ds-duration-1), color var(--ds-duration-1); }
+.drive-breadcrumbs button > span { min-width: 0; overflow-wrap: anywhere; }
+.drive-breadcrumbs button:hover { background: var(--ds-hover); color: var(--ds-text); }
+.drive-breadcrumbs button[aria-current="page"] { color: var(--ds-text); font-weight: var(--ds-weight-semibold); }
+.drive-location__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-1); }
+
+.drive-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2); padding: var(--ds-space-3) var(--ds-space-5); border-bottom: 1px solid var(--ds-border); }
+.drive-toolbar__search.admin-search { flex: 1 1 240px; width: auto; max-width: none; }
+.drive-toolbar__category.ds-input { width: auto; min-width: 180px; max-width: 240px; min-height: var(--ds-control-md); padding-block: 0; font-size: var(--ds-text-md); }
+.drive-toolbar__view { flex-shrink: 0; }
+.drive-toolbar__view button { min-width: 32px; padding: 0 8px; }
+.drive-trash-note { display: flex; align-items: flex-start; gap: var(--ds-space-2); margin: 0; padding: var(--ds-space-3) var(--ds-space-5); border-bottom: 1px solid var(--ds-border-subtle); background: var(--ds-bg-subtle); color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.55; }
+.drive-trash-note > svg { flex-shrink: 0; margin-top: 2px; color: var(--ds-text-3); }
+
+.drive-section { padding: var(--ds-space-4) var(--ds-space-5); }
+.drive-section + .drive-section { border-top: 1px solid var(--ds-border-subtle); }
+.drive-section__title { display: flex; align-items: center; gap: var(--ds-space-2); margin: 0 0 var(--ds-space-3); color: var(--ds-text-3); font-family: var(--ds-font); font-size: var(--ds-text-xs); font-weight: var(--ds-weight-medium); letter-spacing: .05em; line-height: 1.4; text-transform: uppercase; }
+.drive-section__title > span { color: var(--ds-text-3); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.drive-section__more { margin-top: var(--ds-space-3); }
+
+.drive-folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 232px), 1fr)); gap: var(--ds-space-2); margin: 0; padding: 0; list-style: none; }
+.drive-folder-card { display: flex; align-items: center; gap: var(--ds-space-1); min-width: 0; padding-right: var(--ds-space-1); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-surface); transition: background-color var(--ds-duration-1), border-color var(--ds-duration-1); }
+.drive-folder-card:hover { border-color: var(--ds-border-strong); background: var(--ds-hover); }
+.drive-folder-open { display: flex; flex: 1; align-items: center; gap: var(--ds-space-3); min-width: 0; min-height: 56px; padding: var(--ds-space-2) var(--ds-space-1) var(--ds-space-2) var(--ds-space-3); border: 0; border-radius: inherit; background: none; color: var(--ds-text); text-align: left; }
+.drive-folder-open:disabled { cursor: default; }
+.drive-folder-icon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: var(--ds-radius-sm); background: var(--ds-surface-2); color: var(--ds-text-2); }
+.drive-folder-text { display: grid; gap: 1px; min-width: 0; }
+.drive-folder-text strong { display: -webkit-box; overflow: hidden; font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); line-height: 1.4; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.drive-folder-text small { overflow: hidden; color: var(--ds-text-3); font-size: var(--ds-text-xs); line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
+.drive-folder-actions { display: flex; flex-shrink: 0; align-items: center; }
+
+.drive-file-list { display: grid; margin: 0 calc(var(--ds-space-5) * -1) calc(var(--ds-space-4) * -1); padding: 0; list-style: none; }
+.drive-section > .drive-file-list:first-child { margin-top: calc(var(--ds-space-4) * -1); }
+.drive-file { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto; align-items: center; gap: var(--ds-space-4); min-width: 0; padding: var(--ds-space-3) var(--ds-space-5); border-top: 1px solid var(--ds-border-subtle); transition: background-color var(--ds-duration-1); }
+.drive-file:first-child { border-top: 0; }
+.drive-file:hover, .drive-file.is-busy { background: var(--ds-hover); }
+.drive-file__icon { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-surface-2); color: var(--ds-text-2); }
+.drive-file__main { display: grid; gap: 2px; min-width: 0; }
+.drive-file__name { justify-self: start; max-width: 100%; padding: 0; border: 0; background: none; color: var(--ds-text); font-size: var(--ds-text-base); font-weight: var(--ds-weight-medium); line-height: 1.4; text-align: left; overflow-wrap: anywhere; }
+.drive-file__name:hover:not(:disabled) { text-decoration: underline; text-decoration-color: var(--ds-border-strong); text-underline-offset: 3px; }
+.drive-file__name:disabled { cursor: default; }
+.drive-file__meta { margin: 0; color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.5; overflow-wrap: anywhere; }
+.drive-file__description { margin: 0; color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.5; overflow-wrap: anywhere; }
+.drive-file__warning, .drive-file__error { display: flex; align-items: flex-start; gap: 6px; margin: 2px 0 0; font-size: var(--ds-text-sm); line-height: 1.5; overflow-wrap: anywhere; }
+.drive-file__warning { color: var(--ds-warning); }
+.drive-file__error { color: var(--ds-danger); }
+.drive-file__warning > svg, .drive-file__error > svg { flex-shrink: 0; margin-top: 2px; }
+.drive-file__warning > span, .drive-file__error > span { min-width: 0; }
+.drive-file__actions { display: flex; align-items: center; justify-content: flex-end; gap: 2px; min-width: 0; }
+.drive-file__actions a.admin-icon-button { text-decoration: none; }
+.drive-file__spinner { margin-right: var(--ds-space-2); }
+
+.drive-tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: var(--ds-space-3); margin: 0; padding: 0; list-style: none; }
+.drive-tile { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-surface); transition: border-color var(--ds-duration-1), box-shadow var(--ds-duration-2); }
+.drive-tile:hover, .drive-tile.is-busy { border-color: var(--ds-border-strong); box-shadow: var(--ds-shadow-sm); }
+.drive-tile__open { display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-width: 0; padding: 0 0 var(--ds-space-2); border: 0; background: none; color: var(--ds-text); text-align: left; }
+.drive-tile__open:disabled { cursor: default; }
+.drive-tile__open:focus-visible { outline-offset: -2px; border-radius: var(--ds-radius-md); }
+.drive-tile__open:hover:not(:disabled) .drive-tile__name { text-decoration: underline; text-decoration-color: var(--ds-border-strong); text-underline-offset: 3px; }
+.drive-tile__preview { position: relative; display: grid; place-items: center; height: 96px; margin-bottom: var(--ds-space-2); border-bottom: 1px solid var(--ds-border-subtle); background: var(--ds-bg-subtle); color: var(--ds-text-3); }
+.drive-tile__preview small { position: absolute; bottom: var(--ds-space-2); left: var(--ds-space-2); padding: 1px 6px; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-xs); background: var(--ds-surface); color: var(--ds-text-2); font-size: 10px; font-weight: var(--ds-weight-semibold); letter-spacing: .04em; line-height: 1.5; }
+.drive-tile__name { display: -webkit-box; overflow: hidden; padding: 0 var(--ds-space-3); font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); line-height: 1.4; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.drive-tile__meta { overflow: hidden; padding: 0 var(--ds-space-3); color: var(--ds-text-3); font-size: var(--ds-text-xs); line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
+.drive-tile > :is(.drive-file__description, .drive-file__warning, .drive-file__error) { padding: 0 var(--ds-space-3) var(--ds-space-2); }
+.drive-tile__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ds-space-1); margin-top: auto; padding: var(--ds-space-1) var(--ds-space-1) var(--ds-space-1) var(--ds-space-3); border-top: 1px solid var(--ds-border-subtle); }
+.drive-tile__foot .drive-file__actions { margin-left: auto; }
+
+.drive-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--ds-space-2); margin-top: var(--ds-space-3); }
+.drive-library .ds-empty .drive-empty-actions .admin-button { margin-top: 0; }
+.drive-pager__page { padding: 0 var(--ds-space-2); color: var(--ds-text-2); font-size: var(--ds-text-sm); font-variant-numeric: tabular-nums; }
+.drive-library-note { display: flex; align-items: flex-start; gap: var(--ds-space-2); margin-top: var(--ds-space-4); color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.6; }
+.drive-library-note > svg { flex-shrink: 0; margin-top: 2px; }
+
+.drive-skeleton { display: grid; padding: var(--ds-space-2) var(--ds-space-5) var(--ds-space-4); }
+.drive-skeleton__item { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: var(--ds-space-2) var(--ds-space-4); padding: var(--ds-space-3) 0; border-top: 1px solid var(--ds-border-subtle); }
+.drive-skeleton > .drive-skeleton__item:nth-child(2) { border-top: 0; }
+.drive-skeleton__item > .ds-skeleton:first-child { grid-row: 1 / span 2; width: 40px; height: 40px; }
+.drive-skeleton__item > .ds-skeleton--text:nth-child(2) { width: min(60%, 320px); }
+.drive-skeleton__item > .ds-skeleton--text:nth-child(3) { width: min(40%, 200px); }
+.drive-skeleton--grid { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: var(--ds-space-3); padding-top: var(--ds-space-4); }
+.drive-skeleton--grid .drive-skeleton__item { grid-template-columns: minmax(0, 1fr); padding: 0 0 var(--ds-space-3); overflow: hidden; border: 1px solid var(--ds-border-subtle); border-radius: var(--ds-radius-md); }
+.drive-skeleton--grid > .drive-skeleton__item:nth-child(2) { border-top: 1px solid var(--ds-border-subtle); }
+.drive-skeleton--grid .drive-skeleton__item > .ds-skeleton:first-child { grid-row: auto; width: 100%; height: 96px; border-radius: 0; }
+.drive-skeleton--grid .drive-skeleton__item > .ds-skeleton--text { margin: 0 var(--ds-space-3); }
+
+/* ---------- Dialogs ---------- */
+.drive-dialog { display: grid; align-content: start; gap: var(--ds-space-4); min-width: 0; }
+.drive-dialog .admin-label small { color: var(--ds-text-3); font-size: var(--ds-text-sm); font-weight: var(--ds-weight-regular); }
+.drive-dialog textarea { resize: vertical; }
+.drive-dialog__note { display: flex; align-items: flex-start; gap: var(--ds-space-2); margin: 0; color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.55; }
+.drive-dialog__note > svg { flex-shrink: 0; margin-top: 2px; color: var(--ds-text-3); }
+.drive-inline-error { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; color: var(--ds-danger); font-size: var(--ds-text-sm); line-height: 1.5; }
+.drive-inline-error > svg { flex-shrink: 0; }
+.drive-inline-error .admin-text-button { min-height: 28px; color: inherit; font-size: inherit; }
+.drive-dialog-item { display: flex; align-items: center; gap: var(--ds-space-3); min-width: 0; margin: 0; padding: var(--ds-space-3); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-bg-subtle); font-size: var(--ds-text-base); line-height: 1.5; }
+.drive-dialog-item__icon { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: var(--ds-radius-sm); background: var(--ds-surface-2); color: var(--ds-text-2); }
+.drive-dialog-item > strong { min-width: 0; font-weight: var(--ds-weight-medium); overflow-wrap: anywhere; }
+
+.drive-dropzone { position: relative; display: flex; align-items: center; gap: var(--ds-space-3); min-width: 0; min-height: 88px; padding: var(--ds-space-4); border: 1px dashed var(--ds-border-strong); border-radius: var(--ds-radius-md); background: var(--ds-bg-subtle); transition: border-color var(--ds-duration-1), background-color var(--ds-duration-1), box-shadow var(--ds-duration-1); }
+.drive-dropzone:hover { border-color: var(--ds-text-3); background: var(--ds-hover); }
+.drive-dropzone:focus-within { border-style: solid; border-color: var(--ds-focus); box-shadow: 0 0 0 3px var(--ds-selected); }
+.drive-dropzone.is-invalid { border-color: var(--ds-danger); }
+.drive-dropzone.is-disabled { opacity: .55; }
+/* The native input covers the zone, so clicking and dropping a file both work without extra code. */
+.drive-dropzone .drive-dropzone__input { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.drive-dropzone .drive-dropzone__input:disabled { opacity: 0; cursor: not-allowed; }
+.drive-dropzone__icon { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border: 1px solid var(--ds-border); border-radius: 50%; background: var(--ds-surface); color: var(--ds-text-2); }
+.drive-dropzone__text { display: grid; gap: 2px; min-width: 0; }
+.drive-dropzone__text strong { font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); }
+.drive-dropzone__text small { color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.5; }
+.drive-selected-file { display: flex; align-items: center; gap: var(--ds-space-3); min-width: 0; margin: 0; padding: var(--ds-space-2) var(--ds-space-3); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-surface); }
+.drive-selected-file.is-invalid { border-color: color-mix(in srgb, var(--ds-danger) 45%, var(--ds-border)); }
+.drive-selected-file__icon { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: var(--ds-radius-sm); background: var(--ds-surface-2); color: var(--ds-text-2); }
+.drive-selected-file > span:last-child { min-width: 0; font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); overflow-wrap: anywhere; }
+.drive-selected-file small { display: block; color: var(--ds-text-3); font-size: var(--ds-text-sm); font-weight: var(--ds-weight-regular); }
+.drive-progress { display: grid; gap: var(--ds-space-2); }
+.drive-progress > small { color: var(--ds-text-2); font-size: var(--ds-text-sm); overflow-wrap: anywhere; }
+/* The upload API reports no byte progress, so the bar moves without claiming a percentage. */
+.drive-progress__bar > span { width: 40%; animation: drive-progress 1.2s var(--ds-ease-in-out) infinite; }
+@keyframes drive-progress { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+
+.drive-organize { display: grid; gap: var(--ds-space-3); }
+.drive-organize .ds-alert > span { flex: 1; min-width: 0; }
+.drive-organize__list { display: grid; gap: var(--ds-space-2); margin: 0; padding: 0; list-style: none; }
+.drive-organize__action { display: flex; align-items: flex-start; gap: var(--ds-space-3); width: 100%; min-height: 56px; padding: var(--ds-space-3); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text); text-align: left; transition: background-color var(--ds-duration-1), border-color var(--ds-duration-1); }
+.drive-organize__action:hover:not(:disabled) { border-color: var(--ds-border-strong); background: var(--ds-hover); }
+.drive-organize__action:disabled { opacity: .45; }
+.drive-organize__action > svg { flex-shrink: 0; margin-top: 1px; color: var(--ds-text-2); }
+.drive-organize__action > span { display: grid; gap: 2px; min-width: 0; }
+.drive-organize__action strong { font-size: var(--ds-text-base); font-weight: var(--ds-weight-medium); }
+.drive-organize__action small { color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.5; }
+.drive-organize__action.is-danger, .drive-organize__action.is-danger > svg { color: var(--ds-danger); }
+.drive-organize__action.is-danger:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ds-danger) 35%, transparent); background: var(--ds-danger-soft); }
+.drive-organize__note { margin: 0; color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.6; }
+
+.drive-preview { display: grid; gap: var(--ds-space-4); min-width: 0; }
+.drive-preview img, .drive-preview video { display: block; max-width: 100%; max-height: 65dvh; margin: auto; border-radius: var(--ds-radius-md); object-fit: contain; }
+.drive-preview__loading .ds-skeleton { height: min(60dvh, 520px); }
+.drive-library-pdf { width: 100%; max-height: 65dvh; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-surface-3); }
+
+/* ---------- Integration card (Configurações > Integrações) ---------- */
+.drive-integration .calendar-integration__icon { overflow: hidden; }
+.drive-integration__refresh { flex-shrink: 0; margin-left: auto; }
+.drive-integration__alert { margin-top: var(--ds-space-4); }
+.drive-integration__alert.ds-alert > span { flex: 1; min-width: 0; }
+.drive-integration__loading { display: grid; gap: var(--ds-space-3); margin-top: var(--ds-space-5); }
+.drive-integration__loading .ds-skeleton { height: 56px; }
+.drive-integration__loading .ds-skeleton:first-child { width: 40%; height: 14px; }
+.drive-integration__quota-note { display: block; margin-top: var(--ds-space-2); color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.5; }
+.drive-integration__end { margin-left: auto; }
 .drive-integration .calendar-integration__status > i { flex-shrink: 0; }
 .drive-integration .calendar-integration__status > span { overflow-wrap: anywhere; }
+.drive-meter { display: flex; align-items: center; gap: var(--ds-space-2); width: min(280px, 100%); margin-top: var(--ds-space-2); }
+.drive-meter > .ds-progress { flex: 1; }
+.drive-meter > .ds-progress.is-high > span { background: var(--ds-warning); }
+.drive-meter > small { color: var(--ds-text-2); font-size: var(--ds-text-sm); font-variant-numeric: tabular-nums; }
+
+/* ---------- Touch ---------- */
+@media (pointer: coarse) {
+  .drive-breadcrumbs button, .drive-inline-error .admin-text-button, .drive-panel__alert .admin-text-button { min-height: 40px; }
+  .drive-toolbar__view.ds-segmented { padding: 1px; }
+  .drive-toolbar__view button { min-width: 40px; min-height: 40px; }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 767px) {
+  .drive-page .admin-title-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .drive-page .admin-title-actions > .admin-button:last-child { grid-column: 1 / -1; }
+  .drive-page .admin-title-actions > .admin-button, .drive-page .admin-title-actions .admin-refresh > .admin-button { justify-content: center; width: 100%; min-width: 0; }
+  .drive-page .admin-title-actions .admin-refresh { min-width: 0; }
+  .drive-account { flex-wrap: wrap; padding: var(--ds-space-3); }
+  .drive-account__text { flex-basis: calc(100% - 48px); }
+  .drive-account__manage { margin-left: 36px; }
+  .drive-pending li { flex-wrap: wrap; }
+  .drive-pending li > .admin-button { justify-content: center; width: 100%; }
+  .drive-library__tabs { gap: var(--ds-space-4); padding: 0 var(--ds-space-4); }
+  .drive-location { padding: var(--ds-space-3) var(--ds-space-4) 0; }
+  .drive-breadcrumbs { flex-basis: 12rem; }
+  .drive-location__actions { margin-left: auto; }
+  .drive-toolbar { padding: var(--ds-space-3) var(--ds-space-4); }
+  .drive-toolbar__search.admin-search { flex-basis: 100%; }
+  .drive-toolbar__category.ds-input { flex: 1; min-width: 0; max-width: none; }
+  .drive-trash-note { padding: var(--ds-space-3) var(--ds-space-4); }
+  .drive-library__state { padding: var(--ds-space-3) var(--ds-space-4) 0; }
+  .drive-section { padding: var(--ds-space-4); }
+  .drive-file-list { margin: 0 calc(var(--ds-space-4) * -1) calc(var(--ds-space-4) * -1); }
+  .drive-file { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2) var(--ds-space-3); padding: var(--ds-space-3) var(--ds-space-4); }
+  .drive-file__icon { align-self: flex-start; }
+  .drive-file__main { flex: 1 1 calc(100% - 52px); }
+  .drive-file > .drive-chip { margin-left: 52px; }
+  .drive-file__actions { margin-right: -8px; margin-left: auto; }
+  .drive-tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ds-space-2); }
+  .drive-tile__preview { height: 80px; }
+  .drive-skeleton { padding-inline: var(--ds-space-4); }
+  .drive-skeleton--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ds-space-2); }
+  .drive-dropzone { min-height: 72px; padding: var(--ds-space-3); }
+}
 @media (max-width: 560px) {
-  .drive-panel__head { align-items: flex-start; }
+  .drive-panel > .drive-panel__head { align-items: flex-start; }
   .drive-panel__tools { margin-left: auto; }
   .drive-upload .admin-button { justify-self: stretch; justify-content: center; width: 100%; }
   .crm-client-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .crm-client-actions .admin-button { min-width: 0; padding-inline: 10px; line-height: 1.4; overflow-wrap: normal; word-break: normal; white-space: normal; justify-content: center; }
+  .crm-client-actions .admin-button { justify-content: center; min-width: 0; padding-inline: 10px; line-height: 1.4; overflow-wrap: normal; word-break: normal; white-space: normal; }
   .crm-client-actions > .admin-button:last-child { grid-column: 1 / -1; }
 }
-.integration-app-logo { display: block; object-fit: contain; flex-shrink: 0; filter: none; }
-.drive-library-account { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 22px; margin-bottom: 22px; border: 1px solid var(--admin-line); border-radius: 16px; background: var(--admin-surface); }
-.drive-library-account > div { display: grid; gap: 7px; min-width: 0; flex: 1; overflow-wrap: anywhere; }
-.drive-library-account strong { font-size: 14px; }.drive-library-account span { font-size: 12px; color: var(--admin-muted); }
-.drive-library { overflow: hidden; min-width: 0; }
-.drive-library-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 260px); align-items: end; gap: 20px; padding: 24px; border-bottom: 1px solid var(--admin-line); }
-.drive-library-toolbar .admin-field { margin: 0; min-width: 0; }.drive-library-toolbar .admin-search { max-width: none; width: 100%; min-width: 0; }
-.drive-library-toolbar input, .drive-library-toolbar select { min-width: 0; width: 100%; }
-.drive-library-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; align-items: center; gap: 18px; padding: 23px 24px; border-bottom: 1px solid var(--admin-line); }
-.drive-library-row:last-child { border-bottom: 0; }.drive-library-file-icon { display: grid; place-items: center; width: 44px; height: 50px; background: #ef594e12; border: 1px solid #ef594e29; border-radius: 10px; color: var(--admin-accent); }
-.drive-library-file { min-width: 0; display: grid; gap: 7px; }.drive-file-name { color: var(--admin-ink); font: inherit; font-weight: 600; text-align: left; border: 0; padding: 0; background: none; cursor: pointer; overflow-wrap: anywhere; }.drive-file-name:hover { color: var(--admin-accent); }
-.drive-library-file small { color: var(--admin-muted); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }.drive-library-error { margin: 0; color: #ffa382; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
-.drive-library-actions { display: flex; flex-wrap: wrap; gap: 6px; }.drive-library-pagination { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-top: 1px solid var(--admin-line); color: var(--admin-muted); font-size: 12px; }.drive-library-pagination > div { display: flex; gap: 8px; }
-.drive-library-note { display: flex; align-items: flex-start; gap: 10px; color: var(--admin-muted); font-size: 11px; line-height: 1.8; }.drive-library-note svg { flex-shrink: 0; margin-top: 2px; }
-.drive-library-upload { padding: 24px; display: grid; gap: 22px; min-width: 0; }.drive-library-upload .admin-field { margin: 0; min-width: 0; }.drive-library-upload input[type=file] { max-width: 100%; width: 100%; min-width: 0; font-size: 12px; overflow: hidden; }.drive-selected-file { display: flex; gap: 12px; margin: 0; padding: 14px; border-radius: 10px; border: 1px solid var(--admin-line); }.drive-selected-file > span { min-width: 0; overflow-wrap: anywhere; font-size: 13px; }.drive-selected-file small { display: block; margin-top: 5px; color: var(--admin-muted); }.drive-selected-file svg { flex-shrink: 0; }
-.drive-library-preview { padding: 20px; display: grid; gap: 20px; min-width: 0; }.drive-library-pdf { width: 100%; max-height: 65dvh; overflow: auto; overscroll-behavior: contain; border-radius: 8px; background: #242424; }.drive-library-preview img,.drive-library-preview video { display: block; max-width: 100%; max-height: 65dvh; margin: auto; object-fit: contain; }.drive-library-preview .admin-button { justify-self: start; }
-@media (max-width: 760px) { .drive-library-row { grid-template-columns: 38px minmax(0, 1fr); gap: 14px; padding: 20px; }.drive-library-file-icon { width: 38px; height: 44px; }.drive-library-row > .drive-chip { grid-column: 2; justify-self: start; }.drive-library-actions { grid-column: 2; }.drive-library-toolbar { padding: 20px; grid-template-columns: minmax(0, 1fr); gap: 16px; }.drive-library-account { padding: 20px; }.drive-library-account > .admin-text-button { margin-left: 52px; }.drive-library-upload { padding: 20px; }.drive-library-upload .admin-form-actions { display: grid; grid-template-columns: 1fr; }.drive-library-upload .admin-form-actions .admin-button { justify-content: center; width: 100%; }.drive-library-account > div { flex-basis: calc(100% - 52px); } }
-.drive-library-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 20px 24px 0; }
-.drive-library-tabs > button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; border: 1px solid transparent; border-radius: 8px; padding: 9px 14px; color: var(--admin-muted); background: transparent; font: inherit; font-size: 12px; cursor: pointer; transition: background .18s, color .18s, border-color .18s; }
-.drive-library-tabs > button:hover, .drive-library-tabs > button.is-active { color: var(--admin-ink); background: #ef594e12; border-color: #ef594e36; }
-.drive-library-tabs > button.is-active { color: var(--admin-accent); }
-.drive-breadcrumbs { display: flex; flex-wrap: wrap; gap: 6px; padding: 22px 24px 0; min-width: 0; }
-.drive-breadcrumbs > span { display: flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
-.drive-breadcrumbs button { display: inline-flex; align-items: center; gap: 8px; border: 0; padding: 5px 3px; color: var(--admin-muted); background: transparent; font: inherit; font-size: 12px; line-height: 1.5; text-align: left; overflow-wrap: anywhere; cursor: pointer; min-width: 0; }
-.drive-breadcrumbs button[aria-current=page] { color: var(--admin-ink); font-weight: 600; }
-.drive-breadcrumbs button:hover { color: var(--admin-accent); }
-.drive-breadcrumbs svg { flex-shrink: 0; color: var(--admin-muted); }
-.drive-folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 22px 24px; border-bottom: 1px solid var(--admin-line); }
-.drive-folder-card { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 13px; border: 1px solid var(--admin-line); border-radius: 12px; background: #ffffff03; transition: background .18s, border-color .18s; }
-.drive-folder-card:hover { border-color: #ef594e45; background: #ef594e08; }
-.drive-folder-open { display: flex; flex: 1; align-items: center; gap: 13px; min-width: 0; min-height: 48px; padding: 0; color: var(--admin-ink); background: transparent; border: 0; text-align: left; cursor: pointer; font: inherit; }
-.drive-folder-open:disabled { opacity: .8; cursor: default; }
-.drive-folder-open > svg { flex-shrink: 0; color: var(--admin-accent); }
-.drive-folder-open > span { display: grid; gap: 5px; min-width: 0; }
-.drive-folder-open strong { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
-.drive-folder-open small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 10px; line-height: 1.6; color: var(--admin-muted); overflow-wrap: anywhere; }
-.drive-folder-card > .admin-icon-button { flex-shrink: 0; }
-.drive-dialog-item { display: flex; align-items: center; gap: 12px; margin: 0; padding: 14px; border: 1px solid var(--admin-line); border-radius: 10px; font-size: 14px; line-height: 1.6; min-width: 0; }
-.drive-dialog-item > svg { flex-shrink: 0; color: var(--admin-accent); }.drive-dialog-item > strong { min-width: 0; overflow-wrap: anywhere; }
-.drive-organize-actions { display: grid; gap: 12px; padding: 24px; }.drive-organize-actions > .admin-button { justify-content: flex-start; text-align: left; white-space: normal; line-height: 1.6; }.drive-organize-actions > p { margin: 0; }
-.drive-trash-action { color: #ffa382; }.drive-trash-note { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 18px 24px; border-bottom: 1px solid var(--admin-line); color: var(--admin-muted); font-size: 12px; line-height: 1.7; }.drive-trash-note > svg { flex-shrink: 0; margin-top: 2px; }
-.drive-library-upload textarea { min-width: 0; width: 100%; resize: vertical; }
-@media (max-width: 760px) { .drive-library-tabs { padding: 18px 20px 0; gap: 6px; }.drive-library-tabs > button { flex: 1 1 auto; padding: 8px 10px; font-size: 11px; }.drive-breadcrumbs { padding: 18px 20px 0; }.drive-folder-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); padding: 20px; gap: 10px; }.drive-organize-actions { padding: 20px; }.drive-trash-note { padding: 18px 20px; }.drive-library-actions { gap: 5px; }.drive-library-row > .drive-library-actions { min-width: 0; } }
-@media (max-width: 400px) { .drive-folder-grid { grid-template-columns: minmax(0, 1fr); }.drive-library-tabs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }.drive-library-tabs > button:last-child { grid-column: 1 / -1; }.drive-organize-actions > .admin-button { width: 100%; min-width: 0; overflow-wrap: anywhere; } }
-.drive-pending-changes { margin-bottom: 22px; padding: 20px 22px; border: 1px solid #ef594e45; border-radius: 14px; background: #ef594e09; }
-.drive-pending-changes > div { display: flex; gap: 12px; align-items: flex-start; }.drive-pending-changes > div > svg { flex-shrink: 0; color: var(--admin-accent); margin-top: 1px; }.drive-pending-changes > div > span { display: grid; gap: 7px; min-width: 0; }.drive-pending-changes strong { color: var(--admin-ink); font-size: 13px; }.drive-pending-changes small { color: var(--admin-muted); font-size: 11px; line-height: 1.7; }
-.drive-pending-changes ul { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 9px; }.drive-pending-changes li { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 12px; border-top: 1px solid var(--admin-line); }.drive-pending-changes li > span { min-width: 0; overflow-wrap: anywhere; font-size: 12px; line-height: 1.7; }.drive-pending-changes li > button { flex-shrink: 0; }
-@media (max-width: 400px) { .drive-pending-changes { padding: 18px 20px; }.drive-pending-changes li { flex-wrap: wrap; }.drive-pending-changes li > button { width: 100%; justify-content: center; } }
-.drive-page { min-width: 0; }
-.drive-folder-card { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; }
-.drive-folder-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-top: 9px; border-top: 1px solid var(--admin-line); min-width: 0; }
-.drive-folder-actions > .admin-text-button { gap: 7px; min-height: 44px; text-decoration: none; }
-.drive-current-folder { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; min-width: 0; padding: 18px 24px; border-bottom: 1px solid var(--admin-line); }
-.drive-current-folder > div:first-child { display: grid; gap: 5px; min-width: 0; flex: 1 1 200px; overflow-wrap: anywhere; }
-.drive-current-folder small { color: var(--admin-muted); font-size: 10px; }
-.drive-current-folder strong { font-size: 14px; font-weight: 500; }
-.drive-current-folder-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
-@media (max-width: 760px) { .drive-current-folder { padding-inline: 20px; } }
-@media (max-width: 480px) { .drive-current-folder-actions { width: 100%; } .drive-current-folder-actions > .admin-button { flex: 1; min-width: 0; } }
-@media (max-width: 767px) { .drive-page .admin-title-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }.drive-page .admin-title-actions > .admin-button:last-child { grid-column: 1 / -1; }.drive-page .admin-title-actions > .admin-button, .drive-page .admin-title-actions .admin-refresh > .admin-button { width: 100%; min-width: 0; justify-content: center; }.drive-page .admin-title-actions .admin-refresh { min-width: 0; } }
-
-/* Drive connection card in Configurações > Integrações (moved from platform.css). */
-.drive-meter { display: block; width: min(260px, 100%); height: 4px; margin-top: 10px; border-radius: 4px; background: var(--ds-border); overflow: hidden; }
-.drive-meter i { display: block; height: 100%; border-radius: 4px; background: var(--ds-success); }
-.drive-meter.is-high i { background: var(--ds-danger); }
-.drive-integration { margin-top: var(--ds-space-6); }
+@media (prefers-reduced-motion: reduce) {
+  .drive-progress__bar > span { width: 100%; opacity: .5; animation: none; }
+}

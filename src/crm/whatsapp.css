@@ -1,22 +1,66 @@
-.crm-whatsapp-compose { display: grid; gap: 20px; }
-.crm-whatsapp-recipient { display: flex; align-items: center; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--admin-line); }
-.crm-whatsapp-recipient > svg { color: #ffa381; flex-shrink: 0; }
-.crm-whatsapp-recipient > div { min-width: 0; }
-.crm-whatsapp-recipient strong { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
-.crm-whatsapp-recipient small { display: block; color: var(--admin-muted); font-size: 12px; margin-top: 6px; line-height: 1.6; overflow-wrap: anywhere; }
-.crm-whatsapp-preview { padding: 18px; border: 1px solid var(--admin-line); border-radius: 10px; background: #ffffff03; }
-.crm-whatsapp-preview > small, .crm-message-variables > small { color: var(--admin-muted); font-size: 9px; letter-spacing: .12em; }
-.crm-whatsapp-preview p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; font-size: 13px; margin-top: 12px; }
-.crm-whatsapp-missing { display: grid; gap: 14px; }
-.crm-whatsapp-missing > p, .crm-whatsapp-feedback { color: #ffa381; font-size: 12px; line-height: 1.7; }
-.crm-message-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-.crm-message-card { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
-.crm-message-card > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.crm-message-card > div > svg { color: #ffa381; }
-.crm-message-card h2 { font-size: 21px; font-weight: 500; letter-spacing: -.03em; overflow-wrap: anywhere; }
-.crm-message-card p { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--admin-muted); font-size: 12px; line-height: 1.8; flex: 1; }
-.crm-message-card > button { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; }
-.crm-message-variables { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.crm-message-variables > small { flex-basis: 100%; margin-bottom: 4px; }
-.crm-message-variables > button { padding: 8px; border: 1px solid var(--admin-line); border-radius: 5px; font-size: 11px; color: #ffa381; max-width: 100%; overflow-wrap: anywhere; }
-@media (max-width: 767px) { .crm-message-grid { grid-template-columns: minmax(0, 1fr); } .crm-message-card { padding: 20px; } }
+/* WhatsApp conversation dialog and shared message templates (Comercial). Tokens only. */
+
+/* ---------- Conversation dialog ---------- */
+.crm-wa { display: grid; gap: var(--ds-space-5); min-width: 0; }
+.crm-wa__form { margin: 0; padding: 0; border: 0; }
+.crm-wa__recipient { display: flex; align-items: center; gap: var(--ds-space-3); min-width: 0; padding: var(--ds-space-3) var(--ds-space-4); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-bg-subtle); }
+.crm-wa__recipient > div { flex: 1; min-width: 0; }
+.crm-wa__recipient strong { display: block; font-size: var(--ds-text-base); font-weight: var(--ds-weight-medium); overflow-wrap: anywhere; }
+.crm-wa__recipient small { display: block; margin-top: 2px; color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.5; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.crm-wa__recipient > .ds-badge { flex-shrink: 0; }
+.crm-wa__label-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ds-space-3); }
+.crm-wa__count { color: var(--ds-text-3); font-size: var(--ds-text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.crm-wa__missing { display: grid; gap: var(--ds-space-3); padding: var(--ds-space-4); border: 1px solid color-mix(in srgb, var(--ds-warning) 28%, transparent); border-radius: var(--ds-radius-md); background: var(--ds-warning-soft); }
+.crm-wa__missing-title { display: flex; align-items: flex-start; gap: var(--ds-space-2); color: var(--ds-text); font-size: var(--ds-text-md); line-height: 1.55; }
+.crm-wa__missing-title > svg { flex-shrink: 0; margin-top: 2px; color: var(--ds-warning); }
+.crm-wa__fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: var(--ds-space-3) var(--ds-space-4); }
+.crm-wa__unknown { grid-column: 1 / -1; }
+
+.crm-wa__preview { display: grid; gap: var(--ds-space-2); min-width: 0; }
+.crm-wa__preview > h3 { color: var(--ds-text); font-family: var(--ds-font); font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); letter-spacing: -0.005em; }
+.crm-wa__bubble { justify-self: end; max-width: min(100%, 440px); padding: 10px 14px; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-lg) var(--ds-radius-lg) var(--ds-radius-xs) var(--ds-radius-lg); background: var(--ds-surface-2); }
+.crm-wa__bubble p { font-size: var(--ds-text-md); line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.crm-wa__bubble.is-empty { justify-self: stretch; max-width: none; border-style: dashed; border-radius: var(--ds-radius-md); background: transparent; }
+.crm-wa__bubble.is-empty p { color: var(--ds-text-3); }
+.crm-wa-token { padding: 0 3px; border-radius: var(--ds-radius-xs); font-family: var(--ds-font-mono); font-size: .92em; }
+.crm-wa-token--chip { background: var(--ds-surface-3); color: var(--ds-text); }
+.crm-wa-token--missing { background: var(--ds-warning-soft); color: var(--ds-warning); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ds-warning) 35%, transparent); }
+.crm-wa .crm-wa__tip { margin: 0; }
+.crm-wa > .crm-wa__status:empty { margin-top: calc(var(--ds-space-5) * -1); }
+
+.crm-wa__variables { display: grid; gap: var(--ds-space-2); }
+.crm-wa__variables > p { color: var(--ds-text); font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); }
+.crm-wa__variables > div { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); }
+.crm-wa__variables button { min-height: 32px; max-width: 100%; padding: 0 var(--ds-space-3); border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-full); background: var(--ds-surface); color: var(--ds-text); font-family: var(--ds-font-mono); font-size: var(--ds-text-sm); overflow-wrap: anywhere; transition: background-color var(--ds-duration-1), border-color var(--ds-duration-1); }
+.crm-wa__variables button:hover:not(:disabled) { border-color: var(--ds-text-3); background: var(--ds-hover); }
+.crm-wa__variables button:disabled { opacity: .5; }
+.crm-wa__variables > small { color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.5; }
+.crm-wa__switch { align-items: flex-start; }
+.crm-wa__switch input { margin-top: 3px !important; }
+.crm-wa__switch > span { display: grid; gap: 2px; font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); }
+.crm-wa__switch small { color: var(--ds-text-2); font-weight: var(--ds-weight-regular); line-height: 1.5; }
+
+/* ---------- Templates page ---------- */
+.crm-wa-page { display: flex; flex-direction: column; gap: var(--ds-space-5); min-width: 0; }
+.crm-wa-page > .admin-page-title { margin-bottom: var(--ds-space-1); }
+.crm-wa-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-3); }
+.crm-wa-toolbar .admin-search { width: 320px; }
+.crm-wa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--ds-space-4); min-width: 0; }
+.crm-wa-card { display: flex; flex-direction: column; gap: var(--ds-space-3); min-width: 0; }
+.crm-wa-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ds-space-3); }
+.crm-wa-card h2 { min-width: 0; font-family: var(--ds-font); font-size: var(--ds-text-base); font-weight: var(--ds-weight-semibold); letter-spacing: -0.01em; line-height: 1.4; overflow-wrap: anywhere; }
+.crm-wa-card__body { display: -webkit-box; flex: 1; overflow: hidden; color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 8; line-clamp: 8; }
+.crm-wa-card > footer { display: flex; margin-top: auto; padding-top: var(--ds-space-1); }
+.crm-wa-grid .ds-skeleton--text { width: 85%; }
+
+@media (pointer: coarse) {
+  .crm-wa__variables button { min-height: 40px; }
+}
+@media (max-width: 767px) {
+  .crm-wa { gap: var(--ds-space-4); }
+  .crm-wa > .crm-wa__status:empty { margin-top: calc(var(--ds-space-4) * -1); }
+  .crm-wa__foot { flex-direction: column; align-items: stretch; }
+  .crm-wa-toolbar { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .crm-wa-toolbar .admin-search { width: 100%; }
+}

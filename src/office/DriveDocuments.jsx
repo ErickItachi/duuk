@@ -71,9 +71,10 @@ export function DriveDocuments({ scope, contract = null, title = 'Google Drive',
   const retry = item => run(async () => { await driveRequest({ action: 'retry', id: item.id }); await reload(); say('Nova tentativa solicitada. O estado será atualizado em instantes.') })
   return <section className="drive-panel" aria-label={title}>
     <div className="drive-panel__head"><h3><Icon name="cloud" size={16} />{title}</h3><div className="drive-panel__tools"><DriveChip state={current ? state : null} /><RefreshButton onRefresh={reload} disabled={busy} /></div></div>
-    {query.error && <p className="office-muted office-small" role="status">Não foi possível atualizar o estado do Google Drive. Os PDFs continuam no DUUK Admin. Use Atualizar para tentar novamente.</p>}
+    {query.error && <div className="ds-alert ds-alert--warning drive-panel__alert" role="status"><Icon name="cloudAlert" /><span>Não foi possível atualizar o estado do Google Drive. Os PDFs continuam no DUUK Admin.</span><button type="button" className="admin-text-button" disabled={query.loading} onClick={reload}>Tentar novamente</button></div>}
     {documents.length ? <div className="drive-documents">{documents.map(item => <DriveDocumentRow key={item.id} document={item} busy={busy} canManage={canManage} onView={view} onDownload={download} onRetry={retry} />)}</div>
-      : <p className="office-muted office-small">{query.loading || !current && !query.error ? 'Consultando o armazenamento…' : empty}</p>}
+      : query.loading && !query.data || !current && !query.error ? <div className="drive-panel__loading" role="status"><span className="ds-visually-hidden">Consultando o armazenamento…</span><span className="ds-skeleton" aria-hidden="true" /><span className="ds-skeleton" aria-hidden="true" /></div>
+      : <p className="office-muted office-small">{empty}</p>}
     {contract?.status === 'signed' && !documents.some(item => item.kind === 'contract_signed') && <p className="office-muted office-small">O PDF final será enviado assim que for gerado.</p>}
     {feedback?.identity === identity && <p className={`drive-feedback${feedback.failed ? ' is-error' : ''}`} role={feedback.failed ? 'alert' : 'status'}>{feedback.message}</p>}
     <FeedbackContext.Provider value={say}>{children}</FeedbackContext.Provider>

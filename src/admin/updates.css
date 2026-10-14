@@ -1,22 +1,72 @@
-.platform-about__status { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 9px; min-width: 0; width: 100%; padding-top: 16px; border-top: 1px solid var(--admin-line); color: var(--admin-muted); font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
-.platform-about__status svg { flex: 0 0 auto; margin-top: 2px; color: var(--admin-accent); }
-.platform-about__status span { min-width: 0; }
-.platform-release-current { margin-top: 24px; padding: clamp(22px, 3vw, 32px); }
-.platform-release-current > .admin-eyebrow { margin-bottom: 12px; }
-.release-notes__title { color: var(--admin-ink); font-family: 'Inter Tight', Inter, sans-serif; font-size: clamp(22px, 3vw, 28px); line-height: 1.25; letter-spacing: -.035em; margin: 0 0 24px; }
-.release-notes > section + section { margin-top: 24px; }
-.release-notes section h3 { display: flex; align-items: center; gap: 9px; margin: 0 0 12px; font-family: Inter, sans-serif; font-size: 12px; letter-spacing: .01em; font-weight: 600; }
-.release-notes section h3 svg { color: var(--admin-accent); flex-shrink: 0; }
-.release-notes section ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.75; overflow-wrap: anywhere; }
-.release-notes section li::marker { color: var(--admin-accent); }
-.admin-release-content { padding: clamp(20px, 4vw, 28px); }
-.admin-update-notice { flex-wrap: wrap; }
-.admin-update-notice__actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.admin-update-notice > .admin-update-notice__actions { flex: 0 1 auto; }
-.admin-update-notice__actions .admin-button { min-height: 42px; white-space: normal; }
+/* Release notes (About page and the "Novidades" dialog), the About page and the connection banner.
+   Tokens only, for both themes. The banner renders outside .admin-shell, so it sets its own font and
+   focus ring. .admin-update-notice is styled by shell/shell.css; only its phone layout lives here. */
+
+/* ---------- Release notes ---------- */
+.release-notes { display: grid; gap: var(--ds-space-5); min-width: 0; }
+.release-notes__title { color: var(--ds-text); font-family: var(--ds-font-display); font-size: var(--ds-text-xl); font-weight: var(--ds-weight-semibold); letter-spacing: -0.02em; line-height: 1.3; overflow-wrap: anywhere; text-wrap: balance; }
+.release-notes__group h3 { display: flex; align-items: center; gap: var(--ds-space-2); margin: 0 0 var(--ds-space-3); color: var(--ds-text); font-family: var(--ds-font); font-size: var(--ds-text-md); font-weight: var(--ds-weight-semibold); letter-spacing: 0; line-height: 1.4; }
+.release-notes__icon { display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; border: 1px solid var(--ds-border); border-radius: var(--ds-radius-sm); background: var(--ds-surface-2); color: var(--ds-text-2); }
+.release-notes__icon svg { width: 13px; height: 13px; }
+.release-notes__group ul { display: grid; gap: var(--ds-space-2); margin: 0; padding: 0; list-style: none; }
+.release-notes__group li { position: relative; padding-left: 30px; color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.6; overflow-wrap: anywhere; }
+.release-notes__group li::before { content: ''; position: absolute; top: calc(.8em - 2px); left: 9px; width: 4px; height: 4px; border-radius: 50%; background: var(--ds-text-3); }
+.admin-release-content { padding: var(--ds-space-6); }
+
+/* ---------- About ---------- */
+.settings-about { container: about / inline-size; display: grid; gap: var(--ds-space-4); min-width: 0; max-width: 860px; }
+.settings-about__app { display: grid; gap: var(--ds-space-5); }
+.settings-about__identity { display: flex; align-items: center; gap: var(--ds-space-4); min-width: 0; }
+.settings-about__identity img { flex-shrink: 0; width: 56px; height: 56px; border: 1px solid var(--ds-border); border-radius: 14px; }
+.settings-about__identity > div { min-width: 0; }
+.settings-about__identity h2 { font-size: var(--ds-text-lg); font-weight: var(--ds-weight-semibold); letter-spacing: -0.015em; }
+.settings-about__identity p { margin-top: 2px; color: var(--ds-text-2); font-size: var(--ds-text-md); }
+.settings-about__identity p strong { color: var(--ds-text); font-weight: var(--ds-weight-medium); font-variant-numeric: tabular-nums; }
+.settings-about__identity small { display: block; margin-top: 2px; color: var(--ds-text-3); font-size: var(--ds-text-sm); }
+.settings-about__status { display: flex; align-items: flex-start; gap: var(--ds-space-3); min-width: 0; padding: var(--ds-space-3) var(--ds-space-4); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-bg-subtle); color: var(--ds-text); font-size: var(--ds-text-md); line-height: 1.55; overflow-wrap: anywhere; }
+.settings-about__status > svg { flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; color: var(--ds-text-3); }
+.settings-about__status > .ds-spinner { margin-top: 2px; }
+.settings-about__status > span { min-width: 0; }
+.settings-about__status.is-checking { color: var(--ds-text-2); }
+.settings-about__status.is-success > svg { color: var(--ds-success); }
+.settings-about__status.is-warning > svg { color: var(--ds-warning); }
+.settings-about__status.is-info > svg { color: var(--ds-info); }
+.settings-about__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2); }
+.settings-about__actions .admin-button { white-space: normal; }
+@container about (min-width: 600px) {
+  .settings-about__app { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .settings-about__actions { grid-column: 2; grid-row: 1; justify-content: flex-end; }
+  .settings-about__status { grid-column: 1 / -1; }
+}
+.settings-release { display: grid; gap: var(--ds-space-5); }
+.settings-release__head { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); padding-bottom: var(--ds-space-4); border-bottom: 1px solid var(--ds-border); }
+.settings-release__head h2 { font-size: var(--ds-text-lg); font-weight: var(--ds-weight-semibold); letter-spacing: -0.015em; }
+.settings-release__head .ds-badge { font-variant-numeric: tabular-nums; }
+.settings-release__more { justify-self: start; }
+
+/* ---------- Connection banner (rendered outside .admin-shell) ---------- */
+.admin-connection { position: fixed; z-index: 500; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; display: flex; align-items: center; gap: var(--ds-space-3); width: min(560px, calc(100% - 32px)); padding: var(--ds-space-3) var(--ds-space-3) var(--ds-space-3) var(--ds-space-4); border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: var(--ds-shadow-lg); color: var(--ds-text); font-family: var(--ds-font); font-size: var(--ds-text-md); line-height: 1.5; translate: -50% 0; animation: ds-toast-in var(--ds-duration-3) var(--ds-ease-out); }
+.admin-connection > svg { flex-shrink: 0; width: 18px; height: 18px; color: var(--ds-warning); }
+.admin-connection > div { flex: 1 1 auto; min-width: 0; }
+.admin-connection strong { display: block; font-size: var(--ds-text-base); font-weight: var(--ds-weight-semibold); }
+.admin-connection p { margin: 2px 0 0; color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.5; }
+.admin-connection .admin-button { flex-shrink: 0; }
+.admin-connection :focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 2px; }
+.admin-connection.is-online { width: max-content; max-width: calc(100% - 32px); padding: var(--ds-space-2) var(--ds-space-4); }
+.admin-connection.is-online > svg { width: 16px; height: 16px; color: var(--ds-success); }
+
+/* ---------- Phones and touch ---------- */
 @media (max-width: 767px) {
+  .admin-release-content { padding: var(--ds-space-5) var(--ds-space-4); }
+  .release-notes__title { font-size: var(--ds-text-lg); }
+  .settings-about__actions > .admin-button { flex: 1 1 100%; }
   .admin-update-notice > .admin-update-notice__actions { flex-basis: 100%; }
-  .admin-update-notice__actions > button { flex: 1; padding-inline: 12px; }
-  .admin-update-notice > div:not(.admin-update-notice__actions) { flex-basis: calc(100% - 36px); }
-  .platform-about__actions > .admin-button { flex: 1 1 100%; }
+  .admin-update-notice__actions > .admin-button { flex: 1 1 0; }
+  .admin-shell ~ .admin-connection { bottom: calc(var(--ds-bottom-nav-height) + env(safe-area-inset-bottom) + 12px); }
+  .admin-connection:not(.is-online) { flex-wrap: wrap; }
+  .admin-connection:not(.is-online) > div { flex-basis: calc(100% - 30px); }
+  .admin-connection:not(.is-online) .admin-button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-connection { animation: none; }
 }

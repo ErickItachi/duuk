@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useRef,
   useState,
 } from "react";
@@ -12,7 +13,16 @@ import { useAuth } from "../content/AuthContext";
 import { useQuery } from "../office/useQuery";
 import { checked, notificationRequest } from "./api";
 import { Icon, Modal, RefreshButton } from "./components";
-import { Field, PageTitle, QueryState } from "./forms";
+import {
+  EmptyState,
+  ErrorState,
+  FieldError,
+  PageTitle,
+  Pagination,
+  QueryState,
+  SearchField,
+} from "./forms";
+import { matchesQuery, usePagination } from "./ds/list";
 import PushDevice from "./PushDevice";
 import { fmtTime } from "../crm/model";
 import { useUnsavedChanges } from "./unsavedChanges";
@@ -126,15 +136,127 @@ export function NotificationBell() {
     </Link>
   );
 }
+
+// Day groups follow Brasília time, like the rest of the admin.
+const zone = "America/Sao_Paulo";
+const dayParts = new Intl.DateTimeFormat("en-US", {
+  timeZone: zone,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const clock = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: zone,
+  hour: "2-digit",
+  minute: "2-digit",
+});
+const longDay = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "UTC",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+const longDayYear = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "UTC",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+function dayKey(value) {
+  const moment = new Date(value);
+  if (Number.isNaN(moment.getTime())) return "";
+  const parts = Object.fromEntries(
+    dayParts.formatToParts(moment).map((part) => [part.type, part.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+function dayLabel(key) {
+  const now = Date.now(),
+    today = dayKey(now);
+  if (!key) return "Sem data";
+  if (key === today) return "Hoje";
+  if (key === dayKey(now - 86400000)) return "Ontem";
+  const text = (key.slice(0, 4) === today.slice(0, 4) ? longDay : longDayYear).format(
+    new Date(`${key}T12:00:00Z`),
+  );
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+function byDay(items) {
+  const groups = [];
+  for (const item of items) {
+    const key = dayKey(item.created_at);
+    if (groups.at(-1)?.key === key) groups.at(-1).items.push(item);
+    else groups.push({ key, label: dayLabel(key), items: [item] });
+  }
+  return groups;
+}
+const timeOf = (value) => {
+  const moment = new Date(value);
+  return Number.isNaN(moment.getTime()) ? "" : clock.format(moment);
+};
+const categoryOf = (key) => categories.find((c) => c[0] === key);
+
 export function NotificationsPage({ notify }) {
   const auth=useAuth(),context = useContext(NotificationContext),
-    [filter, setFilter] = useState("all"),
+    [status, setStatus] = useState("all"),
+    [category, setCategory] = useState(""),
+    [search, setSearch] = useState(""),
     [busy, setBusy] = useState(false),[notice,setNotice]=useState(false);
-  const items = context.notifications.filter(
+  const all = context.notifications;
+  const unreadCount = all.filter((n) => !n.read_at).length;
+  const items = all.filter(
     (n) =>
-      filter === "all" ||
-      (filter === "unread" && !n.read_at) ||
-      n.category === filter,
+      (status === "all" || !n.read_at) &&
+      (!category || n.category === category) &&
+      matchesQuery(search, n.title, n.body, categoryOf(n.category)?.[1]),
+  );
+  const pager = usePagination(items, {
+    resetKey: `${status}|${category}|${search}`,
+  });
+  const clear = () => {
+    setStatus("all");
+    setCategory("");
+    setSearch("");
+  };
+  const markRead = (n) =>
+    context.mark(n.id).catch((cause) => notify(cause.message, true));
+  const empty = !all.length ? (
+    <EmptyState icon="bell" title="Tudo em dia.">
+      Novidades e lembretes aparecem aqui.
+    </EmptyState>
+  ) : status === "unread" && !category && !search ? (
+    <EmptyState
+      icon="checkCircle"
+      title="Nenhuma notificação não lida."
+      action={
+        <button
+          type="button"
+          className="admin-button admin-button--secondary"
+          onClick={() => setStatus("all")}
+        >
+          Ver todas
+        </button>
+      }
+    >
+      Você está em dia com o que chegou.
+    </EmptyState>
+  ) : (
+    <EmptyState
+      icon="search"
+      title="Nada encontrado."
+      action={
+        <button
+          type="button"
+          className="admin-button admin-button--secondary"
+          onClick={clear}
+        >
+          Limpar filtros
+        </button>
+      }
+    >
+      Ajuste a busca, a categoria ou o filtro de leitura.
+    </EmptyState>
   );
   return (
     <>
@@ -143,10 +265,12 @@ export function NotificationsPage({ notify }) {
         description="O que precisa da sua atenção, em um só lugar."
       >
         <RefreshButton onRefresh={context.reload} />
-        {auth.profile.is_super_admin&&<button className="admin-button" onClick={()=>setNotice(true)}><Icon name="plus"/>Novo aviso</button>}
+        {auth.profile.is_super_admin&&<button type="button" className="admin-button" onClick={()=>setNotice(true)}><Icon name="megaphone"/>Novo aviso</button>}
         <button
+          type="button"
           className="admin-button admin-button--secondary"
           disabled={!context.unread || busy}
+          aria-busy={busy}
           onClick={async () => {
             setBusy(true);
             try {
@@ -160,74 +284,118 @@ export function NotificationsPage({ notify }) {
           }}
         >
           <Icon name="check" />
-          Marcar todas como lidas
+          {busy ? "Marcando…" : "Marcar todas como lidas"}
         </button>
       </PageTitle>
-      <div className="admin-filter-tabs crm-followup-tabs">
-        {[
-          ["all", "Todas"],
-          ["unread", "Não lidas"],
-          ...categories.map(([k, l]) => [k, l]),
-        ].map(([k, l]) => (
-          <button
-            key={k}
-            className={filter === k ? "is-active" : ""}
-            aria-pressed={filter === k}
-            onClick={() => setFilter(k)}
-          >
-            {l}
-          </button>
-        ))}
-      </div>
       <QueryState query={context}>
-        <section className="admin-panel platform-list">
-          {items.map((n) => (
-            <article
-              key={n.id}
-              className={`platform-row notification-row${!n.read_at ? " is-unread" : ""}`}
-            >
-              <Icon
-                name={
-                  categories.find((c) => c[0] === n.category)?.[2] || "bell"
-                }
-              />
-              <Link
-                className="platform-row__main"
-                to={n.link}
-                onClick={() => {
-                  if (!n.read_at)
-                    context
-                      .mark(n.id)
-                      .catch((cause) => notify(cause.message, true));
-                }}
+        <section className="admin-panel settings-inbox" aria-label="Notificações recebidas">
+          <div className="ds-toolbar settings-toolbar">
+            <div className="ds-segmented" role="group" aria-label="Mostrar">
+              <button
+                type="button"
+                aria-pressed={status === "all"}
+                onClick={() => setStatus("all")}
               >
-                <span className="notification-category">{categories.find(c=>c[0]===n.category)?.[1]||"Sistema"}{!n.read_at&&<><i/>Não lida</>}</span>
-                <h2>{n.title}</h2>
-                <p>{n.body}</p>
-                <time dateTime={n.created_at}>{fmtTime(n.created_at)}</time>
-              </Link>
-              {!n.read_at && (
-                <button
-                  className="admin-icon-button"
-                  aria-label={`Marcar como lida: ${n.title}`}
-                  onClick={() =>
-                    context
-                      .mark(n.id)
-                      .catch((cause) => notify(cause.message, true))
-                  }
-                >
-                  <Icon name="check" />
-                </button>
-              )}
-            </article>
-          ))}
-          {!items.length && (
-            <div className="admin-empty">
-              <Icon name="bell" size={32} />
-              <h2>Tudo em dia.</h2>
-              <p>Novidades e lembretes aparecem aqui.</p>
+                Todas
+              </button>
+              <button
+                type="button"
+                aria-pressed={status === "unread"}
+                onClick={() => setStatus("unread")}
+              >
+                Não lidas
+                <span className="settings-count">{unreadCount}</span>
+              </button>
             </div>
-          )}
+            <div className="ds-toolbar__filters settings-filters">
+              <label className="settings-select">
+                <span className="ds-visually-hidden">Categoria</span>
+                <select
+                  className="ds-input ds-select"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  <option value="">Todas as categorias</option>
+                  {categories.map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <SearchField
+                value={search}
+                onChange={setSearch}
+                label="Buscar notificação"
+                placeholder="Buscar notificação…"
+              />
+            </div>
+          </div>
+          {pager.total
+            ? byDay(pager.items).map((day) => (
+                <section className="settings-day" key={day.key || "sem-data"}>
+                  <h2 className="settings-day__label">{day.label}</h2>
+                  <ul className="settings-notifications">
+                    {day.items.map((n) => {
+                      const unread = !n.read_at,
+                        kind = categoryOf(n.category);
+                      return (
+                        <li
+                          key={n.id}
+                          className={`settings-notification${unread ? " is-unread" : ""}`}
+                        >
+                          <span className="settings-notification__icon" aria-hidden="true">
+                            <Icon name={kind?.[2] || "bell"} size={17} />
+                          </span>
+                          <div className="settings-notification__content">
+                            <p className="settings-notification__meta">
+                              <span>{kind?.[1] || "Sistema"}</span>
+                              {unread && (
+                                <span className="settings-unread">
+                                  <i aria-hidden="true" />
+                                  Não lida
+                                </span>
+                              )}
+                            </p>
+                            <h3>
+                              <Link
+                                className="settings-notification__link"
+                                to={n.link}
+                                onClick={() => {
+                                  if (unread) markRead(n);
+                                }}
+                              >
+                                {n.title}
+                              </Link>
+                            </h3>
+                            {n.body && (
+                              <p className="settings-notification__body">{n.body}</p>
+                            )}
+                          </div>
+                          <div className="settings-notification__aside">
+                            <time dateTime={n.created_at} title={fmtTime(n.created_at)}>
+                              {timeOf(n.created_at)}
+                            </time>
+                            {unread && (
+                              <button
+                                type="button"
+                                className="admin-icon-button"
+                                aria-label={`Marcar como lida: ${n.title}`}
+                                title="Marcar como lida"
+                                onClick={() => markRead(n)}
+                              >
+                                <Icon name="check" />
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))
+            : empty}
+          <Pagination pager={pager} noun="notificações" />
         </section>
       </QueryState>
       {notice&&<NoticeEditor onClose={()=>setNotice(false)} onSaved={async()=>{await context.reload();notify("Aviso enviado à equipe.")}}/>}
@@ -235,10 +403,38 @@ export function NotificationsPage({ notify }) {
   );
 }
 function NoticeEditor({onClose,onSaved}) {
- const [title,setTitle]=useState(''),[body,setBody]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [title,setTitle]=useState(''),[body,setBody]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[errors,setErrors]=useState({});
  const attempt=useRef(null);useUnsavedChanges(!!title||!!body);
- const submit=async event=>{event.preventDefault();setBusy(true);setError('');if(!attempt.current||attempt.current.title!==title||attempt.current.body!==body)attempt.current={request_id:crypto.randomUUID(),title,body};try{await notificationRequest({action:'admin-notice',...attempt.current});await onSaved();onClose()}catch(cause){setError(cause.message)}finally{setBusy(false)}};
- return <Modal title="Novo aviso administrativo" subtitle="Enviado às pessoas ativas que permitem notificações de Sistema." onClose={()=>!busy&&onClose()}><form onSubmit={submit}><div className="admin-modal__body admin-form-grid"><Field label="Título" value={title} onChange={setTitle} required maxLength={120}/><Field label="Mensagem"><textarea value={body} onChange={e=>setBody(e.target.value)} required maxLength={500} rows={4}/></Field>{error&&<p className="admin-error" role="alert">{error}</p>}</div><div className="admin-modal__foot"><button type="button" className="admin-button admin-button--secondary" disabled={busy} onClick={onClose}>Cancelar</button><button className="admin-button" disabled={busy}>{busy?'Enviando…':'Enviar aviso'}</button></div></form></Modal>;
+ const titleId=useId(),bodyId=useId();
+ const submit=async event=>{
+  event.preventDefault();
+  if(busy)return;
+  // Same limits the server checks: both required, up to 120 and 500 characters.
+  const found={};
+  if(!title.trim())found.title='Informe o título do aviso.';else if(title.trim().length>120)found.title='Use até 120 caracteres.';
+  if(!body.trim())found.body='Escreva a mensagem do aviso.';else if(body.trim().length>500)found.body='Use até 500 caracteres.';
+  setErrors(found);
+  if(Object.keys(found).length){const form=event.currentTarget;requestAnimationFrame(()=>form.querySelector('[aria-invalid="true"]')?.focus());return}
+  setBusy(true);setError('');if(!attempt.current||attempt.current.title!==title||attempt.current.body!==body)attempt.current={request_id:crypto.randomUUID(),title,body};try{await notificationRequest({action:'admin-notice',...attempt.current});await onSaved();onClose()}catch(cause){setError(cause.message)}finally{setBusy(false)}};
+ return <Modal title="Novo aviso administrativo" subtitle="Enviado às pessoas ativas que permitem notificações de Sistema." onClose={()=>!busy&&onClose()}>
+  <form onSubmit={submit} noValidate aria-busy={busy}>
+   <div className="admin-modal__body settings-modal-stack">
+    <div className="admin-field">
+     <label className="admin-label" htmlFor={titleId}>Título</label>
+     <input id={titleId} value={title} onChange={e=>{setTitle(e.target.value);setErrors(old=>({...old,title:''}))}} required maxLength={120} aria-invalid={errors.title?'true':undefined} aria-describedby={errors.title?`${titleId}-error`:undefined}/>
+     <FieldError id={`${titleId}-error`}>{errors.title}</FieldError>
+    </div>
+    <div className="admin-field">
+     <label className="admin-label" htmlFor={bodyId}>Mensagem</label>
+     <textarea id={bodyId} value={body} onChange={e=>{setBody(e.target.value);setErrors(old=>({...old,body:''}))}} required maxLength={500} rows={4} aria-invalid={errors.body?'true':undefined} aria-describedby={`${bodyId}-hint${errors.body?` ${bodyId}-error`:''}`}/>
+     <small id={`${bodyId}-hint`}>{body.length}/500 caracteres</small>
+     <FieldError id={`${bodyId}-error`}>{errors.body}</FieldError>
+    </div>
+    {error&&<ErrorState>{error}</ErrorState>}
+   </div>
+   <div className="admin-modal__foot"><button type="button" className="admin-button admin-button--secondary" disabled={busy} onClick={onClose}>Cancelar</button><button type="submit" className="admin-button" disabled={busy} aria-busy={busy}>{busy?'Enviando…':'Enviar aviso'}</button></div>
+  </form>
+ </Modal>;
 }
 export function NotificationSettingsPage({ notify }) {
   const auth = useAuth(),
@@ -256,7 +452,9 @@ export function NotificationSettingsPage({ notify }) {
       ),
     );
   const [busy, setBusy] = useState("");
+  const switchId = useId();
   const preference = async (key, value) => {
+    if (busy) return;
     setBusy(key);
     try {
       checked(
@@ -281,34 +479,64 @@ export function NotificationSettingsPage({ notify }) {
         title="Preferências de notificações"
         description="Escolha o que faz sentido para o seu dia."
       />
-      <div className="platform-two-columns">
-        <section className="admin-panel platform-permissions">
-          <h2>Na plataforma</h2>
-          <p className="platform-muted">
-            As categorias respeitam os módulos permitidos para sua conta.
-          </p>
-          <QueryState query={query}>
-            {categories.map(([key, label, icon]) => (
-              <div className="platform-permission" key={key}>
-                <span>
-                  <Icon name={icon} />
-                  {label}
-                </span>
-                <button
-                  className={`platform-switch${query.data?.[key] ? " is-on" : ""}`}
-                  role="switch"
-                  aria-label={`Notificações de ${label}`}
-                  aria-checked={query.data?.[key] || false}
-                  disabled={!!busy}
-                  onClick={() => preference(key, !query.data[key])}
-                >
-                  <span />
-                </button>
+      <div className="settings-notify">
+        <div className="settings-notify__grid">
+          <section className="ds-card" aria-labelledby={`${switchId}-title`}>
+            <div className="settings-card__head">
+              <span className="settings-card__icon" aria-hidden="true">
+                <Icon name="bell" />
+              </span>
+              <div>
+                <h2 id={`${switchId}-title`}>Na plataforma</h2>
+                <p>As categorias respeitam os módulos permitidos para sua conta.</p>
               </div>
-            ))}
-          </QueryState>
-        </section>
-        <PushDevice />
+            </div>
+            {query.loading && !query.data ? (
+              <div className="settings-skeleton-rows" role="status" aria-label="Carregando preferências">
+                {categories.map(([key]) => (
+                  <span key={key} className="ds-skeleton" aria-hidden="true" />
+                ))}
+              </div>
+            ) : query.error && !query.data ? (
+              <ErrorState onRetry={query.reload}>{query.error}</ErrorState>
+            ) : (
+              <>
+                {query.error && (
+                  <ErrorState onRetry={query.reload}>{query.error}</ErrorState>
+                )}
+                <ul className="settings-switch-list">
+                  {categories.map(([key, label, icon]) => (
+                    <li className="settings-switch-row" key={key} aria-busy={busy === key || undefined}>
+                      <span className="settings-switch-row__icon" aria-hidden="true">
+                        <Icon name={icon} size={16} />
+                      </span>
+                      <label
+                        className="settings-switch-row__label"
+                        htmlFor={`${switchId}-${key}`}
+                      >
+                        {label}
+                      </label>
+                      {busy === key && <span className="ds-spinner" aria-hidden="true" />}
+                      <button
+                        id={`${switchId}-${key}`}
+                        type="button"
+                        className="settings-switch"
+                        role="switch"
+                        aria-label={`Notificações de ${label}`}
+                        aria-checked={query.data?.[key] || false}
+                        aria-disabled={busy ? "true" : undefined}
+                        onClick={() => preference(key, !query.data[key])}
+                      >
+                        <span aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </section>
+          <PushDevice />
+        </div>
       </div>
     </>
   );

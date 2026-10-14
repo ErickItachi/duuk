@@ -1,10 +1,25 @@
-.signing-verification { width: min(100%, 520px); margin: 32px auto; box-sizing: border-box; }
-.signing-verification > h1 { margin: 10px 0 18px; font-size: clamp(28px, 5vw, 42px); line-height: 1.12; }
-.signing-verification > h1 span { color: var(--admin-accent); }
-.signing-verification__mark { display: grid; place-items: center; width: 50px; height: 50px; margin-bottom: 28px; border: 1px solid var(--admin-line); border-radius: 15px; color: var(--admin-accent); background: var(--admin-raised); }
-.signing-verification .office-form { padding: 22px 0 0; gap: 20px; }
-.signing-verification .admin-button { width: 100%; justify-content: center; }
-.signing-verification__code { text-align: center; font-size: 24px !important; font-variant-numeric: tabular-nums; letter-spacing: .2em; }
-.signing-verification__notice { margin: 0; color: var(--admin-muted); overflow-wrap: anywhere; }
-.signing-verification__foot { padding-top: 22px; margin: 24px 0 0; border-top: 1px solid var(--admin-line); }
-@media (max-width: 560px) { .signing-verification { margin: 12px auto; padding: 22px 18px; } .signing-verification__mark { margin-bottom: 22px; } }
+/* E-mail confirmation before the signing page opens the document. */
+.signing-verification { width: min(100%, 480px); margin: var(--ds-space-6) auto 0; padding: var(--ds-space-8); }
+.signing-verification__mark { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: var(--ds-space-5); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-surface-2); color: var(--ds-text-2); }
+.signing-verification > .admin-eyebrow { margin-bottom: var(--ds-space-1); }
+.signing-verification > h1 { margin-bottom: var(--ds-space-2); font-size: var(--ds-text-2xl); font-weight: var(--ds-weight-semibold); letter-spacing: -0.025em; line-height: 1.2; overflow-wrap: anywhere; }
+.signing-verification > h1 span { color: var(--ds-accent); }
+.signing-verification > .office-muted strong { color: var(--ds-text); font-weight: var(--ds-weight-medium); }
+.signing-verification__steps { display: flex; flex-wrap: wrap; gap: var(--ds-space-2) var(--ds-space-5); margin: var(--ds-space-5) 0 0; padding: 0; list-style: none; color: var(--ds-text-3); font-size: var(--ds-text-sm); }
+.signing-verification__steps li { display: inline-flex; align-items: center; gap: var(--ds-space-2); }
+.signing-verification__steps li > span { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-full); font-size: var(--ds-text-xs); font-weight: var(--ds-weight-semibold); font-variant-numeric: tabular-nums; }
+.signing-verification__steps li.is-current { color: var(--ds-text); font-weight: var(--ds-weight-medium); }
+.signing-verification__steps li.is-current > span { border-color: var(--ds-primary); background: var(--ds-primary); color: var(--ds-on-primary); }
+.signing-verification__steps li.is-done > span { border-color: transparent; background: var(--ds-success-soft); color: var(--ds-success); }
+.signing-verification .signing-verification__form { gap: var(--ds-space-4); margin-top: var(--ds-space-5); padding: var(--ds-space-5) 0 0; border-top: 1px solid var(--ds-border); }
+.signing-verification__form > .admin-button[type=submit] { width: 100%; min-height: var(--ds-control-lg); }
+.signing-verification__form > .admin-text-button { justify-self: center; }
+.signing-verification .ds-alert > span { flex: 1 1 12rem; min-width: 0; }
+.office-signing .signing-verification .admin-field input.signing-verification__code { min-height: 52px; font-size: 24px !important; font-weight: var(--ds-weight-medium); font-variant-numeric: tabular-nums; letter-spacing: .3em; text-align: center; }
+.signing-verification__foot { margin-top: var(--ds-space-6); padding-top: var(--ds-space-4); border-top: 1px solid var(--ds-border); }
+@media (pointer: coarse) { .signing-verification__form > .admin-text-button { min-height: 40px; } }
+@media (max-width: 560px) {
+  .signing-verification { margin-top: 0; padding: var(--ds-space-6) var(--ds-space-5); }
+  .signing-verification__mark { margin-bottom: var(--ds-space-4); }
+  .signing-verification > h1 { font-size: 22px; }
+}

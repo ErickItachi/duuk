@@ -476,5 +476,33 @@
       ],
       "bin": true
     }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@supabase/supabase-js@2.117.2",
+        "npm:@tiptap/extension-highlight@3.31.4",
+        "npm:@tiptap/pm@3.31.4",
+        "npm:@tiptap/react@3.31.4",
+        "npm:@tiptap/starter-kit@3.31.4",
+        "npm:@types/react-dom@^19.2.7",
+        "npm:@types/react@^19.2.18",
+        "npm:@vitejs/plugin-react@^6.1.1",
+        "npm:fflate@0.8.3",
+        "npm:hls.js@^1.7.3",
+        "npm:libphonenumber-js@1.13.14",
+        "npm:lucide-react@1.52.0",
+        "npm:oxlint@^1.81.0",
+        "npm:pdf-lib@1.17.1",
+        "npm:pdfjs-dist@6.4.299",
+        "npm:playwright-core@1.56.1",
+        "npm:react-dom@^19.2.8",
+        "npm:react-router-dom@^7.18.4",
+        "npm:react@^19.2.8",
+        "npm:sharp@~0.35.4",
+        "npm:tus-js-client@4.3.1",
+        "npm:vite@^8.3.0"
+      ]
+    }
   }
 }

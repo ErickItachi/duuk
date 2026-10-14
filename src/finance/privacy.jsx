@@ -12,14 +12,15 @@ export function FinancePrivacy({ children }) {
  return <Privacy.Provider value={{ hidden, toggle }}>{children}</Privacy.Provider>
 }
 
+// Signed values keep their + or − in every theme; color only reinforces the direction.
 export function Money({ cents, signed = false, tone = false, className = '' }) {
  const { hidden } = useFinancePrivacy()
- const kind = tone && cents ? cents > 0 ? ' is-positive' : ' is-negative' : ''
- if (cents == null) return <span className={`finance-money${className ? ` ${className}` : ''}`}>—</span>
+ const kind = tone && cents && !hidden ? cents > 0 ? ' is-positive' : ' is-negative' : ''
+ if (cents == null) return <span className={`finance-money is-empty${className ? ` ${className}` : ''}`}>—</span>
  return <span className={`finance-money${kind}${className ? ` ${className}` : ''}`}>{hidden ? <><span aria-hidden="true">R$ •••••</span><span className="finance-sr-only">Valor oculto</span></> : signed ? signedMoney(cents) : money(cents)}</span>
 }
 
 export function PrivacyToggle() {
  const { hidden, toggle } = useFinancePrivacy()
- return <button type="button" className="admin-icon-button finance-eye" aria-pressed={hidden} aria-label={hidden ? 'Mostrar valores' : 'Ocultar valores'} title={hidden ? 'Mostrar valores' : 'Ocultar valores'} onClick={toggle}><Icon name={hidden ? 'eyeOff' : 'eye'} /></button>
+ return <button type="button" className="admin-icon-button finance-eye" aria-pressed={hidden} aria-label={hidden ? 'Mostrar valores' : 'Ocultar valores'} title={hidden ? 'Mostrar valores neste aparelho' : 'Ocultar valores neste aparelho'} onClick={toggle}><Icon name={hidden ? 'eyeOff' : 'eye'} /></button>
 }

@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { MapPin } from 'lucide-react'
 import { Icon } from '../admin/components'
-import { eventCategories, eventPayload, eventTime } from '../office/calendarModel'
+import { FieldError } from '../admin/forms'
+import { addDays, eventCategories, eventPayload, eventTime } from '../office/calendarModel'
 import { cents, dateLabel, expenseCategories } from '../office/model'
 import { fmtTime, localInput, timestamp } from '../crm/model'
 import { aiRequest } from './api'
@@ -41,6 +43,39 @@ function actionPayload(kind, form, clients) {
   }
   throw new Error('Esta ação ainda não está disponível.')
 }
+// Field-level messages for the same rules actionPayload and eventPayload enforce, plus the
+// 1900–2100 range the date inputs already declared. actionPayload stays the final guard.
+const outOfRange = value => Boolean(value) && (value < '1900-01-01' || value > '2100-12-31')
+function fieldErrors(kind, form, clients) {
+  const errors = {}
+  try {
+    if (kind === 'agenda.create') {
+      const end = form.end_date || form.start_date
+      if (!form.title.trim()) errors.title = 'Dê um nome ao compromisso.'
+      if (!form.start_date) errors.start_date = 'Informe a data inicial.'
+      else if (outOfRange(form.start_date)) errors.start_date = 'Use uma data entre 1900 e 2100.'
+      else if (end < form.start_date) errors.end_date = 'A data final deve ser igual ou posterior à inicial.'
+      else if (outOfRange(end)) errors.end_date = 'Use uma data entre 1900 e 2100.'
+      else if (end > addDays(form.start_date, 366)) errors.end_date = 'Use um período de até um ano.'
+      if (!form.all_day && !form.start_time) errors.start_time = 'Informe o horário de início.'
+      else if (!form.all_day && form.end_time && end === form.start_date && form.end_time <= form.start_time) errors.end_time = 'O horário final deve ser posterior ao inicial.'
+      if (!form.responsible_id) errors.responsible_id = 'Escolha quem será responsável pelo compromisso.'
+    }
+    if (kind === 'expense.create') {
+      if (!form.title.trim()) errors.title = 'Dê um nome à despesa.'
+      try { cents(form.amount) } catch (cause) { errors.amount = cause.message }
+      if (!form.due_date) errors.due_date = 'Informe a data de vencimento.'
+      else if (outOfRange(form.due_date)) errors.due_date = 'Use uma data entre 1900 e 2100.'
+      if (form.status === 'paid' && !form.paid_date) errors.paid_date = 'Informe a data do pagamento.'
+    }
+    if (kind === 'followup.create') {
+      if (!clients.some(item => item.id === form.client_id)) errors.client_id = 'Escolha o cliente para este follow-up.'
+      if (!form.due_at) errors.due_at = 'Informe a data e o horário do follow-up.'
+      if (!form.owner_id) errors.owner_id = 'Escolha quem será responsável pelo follow-up.'
+    }
+  } catch { return {} }
+  return errors
+}
 function destination(action) {
   if (action.kind.startsWith('agenda.')) {
     const day = action.result?.event?.start_date || action.payload?.start_date || action.result?.date_start
@@ -53,51 +88,66 @@ function destination(action) {
   return { to: '/admin/comercial/follow-ups', label: 'Abrir follow-ups' }
 }
 function Summary({ action, form, options }) {
-  if (action.kind === 'agenda.create') return <><strong>{form.title || 'Informe o título'}</strong><span>{form.start_date ? dateLabel(form.start_date) : 'Escolha a data'}{form.end_date && form.end_date !== form.start_date && ` até ${dateLabel(form.end_date)}`} · {form.all_day ? 'Dia inteiro' : form.start_time ? eventTime(form) : 'Escolha o horário'}</span>{form.location && <span>{form.location}</span>}{(options.people.find(person => person.id === form.responsible_id)?.name || form.responsible_hint) && <span>Responsável: {options.people.find(person => person.id === form.responsible_id)?.name || form.responsible_hint}</span>}</>
-  if (action.kind === 'expense.create') return <><strong>{form.title || 'Informe o título'}</strong><span>{form.amount ? `R$ ${form.amount}` : 'Informe o valor'} · {form.due_date ? `vence ${dateLabel(form.due_date)}` : 'Escolha o vencimento'}</span></>
-  return <><strong>{options.clients.find(item => item.id === form.client_id)?.name || form.client_hint || (action.status === 'completed' ? 'Cliente registrado' : 'Escolha o cliente')}</strong><span>{form.due_at ? fmtTime(timestamp(form.due_at)) : 'Escolha a data e o horário'}</span>{form.notes && <span>{form.notes}</span>}</>
+  const responsible = options.people.find(person => person.id === form.responsible_id)?.name || form.responsible_hint
+  if (action.kind === 'agenda.create') return <><strong>{form.title || 'Informe o título'}</strong><span><Icon name="calendar" size={14} />{form.start_date ? dateLabel(form.start_date) : 'Escolha a data'}{form.end_date && form.end_date !== form.start_date && ` até ${dateLabel(form.end_date)}`} · {form.all_day ? 'Dia inteiro' : form.start_time ? eventTime(form) : 'Escolha o horário'}</span>{form.location && <span><MapPin size={14} strokeWidth={1.6} aria-hidden="true" />{form.location}</span>}{responsible && <span><Icon name="user" size={14} />Responsável: {responsible}</span>}</>
+  if (action.kind === 'expense.create') return <><strong>{form.title || 'Informe o título'}</strong><span><Icon name="wallet" size={14} />{form.amount ? `R$ ${form.amount}` : 'Informe o valor'} · {form.due_date ? `vence ${dateLabel(form.due_date)}` : 'Escolha o vencimento'}</span></>
+  return <><strong>{options.clients.find(item => item.id === form.client_id)?.name || form.client_hint || (action.status === 'completed' ? 'Cliente registrado' : 'Escolha o cliente')}</strong><span><Icon name="clock" size={14} />{form.due_at ? fmtTime(timestamp(form.due_at)) : 'Escolha a data e o horário'}</span>{form.notes && <span className="is-note">{form.notes}</span>}</>
 }
-function Field({ label, children, ...props }) {
-  return <label className="admin-field"><span>{label}</span>{children || <input {...props} />}</label>
+// The label sits outside the error so screen readers announce the message once, through aria-describedby.
+function Field({ id, label, error, hint, children, ...props }) {
+  return <div className="admin-field">
+    <label className="admin-label" htmlFor={id}>{label}</label>
+    {children || <input id={id} {...props} aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-error` : undefined} />}
+    {hint}
+    <FieldError id={`${id}-error`}>{error}</FieldError>
+  </div>
 }
-function PersonField({ value, onChange, people, memberId, hint }) {
+const invalid = (error, id) => ({ 'aria-invalid': error ? true : undefined, 'aria-describedby': error ? `${id}-error` : undefined })
+function PersonField({ id, value, onChange, people, memberId, hint, error }) {
   const choices = people.some(person => person.id === memberId) ? people : [{ id: memberId, name: 'Você' }, ...people]
-  return <Field label="Responsável"><select required value={value || ''} onChange={event => onChange(event.target.value)}><option value="">Escolher responsável</option>{choices.filter(person => person.id).map(person => <option key={person.id} value={person.id}>{person.name}</option>)}</select>{hint && !value && <small>Escolha o cadastro de {hint}.</small>}</Field>
+  return <Field id={id} label="Responsável" error={error} hint={hint && !value && <small>Escolha o cadastro de {hint}.</small>}><select id={id} required value={value || ''} onChange={event => onChange(event.target.value)} {...invalid(error, id)}><option value="">Escolher responsável</option>{choices.filter(person => person.id).map(person => <option key={person.id} value={person.id}>{person.name}</option>)}</select></Field>
 }
-function ActionFields({ action, form, update, options, memberId, clientSearch, setClientSearch }) {
+function ActionFields({ id, action, form, update, options, memberId, clientSearch, setClientSearch, errors }) {
   if (action.kind === 'agenda.create') return <>
-    <Field label="Título" required maxLength={160} value={form.title} onChange={event => update('title', event.target.value)} />
-    <div className="duuk-ai-action__row"><Field label="Data inicial" type="date" required min="1900-01-01" max="2100-12-31" value={form.start_date} onChange={event => { const value = event.target.value; update('start_date', value); if (!form.end_date || form.end_date < value) update('end_date', value) }} /><Field label="Data final" type="date" required min={form.start_date || '1900-01-01'} max="2100-12-31" value={form.end_date || form.start_date} onChange={event => update('end_date', event.target.value)} /></div>
-    <label className="admin-checkbox"><input type="checkbox" checked={form.all_day} onChange={event => update('all_day', event.target.checked)} /><span>Dia inteiro</span></label>
-    {!form.all_day && <div className="duuk-ai-action__row"><Field label="Horário inicial" type="time" required value={form.start_time} onChange={event => update('start_time', event.target.value)} /><Field label="Horário final (opcional)" type="time" value={form.end_time} onChange={event => update('end_time', event.target.value)} /></div>}
-    <div className="duuk-ai-action__row"><Field label="Tipo"><select value={form.category} onChange={event => update('category', event.target.value)}>{Object.entries(eventCategories).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></Field><PersonField value={form.responsible_id} onChange={value => update('responsible_id', value)} people={options.people} memberId={memberId} hint={form.responsible_hint} /></div>
-    <Field label="Local (opcional)" maxLength={200} value={form.location} onChange={event => update('location', event.target.value)} />
-    <Field label="Observações (opcional)"><textarea rows={2} maxLength={2000} value={form.description} onChange={event => update('description', event.target.value)} /></Field>
+    <Field id={`${id}-title`} label="Título" error={errors.title} required maxLength={160} value={form.title} onChange={event => update('title', event.target.value)} />
+    <div className="duuk-ai-action__row"><Field id={`${id}-start-date`} label="Data inicial" error={errors.start_date} type="date" required min="1900-01-01" max="2100-12-31" value={form.start_date} onChange={event => { const value = event.target.value; update('start_date', value); if (!form.end_date || form.end_date < value) update('end_date', value) }} /><Field id={`${id}-end-date`} label="Data final" error={errors.end_date} type="date" required min={form.start_date || '1900-01-01'} max="2100-12-31" value={form.end_date || form.start_date} onChange={event => update('end_date', event.target.value)} /></div>
+    <label className="admin-check duuk-ai-action__check"><input type="checkbox" checked={form.all_day} onChange={event => update('all_day', event.target.checked)} /><span>Dia inteiro</span></label>
+    {!form.all_day && <div className="duuk-ai-action__row"><Field id={`${id}-start-time`} label="Horário inicial" error={errors.start_time} type="time" required value={form.start_time} onChange={event => update('start_time', event.target.value)} /><Field id={`${id}-end-time`} label="Horário final (opcional)" error={errors.end_time} type="time" value={form.end_time} onChange={event => update('end_time', event.target.value)} /></div>}
+    <div className="duuk-ai-action__row"><Field id={`${id}-category`} label="Tipo"><select id={`${id}-category`} value={form.category} onChange={event => update('category', event.target.value)}>{Object.entries(eventCategories).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></Field><PersonField id={`${id}-responsible`} value={form.responsible_id} onChange={value => update('responsible_id', value)} people={options.people} memberId={memberId} hint={form.responsible_hint} error={errors.responsible_id} /></div>
+    <Field id={`${id}-location`} label="Local (opcional)" maxLength={200} value={form.location} onChange={event => update('location', event.target.value)} />
+    <Field id={`${id}-description`} label="Observações (opcional)"><textarea id={`${id}-description`} rows={2} maxLength={2000} value={form.description} onChange={event => update('description', event.target.value)} /></Field>
   </>
   if (action.kind === 'expense.create') return <>
-    <Field label="Título" required maxLength={160} value={form.title} onChange={event => update('title', event.target.value)} />
-    <div className="duuk-ai-action__row"><Field label="Valor (R$)" required inputMode="decimal" placeholder="0,00" value={form.amount} onChange={event => update('amount', event.target.value)} /><Field label="Vencimento" type="date" required min="1900-01-01" max="2100-12-31" value={form.due_date} onChange={event => update('due_date', event.target.value)} /></div>
-    <div className="duuk-ai-action__row"><Field label="Categoria"><select value={form.category} onChange={event => update('category', event.target.value)}>{Object.entries(expenseCategories).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></Field><Field label="Situação"><select value={form.status} onChange={event => update('status', event.target.value)}><option value="pending">A pagar</option><option value="paid">Pago</option></select></Field></div>
-    {form.status === 'paid' && <Field label="Data do pagamento" type="date" required value={form.paid_date || ''} onChange={event => update('paid_date', event.target.value)} />}
-    <Field label="Observações (opcional)"><textarea rows={2} maxLength={2000} value={form.description} onChange={event => update('description', event.target.value)} /></Field>
+    <Field id={`${id}-title`} label="Título" error={errors.title} required maxLength={160} value={form.title} onChange={event => update('title', event.target.value)} />
+    <div className="duuk-ai-action__row"><Field id={`${id}-amount`} label="Valor (R$)" error={errors.amount} required inputMode="decimal" placeholder="0,00" value={form.amount} onChange={event => update('amount', event.target.value)} /><Field id={`${id}-due-date`} label="Vencimento" error={errors.due_date} type="date" required min="1900-01-01" max="2100-12-31" value={form.due_date} onChange={event => update('due_date', event.target.value)} /></div>
+    <div className="duuk-ai-action__row"><Field id={`${id}-category`} label="Categoria"><select id={`${id}-category`} value={form.category} onChange={event => update('category', event.target.value)}>{Object.entries(expenseCategories).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></Field><Field id={`${id}-status`} label="Situação"><select id={`${id}-status`} value={form.status} onChange={event => update('status', event.target.value)}><option value="pending">A pagar</option><option value="paid">Pago</option></select></Field></div>
+    {form.status === 'paid' && <Field id={`${id}-paid-date`} label="Data do pagamento" error={errors.paid_date} type="date" required value={form.paid_date || ''} onChange={event => update('paid_date', event.target.value)} />}
+    <Field id={`${id}-description`} label="Observações (opcional)"><textarea id={`${id}-description`} rows={2} maxLength={2000} value={form.description} onChange={event => update('description', event.target.value)} /></Field>
   </>
   return <>
-    <Field label="Buscar cliente" type="search" maxLength={100} value={clientSearch} placeholder="Nome do cliente" onChange={event => setClientSearch(event.target.value)} />
-    <Field label="Cliente"><select required value={form.client_id || ''} onChange={event => update('client_id', event.target.value)}><option value="">Escolher cliente</option>{options.clients.filter(client => client.id === form.client_id || client.name.toLocaleLowerCase('pt-BR').includes(clientSearch.trim().toLocaleLowerCase('pt-BR'))).map(client => <option key={client.id} value={client.id}>{client.name}</option>)}</select>{form.client_hint && !form.client_id && <small>Selecione o cadastro de {form.client_hint}.</small>}</Field>
-    <div className="duuk-ai-action__row"><Field label="Data e horário" type="datetime-local" required value={form.due_at} onChange={event => update('due_at', event.target.value)} /><PersonField value={form.owner_id} onChange={value => update('owner_id', value)} people={options.people} memberId={memberId} hint={form.owner_hint} /></div>
-    <Field label="Observações (opcional)"><textarea rows={2} maxLength={2000} value={form.notes} onChange={event => update('notes', event.target.value)} /></Field>
+    <Field id={`${id}-search`} label="Buscar cliente" type="search" maxLength={100} value={clientSearch} placeholder="Nome do cliente" onChange={event => setClientSearch(event.target.value)} />
+    <Field id={`${id}-client`} label="Cliente" error={errors.client_id} hint={form.client_hint && !form.client_id && <small>Selecione o cadastro de {form.client_hint}.</small>}><select id={`${id}-client`} required value={form.client_id || ''} onChange={event => update('client_id', event.target.value)} {...invalid(errors.client_id, `${id}-client`)}><option value="">Escolher cliente</option>{options.clients.filter(client => client.id === form.client_id || client.name.toLocaleLowerCase('pt-BR').includes(clientSearch.trim().toLocaleLowerCase('pt-BR'))).map(client => <option key={client.id} value={client.id}>{client.name}</option>)}</select></Field>
+    <div className="duuk-ai-action__row"><Field id={`${id}-due-at`} label="Data e horário" error={errors.due_at} type="datetime-local" required value={form.due_at} onChange={event => update('due_at', event.target.value)} /><PersonField id={`${id}-owner`} value={form.owner_id} onChange={value => update('owner_id', value)} people={options.people} memberId={memberId} hint={form.owner_hint} error={errors.owner_id} /></div>
+    <Field id={`${id}-notes`} label="Observações (opcional)"><textarea id={`${id}-notes`} rows={2} maxLength={2000} value={form.notes} onChange={event => update('notes', event.target.value)} /></Field>
   </>
 }
 function AgendaResult({ action }) {
   const items = Array.isArray(action.result?.items) ? action.result.items : []
-  return <div className="duuk-ai-agenda-result">{items.length ? items.map(item => <div key={item.id}><strong>{item.title}</strong><span>{dateLabel(item.start_date)} · {eventTime(item)}{item.location && ` · ${item.location}`}</span>{item.responsible_name && <span>Responsável: {item.responsible_name}</span>}</div>) : <p>Nenhum compromisso encontrado neste período.</p>}{action.result?.truncated && <small>Há mais compromissos. Abra a agenda para ver todos.</small>}</div>
+  return <div className="duuk-ai-agenda-result">{items.length ? <ul>{items.map(item => <li key={item.id}><strong>{item.title}</strong><span>{dateLabel(item.start_date)} · {eventTime(item)}{item.location && ` · ${item.location}`}</span>{item.responsible_name && <span>Responsável: {item.responsible_name}</span>}</li>)}</ul> : <p>Nenhum compromisso encontrado neste período.</p>}{action.result?.truncated && <small>Há mais compromissos. Abra a agenda para ver todos.</small>}</div>
+}
+function statusBadge(record, expired, kind) {
+  if (record.status === 'completed') return kind === 'agenda.list' ? ['neutral', 'Consultada'] : ['success', 'Salvo']
+  if (record.status === 'cancelled') return ['neutral', 'Descartado']
+  if (expired) return ['neutral', 'Expirado']
+  return ['accent', 'Para confirmar']
 }
 function ActionCard({ action, options, optionsError, optionsLoading, memberId, hasPermission, onUpdated, onDirtyChange, onBusyChange, onRefreshOptions, onSearchClients, generating }) {
-  const [form, setForm] = useState(() => initialForm(action, memberId)), [initial] = useState(() => JSON.stringify(initialForm(action, memberId))), [expanded, setExpanded] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(''), [now, setNow] = useState(Date.now), [attemptLocked, setAttemptLocked] = useState(false), [clientSearch, setClientSearch] = useState('')
-  const alive = useRef(true), running = useRef(false), attempt = useRef(null), record = action
+  const [form, setForm] = useState(() => initialForm(action, memberId)), [initial] = useState(() => JSON.stringify(initialForm(action, memberId))), [expanded, setExpanded] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(''), [now, setNow] = useState(Date.now), [attemptLocked, setAttemptLocked] = useState(false), [clientSearch, setClientSearch] = useState(''), [attempted, setAttempted] = useState(false)
+  const alive = useRef(true), running = useRef(false), attempt = useRef(null), card = useRef(null), record = action, baseId = useId()
   const definition = definitions[action.kind], pending = record.status === 'pending', allowed = hasPermission?.(definition.permission) === true
   const expired = record.expires_at && Date.parse(record.expires_at) <= now
   const dirty = pending && (busy || attemptLocked || JSON.stringify(form) !== initial)
+  const errors = pending && attempted ? fieldErrors(action.kind, form, options.clients) : {}
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
   useEffect(() => { onDirtyChange(action.id, dirty); return () => onDirtyChange(action.id, false) }, [action.id, dirty, onDirtyChange])
   useEffect(() => { onBusyChange(action.id, busy); return () => onBusyChange(action.id, false) }, [action.id, busy, onBusyChange])
@@ -122,12 +172,21 @@ function ActionCard({ action, options, optionsError, optionsLoading, memberId, h
   const apply = updated => {
     if (!updated || updated.id !== action.id || !['pending', 'completed', 'cancelled'].includes(updated.status)) throw new Error('Não foi possível confirmar o resultado. Tente novamente.')
     onUpdated(updated)
-    if (updated.status !== 'pending') { attempt.current = null; setAttemptLocked(false); setForm(initialForm(updated, memberId)); setExpanded(false); setError('') }
+    if (updated.status !== 'pending') { attempt.current = null; setAttemptLocked(false); setForm(initialForm(updated, memberId)); setExpanded(false); setAttempted(false); setError('') }
   }
   const execute = async event => {
     event.preventDefault()
     if (running.current || !pending || expired || !allowed || generating) return
     setError('')
+    if (!attempt.current) {
+      // Show what is missing next to each field before anything is sent.
+      const problems = fieldErrors(action.kind, form, options.clients)
+      if (Object.keys(problems).length) {
+        setAttempted(true); setExpanded(true)
+        requestAnimationFrame(() => card.current?.querySelector('[aria-invalid="true"]')?.focus())
+        return
+      }
+    }
     try {
       if (!attempt.current) { attempt.current = { action: 'action_execute', id: action.id, confirmed: true, client_request_id: crypto.randomUUID(), changes: actionPayload(action.kind, form, options.clients) }; setAttemptLocked(true) }
     } catch (cause) { setExpanded(true); setError(cause.message); return }
@@ -151,17 +210,19 @@ function ActionCard({ action, options, optionsError, optionsLoading, memberId, h
     try { const result = await aiRequest({ action: 'action_cancel', id: action.id }); if (alive.current) apply(result.action) } catch (cause) { if (alive.current) setError(cause.message) } finally { if (alive.current) { running.current = false; setBusy(false) } }
   }
   const link = destination(record), locked = busy || attemptLocked, displayForm = pending ? form : initialForm(record, memberId)
-  return <section className={`duuk-ai-action${pending ? '' : ' is-finished'}`} aria-label={definition.title} aria-busy={busy}>
-    <div className="duuk-ai-action__heading"><Icon name={definition.icon} size={17} /><strong>{definition.title}</strong><span>{record.status === 'completed' ? action.kind === 'agenda.list' ? 'Consultada' : 'Salvo' : record.status === 'cancelled' ? 'Descartado' : expired ? 'Expirado' : 'Para confirmar'}</span></div>
+  const [tone, statusLabel] = statusBadge(record, expired, action.kind)
+  return <section ref={card} className={`duuk-ai-action${pending ? '' : ' is-finished'}`} aria-label={definition.title} aria-busy={busy}>
+    <div className="duuk-ai-action__heading"><span className="duuk-ai-action__icon" aria-hidden="true"><Icon name={definition.icon} size={16} /></span><strong>{definition.title}</strong><span className={`ds-badge ds-badge--${tone}`}><i aria-hidden="true" />{statusLabel}</span></div>
     {action.kind === 'agenda.list' ? <AgendaResult action={record} /> : <div className="duuk-ai-action__summary"><Summary action={record} form={displayForm} options={options} /></div>}
-    {record.status === 'completed' && <div className="duuk-ai-action__completed" role="status">{definition.saved && <p><Icon name="check" size={15} />{definition.saved}.</p>}{allowed && <Link to={link.to}>{link.label}<Icon name="right" size={14} /></Link>}</div>}
-    {pending && <form onSubmit={execute}>
-      {expanded && !expired && <fieldset className="duuk-ai-action__fields" disabled={locked || !allowed}><ActionFields action={record} form={form} update={update} options={options} memberId={memberId} clientSearch={clientSearch} setClientSearch={setClientSearch} /></fieldset>}
-      {expired ? <p className="duuk-ai-action__note">Esta ação expirou. Faça um novo pedido para confirmar os dados atuais.</p> : <p className="duuk-ai-action__note">{action.kind !== 'expense.create' && 'Horário de Brasília. '}{attemptLocked && error ? 'Confira o resultado ou tente confirmar novamente com os mesmos dados.' : 'Revise os dados e confirme para salvar.'}</p>}
-      {!allowed && <p className="duuk-ai-action__note">Você não tem permissão para executar esta ação.</p>}
-      {optionsError && <p className="duuk-ai-action__note">{optionsError} <button type="button" className="admin-text-button" onClick={onRefreshOptions} disabled={optionsLoading}>Recarregar opções</button></p>}
-      {error && <p className="admin-error" role="alert">{error}</p>}
-      <div className="duuk-ai-action__buttons">{!expired && <><button className="admin-button" disabled={busy || !allowed || optionsLoading || generating}>{busy ? 'Salvando…' : attemptLocked && error ? 'Tentar confirmar novamente' : definition.button}</button><button type="button" className="admin-text-button" disabled={locked || !allowed} onClick={() => setExpanded(!expanded)}><Icon name={expanded ? 'up' : 'edit'} size={14} />{expanded ? 'Recolher' : 'Revisar'}</button></>}<button type="button" className="admin-text-button" disabled={busy || generating} onClick={cancel}>Descartar</button></div>
+    {record.status === 'completed' && <div className="duuk-ai-action__completed" role="status">{definition.saved && <p><Icon name="checkCircle" size={16} />{definition.saved}.</p>}{allowed && <Link className="admin-text-button" to={link.to}>{link.label}<Icon name="arrow" size={14} /></Link>}</div>}
+    {pending && <form onSubmit={execute} noValidate>
+      {expanded && !expired && <fieldset className="duuk-ai-action__fields" disabled={locked || !allowed}><legend className="ds-visually-hidden">Revisar {definition.title.toLowerCase()}</legend><ActionFields id={baseId} action={record} form={form} update={update} options={options} memberId={memberId} clientSearch={clientSearch} setClientSearch={setClientSearch} errors={errors} /></fieldset>}
+      {expired ? <p className="duuk-ai-action__note"><Icon name="clock" size={14} />Esta ação expirou. Faça um novo pedido para confirmar os dados atuais.</p> : <p className="duuk-ai-action__note"><Icon name="info" size={14} /><span>{action.kind !== 'expense.create' && 'Horário de Brasília. '}{attemptLocked && error ? 'Confira o resultado ou tente confirmar novamente com os mesmos dados.' : 'Revise os dados e confirme para salvar.'}</span></p>}
+      {!allowed && <p className="duuk-ai-action__note"><Icon name="lock" size={14} />Você não tem permissão para executar esta ação.</p>}
+      {optionsError && <p className="duuk-ai-action__note is-warning"><Icon name="warning" size={14} /><span>{optionsError} <button type="button" className="admin-text-button" onClick={onRefreshOptions} disabled={optionsLoading}>Recarregar opções</button></span></p>}
+      {Object.keys(errors).length > 0 && !error && <p className="duuk-ai-action__note is-error" role="alert"><Icon name="alertCircle" size={14} />Confira os campos destacados.</p>}
+      {error && <p className="admin-error" role="alert"><Icon name="alertCircle" /><span>{error}</span></p>}
+      <div className="duuk-ai-action__buttons">{!expired && <><button className="admin-button" disabled={busy || !allowed || optionsLoading || generating} aria-busy={busy}>{busy ? 'Salvando…' : attemptLocked && error ? 'Tentar confirmar novamente' : definition.button}</button><button type="button" className="admin-button admin-button--secondary" disabled={locked || !allowed} aria-expanded={expanded} onClick={() => setExpanded(!expanded)}><Icon name={expanded ? 'up' : 'edit'} size={14} />{expanded ? 'Recolher' : 'Revisar'}</button></>}<button type="button" className="admin-button admin-button--ghost duuk-ai-action__discard" disabled={busy || generating} onClick={cancel}>Descartar</button></div>
     </form>}
   </section>
 }

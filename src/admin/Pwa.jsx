@@ -273,8 +273,10 @@ export function PwaProvider({ children }) {
             </p>
           </div>
           <button
+            type="button"
             className="admin-button admin-button--secondary"
             disabled={checking}
+            aria-busy={checking}
             onClick={retry}
           >
             <Icon name="refresh" className={checking ? "is-spinning" : ""} />
@@ -284,8 +286,8 @@ export function PwaProvider({ children }) {
       )}
       {connection && (
         <div className="admin-connection is-online" role="status">
-          <Icon name="check" />
-          {connection}
+          <Icon name="checkCircle" />
+          <span>{connection}</span>
         </div>
       )}
       {updating && (
@@ -305,11 +307,13 @@ export function UpdateNotice() {
         <p>{pwa.message || "Atualize o aplicativo quando estiver pronto."}</p>
       </div>
       <div className="admin-update-notice__actions"><button
+        type="button"
         className="admin-button admin-button--secondary"
         onClick={() => pwa.openNotes(pwa.available)}
       >
         Ver novidades
       </button><button
+        type="button"
         className="admin-button admin-button--secondary"
         onClick={pwa.update}
         disabled={!!pwa.updating || pwa.checking}
@@ -319,77 +323,136 @@ export function UpdateNotice() {
     </div>
   );
 }
+const releaseDate = (value) =>
+  new Date(value + "T12:00:00-03:00").toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "America/Sao_Paulo",
+  });
+// Tone and icon of the version check; the words come from the provider unchanged.
+function checkTone(pwa) {
+  if (pwa.checking) return ["checking", null];
+  if (pwa.hasActionMessage) return ["warning", "warning"];
+  if (pwa.checkStatus === "current") return ["success", "checkCircle"];
+  if (pwa.checkStatus === "error") return ["warning", "wifi"];
+  if (pwa.checkStatus === "available") return ["info", "download"];
+  return ["neutral", "info"];
+}
 export function AboutAdminPage() {
   const pwa = usePwa();
+  const [tone, icon] = checkTone(pwa);
   return (
     <>
       <PageTitle
         title="Sobre o DUUK Admin"
         description="O espaço da equipe. Sempre em movimento."
       />
-      <section className="admin-panel platform-about">
-        <img
-          src="/admin-assets/icon-180.png"
-          width="76"
-          height="76"
-          alt="DUUK Admin"
-        />
-        <div>
-          <h2>DUUK Admin</h2>
-          <p>
-            Versão instalada <strong>{currentRelease.version}</strong>
-          </p>
-          <small>
-            Última atualização:{" "}
-            {new Date(
-              currentRelease.date + "T12:00:00-03:00",
-            ).toLocaleDateString("pt-BR")}
-          </small>
-        </div>
-        <div className="platform-about__actions">
-          <button
-            className="admin-button admin-button--secondary"
-            disabled={pwa.checking}
-            onClick={() => pwa.check(true)}
-            aria-busy={pwa.checking}
-          >
-            <Icon
-              name="refresh"
-              className={pwa.checking ? "is-spinning" : ""}
+      <div className="settings-about">
+        <section
+          className="ds-card settings-about__app"
+          aria-labelledby="settings-about-title"
+        >
+          <div className="settings-about__identity">
+            <img
+              src="/admin-assets/icon-180.png"
+              width="56"
+              height="56"
+              alt=""
             />
-            {pwa.checking
-              ? "Verificando atualizações…"
-              : "Verificar atualizações"}
-          </button>
+            <div>
+              <h2 id="settings-about-title">DUUK Admin</h2>
+              <p>
+                Versão instalada <strong>{currentRelease.version}</strong>
+              </p>
+              <small>
+                Última atualização:{" "}
+                <time dateTime={currentRelease.date}>
+                  {releaseDate(currentRelease.date)}
+                </time>
+              </small>
+            </div>
+          </div>
+          <div
+            className={`settings-about__status is-${tone}`}
+            role="status"
+            aria-live="polite"
+          >
+            {icon ? (
+              <Icon name={icon} />
+            ) : (
+              <span className="ds-spinner" aria-hidden="true" />
+            )}
+            <span>
+              {pwa.checking
+                ? "Verificando a versão disponível…"
+                : pwa.message ||
+                  "Confira se há uma nova versão disponível para o aplicativo."}
+            </span>
+          </div>
+          <div className="settings-about__actions">
+            {pwa.available && (
+              <button
+                type="button"
+                className="admin-button"
+                disabled={!!pwa.updating}
+                aria-busy={!!pwa.updating}
+                onClick={pwa.update}
+              >
+                <Icon name="download" />
+                Atualizar agora
+              </button>
+            )}
+            <button
+              type="button"
+              className="admin-button admin-button--secondary"
+              disabled={pwa.checking}
+              onClick={() => pwa.check(true)}
+              aria-busy={pwa.checking}
+            >
+              <Icon
+                name="refresh"
+                className={pwa.checking ? "is-spinning" : ""}
+              />
+              {pwa.checking
+                ? "Verificando atualizações…"
+                : "Verificar atualizações"}
+            </button>
+            {pwa.canInstall && (
+              <button
+                type="button"
+                className="admin-button admin-button--secondary"
+                onClick={pwa.install}
+              >
+                <Icon name="download" />
+                Instalar aplicativo
+              </button>
+            )}
+          </div>
+        </section>
+        <section
+          className="ds-card settings-release"
+          aria-labelledby="settings-release-title"
+        >
+          <header className="settings-release__head">
+            <h2 id="settings-release-title">Nesta versão</h2>
+            <span className="ds-badge ds-badge--neutral">
+              {currentRelease.version}
+            </span>
+          </header>
+          <ReleaseNotes release={currentRelease} />
           {pwa.available && (
             <button
-              className="admin-button"
-              disabled={!!pwa.updating}
-              onClick={pwa.update}
+              className="admin-text-button settings-release__more"
+              type="button"
+              onClick={() => pwa.openNotes(pwa.available)}
             >
-              Atualizar agora
+              Ver novidades da versão {pwa.available.version}
+              <Icon name="arrow" size={16} />
             </button>
           )}
-          {pwa.canInstall && (
-            <button
-              className="admin-button admin-button--secondary"
-              onClick={pwa.install}
-            >
-              <Icon name="download" />
-              Instalar aplicativo
-            </button>
-          )}
-        </div>
-        <div className="platform-about__status" role="status" aria-live="polite">
-          <Icon name={pwa.checking ? 'refresh' : pwa.hasActionMessage ? 'info' : pwa.checkStatus === 'current' ? 'check' : pwa.checkStatus === 'error' ? 'wifi' : 'info'} size={17} className={pwa.checking ? 'is-spinning' : ''} />
-          <span>{pwa.checking ? 'Verificando a versão disponível…' : pwa.message || 'Confira se há uma nova versão disponível para o aplicativo.'}</span>
-        </div>
-      </section>
-      <section className="admin-panel platform-release-current">
-        <p className="admin-eyebrow">NESTA VERSÃO · {currentRelease.version}</p>
-        <ReleaseNotes release={currentRelease} />
-        {pwa.available && <button className="admin-text-button" type="button" onClick={() => pwa.openNotes(pwa.available)}>Ver novidades da versão {pwa.available.version}<Icon name="arrow" size={16} /></button>}
-      </section>
+        </section>
+      </div>
     </>
   );
 }

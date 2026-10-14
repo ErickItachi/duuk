@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { mailRequest } from "../admin/api";
 import { Icon, Modal } from "../admin/components";
+import { ErrorState } from "../admin/forms";
 import { useUnsavedChanges } from "../admin/unsavedChanges";
 
 export default function MailConnection({ onClose, onConnected }) {
@@ -66,34 +67,36 @@ export default function MailConnection({ onClose, onConnected }) {
               </button>
             </span>
           </label>
-          <small id="titan-password-help" className="platform-muted">
+          <small id="titan-password-help" className="mail-connect-form__help">
             A senha fica criptografada no servidor. Vamos validar o recebimento
             e o envio antes de concluir.
           </small>
-          <p className="platform-muted">
-            A senha de entrada na conta GoDaddy pode ser diferente da senha do
-            e-mail. Se usa verificação em duas etapas, consulte as opções de
-            acesso na segurança da sua conta GoDaddy.
-          </p>
-          <a
-            className="admin-text-button"
-            href="https://www.godaddy.com/pt-br/help/usar-as-configuracoes-imap-para-adicionar-meu-professional-email-a-um-cliente-de-email-32204"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Ajuda da GoDaddy <Icon name="arrow" />
-          </a>
+          <div className="ds-alert ds-alert--info mail-connect-form__note">
+            <Icon name="info" />
+            <div>
+              <p>
+                A senha de entrada na conta GoDaddy pode ser diferente da senha
+                do e-mail. Se usa verificação em duas etapas, consulte as opções
+                de acesso na segurança da sua conta GoDaddy.
+              </p>
+              <a
+                className="admin-text-button"
+                href="https://www.godaddy.com/pt-br/help/usar-as-configuracoes-imap-para-adicionar-meu-professional-email-a-um-cliente-de-email-32204"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Ajuda da GoDaddy <Icon name="external" />
+                <span className="ds-visually-hidden"> (abre em uma nova aba)</span>
+              </a>
+            </div>
+          </div>
           {busy && (
             <p className="mail-connect-progress" role="status">
               <Icon name="refresh" className="is-spinning" />
               Validando entrada e envio…
             </p>
           )}
-          {error && (
-            <p className="admin-error" role="alert">
-              {error}
-            </p>
-          )}
+          {error && <ErrorState>{error}</ErrorState>}
         </div>
         <div className="admin-modal__foot">
           <button
@@ -104,7 +107,11 @@ export default function MailConnection({ onClose, onConnected }) {
           >
             Cancelar
           </button>
-          <button className="admin-button" disabled={busy || !password}>
+          <button
+            className="admin-button"
+            disabled={busy || !password}
+            aria-busy={busy}
+          >
             <Icon name="mail" />
             {busy ? "Conectando…" : "Conectar caixa"}
           </button>
