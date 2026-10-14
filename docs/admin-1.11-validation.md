@@ -26,3 +26,9 @@ Artefatos locais de QA: ~/.codex/tmp/duuk194. Segredos temporários ficam fora d
 Atualização de origem a cada 24 h segundo o provedor; recorrência futura não foi observada neste teste. Conta PJ não conectada neste turno. Limite do extrato online: dez páginas/5.000 movimentos por mês, aviso de resultado parcial. Autorização bancária pertence ao usuário; não substituí-la por Sandbox ou conexão comercial paga. O bloqueio inicial do botão do portal foi observado e relatado em issue pública do provedor; o usuário posteriormente conectou o banco real.
 
 Após push, verificar Vercel, domínio, versão/build/worker, sessão autenticada e site público antes de afirmar publicação.
+
+## Publicação verificada
+
+Código publicado no commit `859d1ca7ea97e24b987488765142638ed471b16c`, push origin/main concluído. Deployment Vercel 7059114702, Production/success, URL duuk-knkg9ok7c-duuk1.vercel.app. Domínio e metadata/worker confirmaram 1.11.0, build `3c8f11a5b3e84d51db9d`.
+
+A sessão autenticada no domínio confirmou seis movimentos reais, saldo disponível, CSV habilitado e zero erros em Conta conectada; viewport 1440 px sem overflow e padding interno 24 px. Sobre confirmou a versão mais recente, as novidades foram reconhecidas e o controller respondeu com o mesmo build. Site público/login conferidos em 320/1440 px, sem links do Admin ou erros JavaScript. O relatório para a continuidade do Claude está em `docs/claude-handoff-financeiro-1.11.md`.

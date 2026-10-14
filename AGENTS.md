@@ -100,6 +100,8 @@ O usuário autorizou publicar o painel administrativo em produção e aplicar as
 
 ## Extratos conectados — 1.11.0
 
+Continuidade para Claude/Cursor: leia `docs/claude-handoff-financeiro-1.11.md`, com o relatório da entrega, evidências e fluxo de publicação. Use este checkout publicado, não a pasta original antiga.
+
 - O usuário autorizou usar sua conta pessoal Nubank como teste da conexão central Meu Pluggy; depois trocará pela conta da empresa. Não declare a conta atual como PJ. Em 14/10/2026, a configuração foi validada por API real: conector 200, UPDATED/SUCCESS, uma conta BANK BRL, saldo válido e seis movimentos de outubro no endpoint DUUK autenticado. A atualização futura diária e a nova conta PJ ainda não foram testadas.
 - Permanece gratuito: somente proxy real MeuPluggy (200), sem Sandbox/diretos pagos/serviços de pagamentos. Origem atualiza a cada 24 h, conforme guia oficial; Atualizar consulta dados disponíveis. Não prometa tempo real e não force PATCH/saldo instantâneo em proxy concluído. A criação/reinicialização OAuth durante onboarding não é atualização periódica. Não guarde CPF/titular/conta completa, não envie dados bancários ao Gemini e não crie receitas/despesas automaticamente.
 - Configuração central no Vault, RPC service_role, Edge Auth/Financeiro em todas as ações e super administrador para configuração/desconexão, com revisão. Financeiro mostra saldo/data, mês, busca/tipo, CSV e erro explícito; a configuração permite trocar conexão. Desconectar remove apenas a configuração DUUK. Preserve o OFX privado separado.
