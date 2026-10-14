@@ -14,6 +14,7 @@ import {
 import { dateLabel, today } from "./model";
 import { useQuery } from "./useQuery";
 import { useSearchParams } from "react-router-dom";
+import { useCreateIntent } from "../admin/shell/hooks";
 import { useAuth } from "../content/AuthContext";
 
 function EventEditor({ record, day, people, currentUserId, onClose, onSaved }) {
@@ -271,6 +272,7 @@ export default function AgendaPage({ notify }) {
     ),
     dayEvents = eventsOnDay(visible, selected);
   const people = data?.month === month ? data.people || [] : [];
+  useCreateIntent("compromisso", () => setEditing("new"), data?.month === month);
   const peopleById = new Map(people.map((person) => [person.id, person]));
   const responsibleName = (record) =>
     peopleById.get(record.responsible_id)?.name || "Responsável não disponível";

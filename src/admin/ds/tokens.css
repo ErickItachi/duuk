@@ -1,0 +1,203 @@
+/* DUUK Admin 2.0 design tokens. Admin only: the institutional site keeps its own system.
+   Neutral surfaces carry the interface; the DUUK coral is a single, sparing accent. */
+
+@font-face { font-family: 'DUUK Inter'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(/fonts/inter-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'DUUK Inter'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(/fonts/inter-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'DUUK Inter Tight'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(/fonts/inter-tight-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'DUUK Inter Tight'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(/fonts/inter-tight-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+/* Dark is the default theme. It also covers pages without the theme attribute, such as the signing page. */
+:root {
+  /* Surfaces */
+  --ds-bg: #0a0a0a;
+  --ds-bg-subtle: #0e0e0e;
+  --ds-surface: #121212;
+  --ds-surface-2: #181818;
+  --ds-surface-3: #202020;
+  --ds-surface-inverse: #ededed;
+  --ds-field: #0c0c0c;
+  --ds-overlay: rgb(0 0 0 / 62%);
+  --ds-hover: rgb(255 255 255 / 4.5%);
+  --ds-active: rgb(255 255 255 / 7.5%);
+  --ds-selected: rgb(255 255 255 / 9%);
+  /* Lines */
+  --ds-border: #242424;
+  --ds-border-subtle: #1c1c1c;
+  --ds-border-strong: #333333;
+  /* Text */
+  --ds-text: #ededed;
+  --ds-text-2: #a1a1a1;
+  --ds-text-3: #8b8b8b;
+  --ds-text-inverse: #0a0a0a;
+  --ds-text-disabled: #5c5c5c;
+  /* Actions */
+  --ds-primary: #ededed;
+  --ds-primary-hover: #ffffff;
+  --ds-on-primary: #0a0a0a;
+  --ds-accent: #f05a4b;
+  --ds-accent-soft: rgb(240 90 75 / 12%);
+  --ds-accent-line: rgb(240 90 75 / 32%);
+  --ds-on-accent: #ffffff;
+  --ds-focus: #c8c8c8;
+  /* Status (always paired with an icon or text) */
+  --ds-success: #4cc38a;
+  --ds-success-soft: rgb(76 195 138 / 12%);
+  --ds-warning: #e9b14c;
+  --ds-warning-soft: rgb(233 177 76 / 12%);
+  --ds-danger: #ff6b6b;
+  --ds-danger-soft: rgb(255 107 107 / 11%);
+  --ds-danger-solid: #e5484d;
+  --ds-info: #6aa8ff;
+  --ds-info-soft: rgb(106 168 255 / 12%);
+  /* Charts: neutral series plus the accent for the highlighted one */
+  --ds-chart-1: #ededed;
+  --ds-chart-2: #8b8b8b;
+  --ds-chart-3: #4d4d4d;
+  --ds-chart-accent: #f05a4b;
+  --ds-chart-grid: #1f1f1f;
+  /* Elevation */
+  --ds-shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --ds-shadow-md: 0 8px 24px rgb(0 0 0 / 45%), 0 0 0 1px rgb(255 255 255 / 5%);
+  --ds-shadow-lg: 0 24px 64px rgb(0 0 0 / 60%), 0 0 0 1px rgb(255 255 255 / 6%);
+  --ds-skeleton: #1a1a1a;
+  --ds-skeleton-shine: rgb(255 255 255 / 4%);
+  --ds-logo-filter: none;
+  color-scheme: dark;
+}
+
+:root[data-duuk-admin-theme="light"] {
+  --ds-bg: #fafafa;
+  --ds-bg-subtle: #f5f5f5;
+  --ds-surface: #ffffff;
+  --ds-surface-2: #f5f5f5;
+  --ds-surface-3: #ececec;
+  --ds-surface-inverse: #0a0a0a;
+  --ds-field: #ffffff;
+  --ds-overlay: rgb(10 10 10 / 32%);
+  --ds-hover: rgb(0 0 0 / 3.5%);
+  --ds-active: rgb(0 0 0 / 6%);
+  --ds-selected: rgb(0 0 0 / 6.5%);
+  --ds-border: #e6e6e6;
+  --ds-border-subtle: #efefef;
+  --ds-border-strong: #d4d4d4;
+  --ds-text: #0a0a0a;
+  --ds-text-2: #525252;
+  --ds-text-3: #6b6b6b;
+  --ds-text-inverse: #fafafa;
+  --ds-text-disabled: #a3a3a3;
+  --ds-primary: #0a0a0a;
+  --ds-primary-hover: #262626;
+  --ds-on-primary: #fafafa;
+  --ds-accent: #cf3a2c;
+  --ds-accent-soft: rgb(207 58 44 / 8%);
+  --ds-accent-line: rgb(207 58 44 / 28%);
+  --ds-on-accent: #ffffff;
+  --ds-focus: #404040;
+  --ds-success: #16794a;
+  --ds-success-soft: rgb(22 121 74 / 9%);
+  --ds-warning: #9a5b00;
+  --ds-warning-soft: rgb(154 91 0 / 9%);
+  --ds-danger: #c62828;
+  --ds-danger-soft: rgb(198 40 40 / 8%);
+  --ds-danger-solid: #d93036;
+  --ds-info: #1d5fd1;
+  --ds-info-soft: rgb(29 95 209 / 8%);
+  --ds-chart-1: #0a0a0a;
+  --ds-chart-2: #737373;
+  --ds-chart-3: #c4c4c4;
+  --ds-chart-accent: #cf3a2c;
+  --ds-chart-grid: #efefef;
+  --ds-shadow-sm: 0 1px 2px rgb(0 0 0 / 6%);
+  --ds-shadow-md: 0 8px 24px rgb(0 0 0 / 8%), 0 0 0 1px rgb(0 0 0 / 5%);
+  --ds-shadow-lg: 0 24px 64px rgb(0 0 0 / 14%), 0 0 0 1px rgb(0 0 0 / 6%);
+  --ds-skeleton: #efefef;
+  --ds-skeleton-shine: rgb(255 255 255 / 70%);
+  --ds-logo-filter: brightness(0);
+  color-scheme: light;
+}
+
+:root {
+  /* Type */
+  --ds-font: 'DUUK Inter', Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ds-font-display: 'DUUK Inter Tight', 'Inter Tight', 'DUUK Inter', Inter, ui-sans-serif, system-ui, sans-serif;
+  --ds-font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  --ds-text-xs: 11px;
+  --ds-text-sm: 12px;
+  --ds-text-md: 13px;
+  --ds-text-base: 14px;
+  --ds-text-lg: 16px;
+  --ds-text-xl: 20px;
+  --ds-text-2xl: 24px;
+  --ds-text-3xl: 30px;
+  --ds-weight-regular: 400;
+  --ds-weight-medium: 500;
+  --ds-weight-semibold: 600;
+  /* Space (4px grid) */
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 20px;
+  --ds-space-6: 24px;
+  --ds-space-8: 32px;
+  --ds-space-10: 40px;
+  --ds-space-12: 48px;
+  /* Shape */
+  --ds-radius-xs: 4px;
+  --ds-radius-sm: 6px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 12px;
+  --ds-radius-xl: 16px;
+  --ds-radius-full: 999px;
+  /* Controls */
+  --ds-control-sm: 30px;
+  --ds-control-md: 36px;
+  --ds-control-lg: 44px;
+  /* Motion */
+  --ds-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ds-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ds-ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --ds-duration-1: 120ms;
+  --ds-duration-2: 180ms;
+  --ds-duration-3: 240ms;
+  --ds-duration-4: 320ms;
+  /* Layout */
+  --ds-sidebar-width: 248px;
+  --ds-sidebar-collapsed: 64px;
+  --ds-header-height: 56px;
+  --ds-bottom-nav-height: 64px;
+  --ds-content-max: 1360px;
+  --ds-gutter: 32px;
+}
+
+@media (pointer: coarse) { :root { --ds-control-md: 44px; --ds-control-sm: 40px; } }
+@media (max-width: 1199px) { :root { --ds-gutter: 24px; } }
+@media (max-width: 599px) { :root { --ds-gutter: 16px; } }
+
+/* Legacy names used across module styles now resolve to the 2.0 tokens. */
+.admin-shell, .admin-modal, .admin-login, .admin-loader {
+  --admin-ink: var(--ds-text);
+  --admin-muted: var(--ds-text-2);
+  --admin-line: var(--ds-border);
+  --admin-paper: var(--ds-bg);
+  --admin-surface: var(--ds-surface);
+  --admin-raised: var(--ds-surface-2);
+  --admin-accent: var(--ds-accent);
+  --admin-focus: var(--ds-focus);
+  --admin-radius: var(--ds-radius-lg);
+  --ui-shell: var(--ds-bg-subtle);
+  --ui-soft: var(--ds-hover);
+  --ui-hover: var(--ds-hover);
+  --ui-edge: var(--ds-border-subtle);
+  --ui-edge-strong: var(--ds-border);
+  --ui-accent-wash: var(--ds-accent-soft);
+  --ui-accent-edge: var(--ds-accent-line);
+  --ui-shadow: transparent;
+  --coral: var(--ds-accent);
+  --coral-mid: var(--ds-accent);
+  --orange: var(--ds-accent);
+  --black: var(--ds-bg);
+  --off-white: var(--ds-text);
+  --gradient: var(--ds-accent);
+  --ease: var(--ds-ease-out);
+}

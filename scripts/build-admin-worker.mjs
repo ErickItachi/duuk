@@ -9,7 +9,12 @@ html = html
   .replace(/<link[^>]*rel="icon"[^>]*>/g, "")
   .replace(
     "</head>",
-    '<link rel="icon" href="/admin-assets/favicon.ico"><link rel="icon" type="image/png" sizes="32x32" href="/admin-assets/icon-32.png"><link rel="apple-touch-icon" href="/admin-assets/icon-180.png"><link rel="manifest" href="/admin-assets/manifest.webmanifest"><meta name="theme-color" content="#080808"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="robots" content="noindex,nofollow"></head>',
+    '<link rel="icon" href="/admin-assets/favicon.ico"><link rel="icon" type="image/png" sizes="32x32" href="/admin-assets/icon-32.png"><link rel="apple-touch-icon" href="/admin-assets/icon-180.png"><link rel="manifest" href="/admin-assets/manifest.webmanifest"><meta name="theme-color" content="#0a0a0a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="robots" content="noindex,nofollow"><script src="/admin-assets/boot.js"></script></head>',
+  )
+  // The start screen is in the HTML itself, so it shows before any script downloads.
+  .replace(
+    '<div id="root"></div>',
+    '<div id="root"><div class="admin-loader" role="status" aria-live="polite" aria-busy="true" style="--admin-loader-progress:.12"><div class="admin-loader__content"><div class="admin-loader__stage"><span class="admin-loader__frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span><img class="admin-loader__logo" src="/media/duuk-logo-white.png" alt="DUUK" width="718" height="886" fetchpriority="high"></div><span class="admin-loader__progress" aria-hidden="true"><span></span></span><p class="admin-loader__label">Abrindo o DUUK Admin…</p></div></div></div>',
   );
 await writeFile(new URL("admin-shell.html", root), html);
 const assets = (await readdir(new URL("assets/", root)))
@@ -18,7 +23,7 @@ const assets = (await readdir(new URL("assets/", root)))
 const fonts = (await readdir(new URL("fonts/", root), { recursive: true }))
   .filter((f) => /\.woff2?$/.test(f))
   .map((f) => "/fonts/" + f);
-const icons = [32, 64, 180, 192, 512].map((s) => `/admin-assets/icon-${s}.png`);
+const icons = [32, 64, 180, 192, 512].map((s) => `/admin-assets/icon-${s}.png`).concat("/admin-assets/boot.js");
 const source = await readFile(
   new URL("admin-worker.template.js", import.meta.url),
   "utf8",

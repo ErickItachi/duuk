@@ -1,3 +1,6 @@
+import '../admin/ds/tokens.css'
+import '../admin/ds/base.css'
+import '../admin/ds/components.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { signRequest } from './api'

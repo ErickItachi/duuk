@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useCreateIntent } from '../admin/shell/hooks'
 import { ConfirmModal, Icon, Modal, RefreshButton } from '../admin/components'
 import { LoadingPanel } from '../admin/forms'
 import { useUnsavedChanges } from '../admin/unsavedChanges'
@@ -58,6 +59,8 @@ function FinanceWorkspace({ notify }) {
  const view = tabs.some(([key]) => key === requestedTab) ? requestedTab : 'inicio'
  const [type, setType] = useState('all'), [status, setStatus] = useState('all'), [basis, setBasis] = useState('due'), [search, setSearch] = useState(''), [category, setCategory] = useState('all'), [editing, setEditing] = useState(null), [removing, setRemoving] = useState(null), [goalEditing, setGoalEditing] = useState(false), [exporting, setExporting] = useState(false), [exportError, setExportError] = useState('')
  const ledger = useRef(null), bank = useBankData()
+ useCreateIntent('receita', () => setEditing({type:'income'}))
+ useCreateIntent('despesa', () => setEditing({type:'expense'}))
  const setParam = (key, value) => setParams(previous => {const next = new URLSearchParams(previous);next.set(key,value);return next},{replace:true})
  const changeMonth = value => {setMonth(value);setCategory('all');setParam('mes',value)}
  const setView = key => setParam('aba',key)

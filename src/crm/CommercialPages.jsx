@@ -1,6 +1,7 @@
 import { useUnsavedChanges } from "../admin/unsavedChanges";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useCreateIntent } from "../admin/shell/hooks";
 import { useAuth } from "../content/AuthContext";
 import { useQuery } from "../office/useQuery";
 import { brl, cents } from "../office/model";
@@ -824,6 +825,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
     followups: [],
     people: [],
   };
+  useCreateIntent("lead", () => setEditing("new"), mode === "clients" && !!query.data);
   const requestedClient=params.get('cliente'),openedClient=useRef('');
   useEffect(()=>{const client=data.clients.find(item=>item.id===requestedClient);if(!client||openedClient.current===requestedClient)return;const timer=setTimeout(()=>{openedClient.current=requestedClient;setDetail(client)},0);return()=>clearTimeout(timer)},[data.clients,requestedClient]);
   const filtered = useMemo(

@@ -2,6 +2,7 @@ import { LoadingPanel } from '../admin/forms'
 import { useUnsavedChanges } from '../admin/unsavedChanges'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useCreateIntent } from '../admin/shell/hooks'
 import { ConfirmModal, Icon, Modal, RefreshButton } from '../admin/components'
 import { listContracts, listDriveStatuses, officeRequest } from './api'
 import { contractStatuses, dateLabel, downloadFile, fieldTypes, partyLabels } from './model'
@@ -28,6 +29,7 @@ export default function ContractsPage({notify}) {
   const drive=(driveQuery.data||[]).reduce((groups,item)=>{(groups[item.contract_id]??=[]).push(item);return groups},{})
   const refresh=async()=>{const [result]=await Promise.all([load(),reloadDrive()]);return result}
   const contracts=data||[]
+  useCreateIntent('contrato',()=>setUploading(true))
   const active=contracts.filter(c=>!c.deleted_at),deleted=contracts.filter(c=>c.deleted_at)
   const visible=trash?deleted:active.filter(c=>filter==='all'||c.status===filter)
   return <>

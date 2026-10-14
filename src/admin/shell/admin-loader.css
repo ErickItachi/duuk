@@ -1,0 +1,33 @@
+/* Admin start screen. Lives in the main bundle so it can cover the admin chunk download.
+   It stays dark in both themes, like a film opening, so the original white logo is never recolored here. */
+.admin-loader {
+  --loader-bg: #0a0a0a; --loader-line: #2a2a2a; --loader-fill: #ededed; --loader-text: #8b8b8b; --loader-mark: rgb(237 237 237 / 55%);
+  position: fixed; z-index: 1000; inset: 0;
+  display: grid; place-items: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--loader-bg); color: var(--loader-text);
+  font-family: 'DUUK Inter', Inter, ui-sans-serif, system-ui, sans-serif;
+  transition: opacity 260ms cubic-bezier(.22, 1, .36, 1), visibility 0s linear 260ms;
+}
+.admin-loader.is-leaving { opacity: 0; visibility: hidden; pointer-events: none; }
+.admin-loader__content { display: flex; flex-direction: column; align-items: center; gap: 28px; transition: transform 260ms cubic-bezier(.22, 1, .36, 1); }
+.admin-loader.is-leaving .admin-loader__content { transform: scale(.985); }
+.admin-loader__stage { position: relative; display: grid; place-items: center; width: 132px; height: 132px; }
+.admin-loader__logo { display: block; width: 52px; height: auto; }
+/* Viewfinder corners: a quiet, geometric nod to the camera finding focus. */
+.admin-loader__frame { position: absolute; inset: 0; animation: admin-loader-focus 1.8s cubic-bezier(.65, 0, .35, 1) infinite alternate; }
+.admin-loader__frame i { position: absolute; width: 16px; height: 16px; border: 0 solid var(--loader-mark); }
+.admin-loader__frame i:nth-child(1) { top: 0; left: 0; border-top-width: 1.5px; border-left-width: 1.5px; }
+.admin-loader__frame i:nth-child(2) { top: 0; right: 0; border-top-width: 1.5px; border-right-width: 1.5px; }
+.admin-loader__frame i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.admin-loader__frame i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+.admin-loader__progress { position: relative; width: 120px; height: 2px; overflow: hidden; border-radius: 2px; background: var(--loader-line); }
+.admin-loader__progress > span { position: absolute; inset: 0; border-radius: inherit; background: var(--loader-fill); transform: scaleX(var(--admin-loader-progress, .1)); transform-origin: left; transition: transform 420ms cubic-bezier(.22, 1, .36, 1); }
+.admin-loader__progress > span::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 45%), transparent); transform: translateX(-100%); animation: admin-loader-activity 1.4s cubic-bezier(.65, 0, .35, 1) infinite; }
+.admin-loader__label { min-height: 18px; margin: -12px 0 0; font-size: 12px; letter-spacing: .01em; line-height: 1.5; text-align: center; }
+@keyframes admin-loader-focus { from { transform: scale(1.06); opacity: .55; } to { transform: scale(.94); opacity: 1; } }
+@keyframes admin-loader-activity { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .admin-loader, .admin-loader__content, .admin-loader__progress > span { transition: none; }
+  .admin-loader__frame, .admin-loader__progress > span::after { animation: none; }
+}
