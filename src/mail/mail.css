@@ -742,3 +742,85 @@
     transition: none;
   }
 }
+
+/* Mail connection (moved from platform.css in 2.0). */
+
+.mail-connect-form {
+  display: grid;
+  gap: 18px;
+}
+.mail-connect-form p {
+  margin: 0;
+}
+.mail-connect-form small {
+  line-height: 1.6;
+}
+.mail-connect-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--admin-accent);
+}
+.mail-connect-progress svg {
+  flex-shrink: 0;
+}
+.mail-connection {
+  display: grid;
+  justify-items: start;
+  gap: 20px;
+  padding: 40px;
+  margin-top: 24px;
+}
+.mail-connection h2 {
+  font-weight: 500;
+  font-size: 26px;
+  letter-spacing: -0.04em;
+}
+.mail-connection p {
+  color: var(--admin-muted);
+  font-size: 13px;
+  line-height: 1.8;
+  max-width: 570px;
+}
+.mail-row {
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--admin-line);
+}
+.mail-unread-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--admin-accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mail-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 28px 0;
+}
+.mail-associate {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--admin-line);
+}
+.mail-more {
+  padding: 20px;
+}
+@media (max-width: 767px) {
+  .mail-connection {
+    padding: 26px;
+  }
+  .mail-associate {
+    grid-template-columns: 1fr;
+  }
+}
