@@ -20,7 +20,7 @@ This guide is the contract for every screen of the DUUK Admin (`/admin`). The in
 | `src/admin/ds/base.css` | Typography, focus ring, selection, scrollbars, reduced motion. Element resets use `:where()` so classes always win. |
 | `src/admin/ds/components.css` | Buttons, fields, cards, KPIs, badges, tabs, toolbars, tables, pagination, alerts, empty and loading states, dialogs, toasts, menus. |
 | `src/admin/shell/*` | Sidebar, top bar, phone tab bar, drawer, command palette (⌘K), shortcuts, settings frame, toasts, start screen. |
-| Module CSS (`office.css`, `calendar.css`, `crm.css`, `mail.css`, `finance*.css`, `bank.css`, `ai.css`, `drive.css`, `platform.css`, …) | Only what is specific to that module. |
+| Module CSS (`office.css`, `calendar.css`, `crm.css`, `mail.css`, `finance*.css`, `bank.css`, `ai.css`, `drive.css`, `settings.css`, …) | Only what is specific to that module. |
 
 CSS order: design system first, module styles next, shell last. A module rule with the same specificity as a design-system rule wins, so remove module rules that only repeat what the design system already does.
 

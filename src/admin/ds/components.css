@@ -213,6 +213,10 @@
 .platform-row h2, .platform-row h3 { margin: 0 0 2px; font-family: var(--ds-font); font-size: var(--ds-text-base); font-weight: var(--ds-weight-medium); letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .platform-row p { color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.5; overflow-wrap: anywhere; }
 .platform-row small { display: block; color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.5; overflow-wrap: anywhere; }
+.platform-two-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ds-space-5); }
+.platform-form { display: grid; align-content: start; gap: var(--ds-space-5); min-width: 0; padding: var(--ds-space-6); }
+.platform-form h2 { font-size: var(--ds-text-lg); font-weight: var(--ds-weight-semibold); letter-spacing: -0.015em; }
+@media (max-width: 767px) { .platform-two-columns { grid-template-columns: minmax(0, 1fr); gap: var(--ds-space-4); } .platform-form { padding: var(--ds-space-5); } }
 .platform-muted, .office-muted { color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.6; overflow-wrap: anywhere; }
 .admin-row-actions { display: flex; justify-content: flex-end; gap: 2px; }
 .ds-table-wrap { width: 100%; overflow-x: auto; }
@@ -385,7 +389,10 @@ body:has(.admin-modal[open]) { overflow: hidden; }
   .admin-field-row { flex-wrap: wrap; }
   .admin-field-row .admin-field, .admin-field-row .admin-field--year { flex-basis: 100%; }
   :is(.admin-shell, .admin-modal, .admin-login) :is(input:not([type=checkbox]):not([type=radio]), textarea, select) { font-size: 16px !important; }
-  .platform-row { padding: var(--ds-space-3) var(--ds-space-4); }
+  .platform-row { flex-wrap: wrap; gap: var(--ds-space-3); padding: var(--ds-space-3) var(--ds-space-4); }
+  .platform-row__main { flex-basis: calc(100% - 64px); }
+  .platform-row > :is(.admin-status, .crm-stage, .ds-badge) { margin-left: 0; }
+  .platform-row > .admin-row-actions { margin-left: auto; }
   .calendar-integration { padding: var(--ds-space-5) var(--ds-space-4); }
   .calendar-integration__details { grid-template-columns: minmax(0, 1fr); }
   /* Dialogs become bottom sheets that respect the keyboard and safe areas. */

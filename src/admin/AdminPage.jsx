@@ -41,7 +41,7 @@ import { locate, mobileDestinations, visibleGroups, visibleSettings } from './sh
 import './admin.css'
 import '../office/office.css'
 import '../office/calendar.css'
-import './platform.css'
+import './settings.css'
 import './ai-entry.css'
 import './shell/shell.css'
 const AiPage = lazy(() => import('../ai/AiPage'))

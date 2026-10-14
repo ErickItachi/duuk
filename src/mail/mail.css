@@ -824,3 +824,5 @@
     grid-template-columns: 1fr;
   }
 }
+
+.mail-row.is-unread { background: color-mix(in srgb, var(--ds-accent) 4%, transparent); }

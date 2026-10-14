@@ -22,14 +22,14 @@ export async function startServer() {
   return { server, origin: `http://127.0.0.1:${address.port}` }
 }
 
-export async function openAdmin(browser, origin, { route = '/admin', width = 1440, height = 900, theme = 'dark', signedIn = true, reducedMotion = 'reduce', permissions = fixtures.permissions, profile = fixtures.profile, localStorage } = {}) {
+export async function openAdmin(browser, origin, { route = '/admin', width = 1440, height = 900, theme = 'dark', signedIn = true, reducedMotion = 'reduce', permissions = fixtures.permissions, profile = fixtures.profile, localStorage, tables = fixtures.tables(), rpc = fixtures.rpc, functions = fixtures.functions } = {}) {
   const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, reducedMotion, colorScheme: theme === 'light' ? 'light' : 'dark', locale: 'pt-BR', timezoneId: 'America/Sao_Paulo', hasTouch: width < 1024, isMobile: width < 768 })
   const page = await context.newPage()
   const errors = [], unknown = []
   page.on('pageerror', error => errors.push(`pageerror: ${error.message}`))
   page.on('console', message => { if (message.type() === 'error' && !/Failed to load resource|ERR_|WebSocket/.test(message.text())) errors.push(`console: ${message.text()}`) })
   await page.clock.setFixedTime(new Date(`${fixtures.TODAY}T10:00:00-03:00`))
-  const mock = await installSupabaseMock(page, { user: fixtures.user, profile, permissions, tables: fixtures.tables(), rpc: fixtures.rpc, functions: fixtures.functions, theme: theme === 'system' ? undefined : theme, signedIn, localStorage: { [`duuk-release-seen:${fixtures.user.id}:${releases[0].version}`]: '1', ...(theme === 'system' ? { [`duuk-admin-theme:${fixtures.user.id}`]: 'system' } : {}), ...localStorage }, log: entry => unknown.push(entry) })
+  const mock = await installSupabaseMock(page, { user: fixtures.user, profile, permissions, tables, rpc, functions, theme: theme === 'system' ? undefined : theme, signedIn, localStorage: { [`duuk-release-seen:${fixtures.user.id}:${releases[0].version}`]: '1', ...(theme === 'system' ? { [`duuk-admin-theme:${fixtures.user.id}`]: 'system' } : {}), ...localStorage }, log: entry => unknown.push(entry) })
   await page.goto(origin + route, { waitUntil: 'domcontentloaded' })
   await page.waitForSelector('.admin-shell, .admin-login', { timeout: 20000 }).catch(() => errors.push('timeout: shell not rendered'))
   await page.waitForSelector('.duuk-loader, .admin-loader', { state: 'detached', timeout: 15000 }).catch(() => errors.push('timeout: loader still visible'))
