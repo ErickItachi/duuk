@@ -1,7 +1,15 @@
 # Fluxo de trabalho da DUUK
 
+## Financeiro redesenhado — 1.12.0
+
+- Em 14/10/2026 o usuário pediu reformular o Financeiro em torno do Meu Pluggy, sem funções desnecessárias. `/admin/financeiro` tem três abas (`?aba=inicio|extrato|contas`) com um único mês: Início (saldo, KPIs, gráficos de 6 meses, saldo diário, categorias, formas de pagamento, cartões/investimentos e próximas contas), Extrato (Pluggy por dia, filtros, CSV) e Contas (receitas/despesas manuais, metas, Excel/CSV). Resumo, Fluxo de caixa, Metas e a importação OFX saíram da interface; tabelas, RPCs e dados OFX continuam no banco.
+- O olho do topo oculta valores só neste aparelho (`localStorage`), nunca altera respostas do servidor. Positivo/negativo sempre com sinal ou seta, além da cor.
+- `duuk-pluggy` ganhou a ação de leitura `overview` (6 meses, categorias traduzidas por `/categories`, forma de pagamento por lista fixa e, com `extras:true`, cartões `CREDIT` e `/investments` da mesma conexão). Continua sem pagador/recebedor, documentos, número completo ou titular. O frontend recompõe o período por `statement` mensal se o servidor ainda não tiver `overview`. O saldo diário é reconstruído a partir do saldo informado e dos movimentos confirmados.
+- Ajuda estática da IA: manual 1.6.0. Deploys de `duuk-pluggy` e `duuk-ai` são separados do Git/Vercel e só ocorrem com aprovação do usuário.
+
 ## Extratos OFX — 1.10.1
 
+- Desde 1.12.0 a importação OFX não aparece na interface; as regras abaixo valem para os dados e RPCs preservados.
 - Em 14/10/2026 o usuário escolheu conta Nubank PJ e importação OFX gratuita. Financeiro > Extratos é importação manual, sem conexão automática ou credenciais bancárias. Preserve limite de 2 MB/2.000 movimentos, prévia, revisão explícita e separação entre extrato e receitas/despesas.
 - Migração aplicada: `20261014050206_duuk_bank_ofx_import.sql`. `duuk_bank_imports`/`duuk_bank_transactions` têm RLS financeiro e leitura apenas para membros ativos autorizados. Gravações usam RPCs transacionais com permissão atual, idempotência, deduplicação por conta/FITID e revisão. Não substitua por múltiplas escritas no frontend nem exponha conta/FITID completos ou arquivo original.
 - Vincular baixa conta existente, criar exige revisão, ignorar não gera receita/despesa e remover vínculo conserva o registro financeiro. O saldo é o informado no arquivo, com data, nunca consulta ao banco. Alterações posteriores do lançamento mostram divergência do vínculo. A IA recebe somente manual estático, sem extratos. Valide com `tests/ofx.test.mjs`, `supabase/tests/bank-ofx.sql` com rollback e fixtures de navegador.

@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.12.0",
+    "date": "2026-10-14",
+    "title": "Um Financeiro novo, com a sua conta no centro",
+    "new": [
+      "Início com saldo da conta, entradas e saídas do mês, gráficos dos últimos 6 meses, evolução do saldo e gastos por categoria.",
+      "Olho no topo do Financeiro para ocultar ou mostrar todos os valores neste aparelho.",
+      "Extrato agrupado por dia, com categoria, forma de pagamento, filtros e CSV.",
+      "Cartões de crédito e investimentos do Meu Pluggy, quando a conexão fornecer."
+    ],
+    "improved": [
+      "Financeiro reorganizado em três abas: Início, Extrato e Contas, com entradas em verde e saídas em vermelho.",
+      "A importação manual de arquivos OFX saiu da tela; o extrato chega pela conta conectada."
+    ]
+  },
+  {
     "version": "1.11.0",
     "date": "2026-10-14",
     "title": "Sua conta conectada ao Financeiro",
