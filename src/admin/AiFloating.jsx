@@ -31,6 +31,9 @@ function useFloatingPosition(ref, { userId, kind, enabled = true }) {
       if (topbar && topbar.bottom > view.top) minimum.y = Math.min(topbar.bottom + 12, maximum.y)
       const footer = document.querySelector('.admin-footer')?.getBoundingClientRect()
       if (footer && footer.bottom > view.top && footer.top < view.top + view.height) maximum.y = Math.max(minimum.y, footer.top - rect.height - 12)
+      // On phones the launcher stays above the tab bar while it is visible.
+      const tabs = document.querySelector('.ds-bottom-nav')?.getBoundingClientRect()
+      if (tabs && tabs.height && tabs.top < view.top + view.height) maximum.y = Math.max(minimum.y, Math.min(maximum.y, tabs.top - rect.height - 12))
     }
     return { view, rect, minimum, maximum }
   }
@@ -143,7 +146,7 @@ export function AiFloatingLauncher({ userId, onOpen }) {
 
 export function AiFloatingDialog({ userId, onClose, children }) {
   const dialog = useRef(null), hintId = useId()
-  const [desktop, setDesktop] = useState(() => window.matchMedia('(min-width: 601px)').matches)
+  const [desktop, setDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
   useEffect(() => {
     const element = dialog.current, opener = document.activeElement
     element.showModal()
@@ -156,7 +159,7 @@ export function AiFloatingDialog({ userId, onClose, children }) {
   }, [])
   const floating = useFloatingPosition(dialog, { userId, kind: 'dialog', enabled: desktop })
   useEffect(() => {
-    const query = window.matchMedia('(min-width: 601px)')
+    const query = window.matchMedia('(min-width: 768px)')
     const resize = () => setDesktop(query.matches)
     query.addEventListener('change', resize)
     return () => query.removeEventListener('change', resize)

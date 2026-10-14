@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import BrandLoader from './components/BrandLoader'
+import AdminLoader from './admin/shell/AdminLoader'
 import { LanguageProvider } from './i18n'
 import HomePage from './pages/HomePage'
 import { loadSecondaryPages } from './pages/loadPages'
@@ -57,7 +58,7 @@ function AppRoutes() {
 
   return (
     <>
-      <Suspense fallback={<BrandLoader />}>
+      <Suspense fallback={location.pathname.startsWith('/admin') ? <AdminLoader step="module" /> : <BrandLoader />}>
         <div
           className={location.pathname.startsWith('/admin') ? 'route-view route-view--admin' : 'route-view'}
           key={location.pathname.startsWith('/admin') ? 'admin' : location.pathname}

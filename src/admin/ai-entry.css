@@ -1,30 +1,66 @@
-.duuk-ai-help { position: fixed; right: 24px; bottom: 24px; z-index: 50; display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 46px; padding: 10px 17px 10px 13px; border: 1px solid #8c6045; border-radius: 999px; background: linear-gradient(120deg, #302118, #17130f); color: var(--admin-ink); box-shadow: 0 5px 20px #0004; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; isolation: isolate; transition: border-color .2s, box-shadow .2s, background .2s; }
-.duuk-ai-help::before { content: ''; position: absolute; z-index: -1; inset: -5px; border: 1px solid #eb8e626b; border-radius: inherit; pointer-events: none; opacity: 0; animation: duuk-ai-invite 9s ease-out 1.5s 3; }
-.duuk-ai-help__spark { display: grid; place-items: center; flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%; background: #f28b6120; }
-.duuk-ai-help svg { color: #e2a27b; }
-.duuk-ai-help__label { font-size: 11px; font-weight: 550; letter-spacing: .025em; }
-.duuk-ai-help:hover { background: #2a1d13; border-color: #cb8960; box-shadow: 0 7px 24px #0005; }
-.duuk-ai-help:focus-visible { outline: 2px solid var(--admin-focus, #baaca1); outline-offset: 4px; }
-.duuk-ai-help.is-dragging { cursor: grabbing; box-shadow: 0 9px 28px #0006; }
-.duuk-ai-help.is-dragging::before { animation: none; }
-.duuk-ai-floating-hint { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.admin-modal.duuk-ai-floating-dialog { inset: auto 24px 76px auto; margin: 0; width: min(600px, calc(100vw - 40px)); max-width: calc(100vw - 40px); height: min(760px, calc(100dvh - 104px)); max-height: calc(100dvh - 40px); padding: 0; border-radius: 17px; overflow: hidden; box-shadow: 0 22px 90px #0005; animation: duuk-ai-dialog-in .24s cubic-bezier(.2, .75, .25, 1) both; }
-.admin-modal.duuk-ai-floating-dialog[open] { display: flex; flex-direction: column; }
-.admin-modal.duuk-ai-floating-dialog > .duuk-ai--embedded { min-height: 0; flex: 1; overflow: hidden; }
-.duuk-ai-floating-dialog.is-dragging { animation: none; }
-.duuk-ai-dragbar { display: flex; justify-content: center; flex-shrink: 0; min-height: 25px; border-bottom: 1px solid var(--admin-line); background: var(--admin-surface, #17130f); }
-.duuk-ai-drag-handle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 25px; width: 100%; padding: 3px 12px; color: var(--admin-muted); font-size: 9px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
-.duuk-ai-drag-handle:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--admin-focus); }
-.duuk-ai-floating-dialog.is-dragging .duuk-ai-drag-handle { cursor: grabbing; }
-@keyframes duuk-ai-invite { 0%, 18%, 100% { opacity: 0; transform: scale(.98); } 3% { opacity: .65; } 12% { opacity: 0; transform: scale(1.1); } }
-@keyframes duuk-ai-dialog-in { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 600px) {
-  .duuk-ai-help { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 48px; height: 48px; padding: 0; }
-  .duuk-ai-help__label { display: none; }
-  .admin-modal.duuk-ai-floating-dialog { inset: var(--duuk-ai-viewport-top, 0px) 0 auto; width: 100%; max-width: 100%; height: var(--duuk-ai-viewport-height, 100dvh); max-height: var(--duuk-ai-viewport-height, 100dvh); border-radius: 0; animation-name: duuk-ai-dialog-mobile-in; }
+/* DUUK AI launcher and floating help window. Neutral surfaces only; the launcher and the window
+   move by mouse, touch or arrow keys and remember their place per member and device. */
+.duuk-ai-help {
+  position: fixed; z-index: 50; right: 24px; bottom: 24px;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--ds-space-2);
+  min-height: 40px; padding: 0 var(--ds-space-4) 0 6px;
+  border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-full);
+  background: var(--ds-surface); color: var(--ds-text);
+  box-shadow: var(--ds-shadow-md);
+  font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); line-height: 1;
+  cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+  transition: background-color var(--ds-duration-1), border-color var(--ds-duration-1), box-shadow var(--ds-duration-2) var(--ds-ease-out), transform var(--ds-duration-1) var(--ds-ease-out);
+  -webkit-tap-highlight-color: transparent;
 }
+.duuk-ai-help:hover { border-color: var(--ds-text-3); background: var(--ds-surface-2); }
+.duuk-ai-help:active { transform: scale(.97); }
+.duuk-ai-help:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 3px; }
+.duuk-ai-help.is-dragging { box-shadow: var(--ds-shadow-lg); transform: none; cursor: grabbing; }
+.duuk-ai-help__spark { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50%; background: var(--ds-primary); color: var(--ds-on-primary); }
+.duuk-ai-help__spark svg { width: 16px; height: 16px; }
+.duuk-ai-help__label { letter-spacing: -0.005em; white-space: nowrap; }
+.duuk-ai-floating-hint { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+.admin-modal.duuk-ai-floating-dialog {
+  inset: auto 24px 80px auto; margin: 0;
+  width: min(520px, calc(100vw - 48px)); max-width: calc(100vw - 48px);
+  height: min(760px, calc(100dvh - 112px)); max-height: calc(100dvh - 48px);
+  padding: 0;
+  border: 1px solid var(--ds-border); border-radius: var(--ds-radius-xl);
+  background: var(--ds-surface); box-shadow: var(--ds-shadow-lg);
+  overflow: hidden;
+  animation: duuk-ai-dialog-in var(--ds-duration-3) var(--ds-ease-out) both;
+}
+.admin-modal.duuk-ai-floating-dialog[open] { display: flex; flex-direction: column; }
+.admin-modal.duuk-ai-floating-dialog > .duuk-ai--embedded { flex: 1; min-height: 0; overflow: hidden; }
+.admin-modal.duuk-ai-floating-dialog.is-dragging { animation: none; user-select: none; -webkit-user-select: none; }
+.duuk-ai-dragbar { display: flex; flex-shrink: 0; justify-content: center; border-bottom: 1px solid var(--ds-border-subtle); }
+.duuk-ai-drag-handle { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 20px; padding: 2px var(--ds-space-3); border: 0; background: none; color: var(--ds-text-3); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; transition: background-color var(--ds-duration-1), color var(--ds-duration-1); }
+.duuk-ai-drag-handle:hover { background: var(--ds-hover); color: var(--ds-text-2); }
+.duuk-ai-drag-handle:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ds-focus); color: var(--ds-text); }
+.duuk-ai-drag-handle svg { width: 16px; height: 16px; }
+/* The handle keeps its spoken name; the grip is the visible cue and the title shows on hover. */
+.duuk-ai-drag-handle > span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.duuk-ai-floating-dialog.is-dragging .duuk-ai-drag-handle { cursor: grabbing; }
+
+@keyframes duuk-ai-dialog-in { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
 @keyframes duuk-ai-dialog-mobile-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Phones: a round launcher above the tab bar, and a full-screen window that follows the visible viewport. */
+@media (max-width: 767px) {
+  .duuk-ai-help { right: 16px; width: 48px; height: 48px; min-height: 48px; padding: 0; border-color: transparent; background: var(--ds-primary); color: var(--ds-on-primary); }
+  .duuk-ai-help:hover { border-color: transparent; background: var(--ds-primary-hover); }
+  .duuk-ai-help__spark { flex-basis: auto; width: auto; height: auto; background: none; color: inherit; }
+  .duuk-ai-help__spark svg { width: 20px; height: 20px; }
+  .duuk-ai-help__label { display: none; }
+  .admin-modal.duuk-ai-floating-dialog {
+    inset: var(--duuk-ai-viewport-top, 0px) 0 auto;
+    width: 100%; max-width: 100%;
+    height: var(--duuk-ai-viewport-height, 100dvh); max-height: var(--duuk-ai-viewport-height, 100dvh);
+    border: 0; border-radius: 0;
+    animation-name: duuk-ai-dialog-mobile-in;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .duuk-ai-help, .admin-modal.duuk-ai-floating-dialog { transition: none; animation: none; }
-  .duuk-ai-help::before { animation: none; }
 }

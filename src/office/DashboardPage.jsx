@@ -1,68 +1,97 @@
-import { useCallback } from 'react'
+import { Fragment, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon, RefreshButton } from '../admin/components'
+import { EmptyState } from '../admin/forms'
+import { useMediaQuery } from '../admin/shell/hooks'
 import { useAuth } from '../content/AuthContext'
 import { useContent } from '../content/useContent'
-import { listContracts, listEvents, listExpenses, listMetrics } from './api'
-import { listClients, listActivities } from '../crm/api'
-import { localDay } from '../crm/model'
-import { eventCategories, eventTime } from './calendarModel.js'
-import { brl, contractStatuses, dateLabel, expenseTotals, metricSummary, today } from './model'
-import { useQuery } from './useQuery'
+import { today } from './model'
 import StudioGreeting from './StudioGreeting'
+import { combine, useDashboardData, useMinute } from './dashboard/data'
+import { activityView, agendaView, contractView, dashboardColumns, digestItems, financeView, followupView, metricsView, nowTime, pipelineView, quickActions, socialView } from './dashboard/model'
+import { ActivityCard, AgendaCard, ContractsCard, FinanceCard, FollowupsCard, PipelineCard, QuickActionsCard, SiteCard, SocialCard } from './dashboard/cards'
 import './dashboard-experience.css'
 
-function StatCard({ label, icon, value, note }) {
- return <div className="dashboard-stat"><div className="office-stat-heading"><span>{label}</span><span className="dashboard-stat__icon"><Icon name={icon} size={18}/></span></div><strong className={String(value).length>15?'office-value-long':undefined}>{value}</strong><small className="office-stat-note">{note}</small></div>
+const firstName = name => String(name || '').trim().split(/\s+/)[0]
+
+// What needs attention today, built from the widgets the member can open.
+function Digest({ items, loading, settled }) {
+  if (items.length) return <ul className="dashboard-digest" role="list" aria-label="Pendências de hoje">{items.map(item => <li key={item.key}>
+    <Link className={item.tone === 'danger' ? 'is-danger' : undefined} to={item.to}><Icon name={item.icon} />{item.text}</Link>
+  </li>)}</ul>
+  if (loading) return <div className="dashboard-digest" aria-hidden="true"><span className="ds-skeleton" /><span className="ds-skeleton" /></div>
+  if (settled) return <p className="dashboard-digest__calm"><Icon name="checkCircle" />Nada pendente para hoje.</p>
+  return null
 }
-function SectionTitle({ icon, title, label, path }) {
- return <div className="office-section-title"><div className="dashboard-section-heading"><span className="dashboard-section-heading__icon"><Icon name={icon} size={19}/></span><h2>{title}</h2></div><Link className="admin-text-button" to={path}>{label}<Icon name="arrow" size={15}/></Link></div>
-}
-function EmptyState({ icon, children }) {
- return <div className="dashboard-empty"><Icon name={icon} size={22}/><p className="office-muted">{children}</p></div>
-}
-function EventDate({ day }) {
- const month = new Intl.DateTimeFormat('pt-BR', { month: 'short', timeZone: 'America/Sao_Paulo' }).format(new Date(`${day}T12:00:00Z`)).replace('.', '')
- return <span className="dashboard-event-date" aria-hidden="true"><strong>{day.slice(8,10)}</strong><small>{month}</small></span>
-}
-function ContractProgress({ records }) {
- const active = records?.filter(record => record.status !== 'cancelled')
- const total = active?.length || 0, signed = active?.filter(record => record.status === 'signed').length || 0
- const percentage = total ? Math.round(signed / total * 100) : null
- const label = !records ? 'Carregando os contratos' : total ? `${signed} de ${total} contratos ativos assinados` : 'Nenhum contrato cadastrado'
- return <div className="dashboard-contract-progress" role="img" aria-label={label}>
-  <div className="dashboard-contract-progress__ring"><svg viewBox="0 0 108 108" aria-hidden="true"><circle cx="54" cy="54" r="46"/><circle cx="54" cy="54" r="46" pathLength="100" strokeDasharray={`${percentage || 0} 100`}/></svg><strong>{!records ? '…' : percentage === null ? '—' : <>{percentage}<small>%</small></>}</strong></div>
-  <div><span>Contratos assinados</span><small>{!records ? 'Carregando…' : total ? `${signed} de ${total} ativos` : 'Sem contratos'}</small></div>
- </div>
-}
-const shortcuts=[['crm.dashboard','users','Comercial','Conversas, propostas e próximos passos.','/admin/comercial'],['agenda','calendar','Agenda','O ritmo das próximas produções.','/admin/agenda'],['contracts','document','Contratos','Documentos e assinaturas em um lugar.','/admin/contratos'],['finance','wallet','Financeiro','Cada custo, com clareza.','/admin/financeiro'],['insights','chart','Insights','Os movimentos do seu site.','/admin/insights'],['site','film','Portfólio','Histórias prontas para ganhar espaço.','/admin/portfolio'],['site','home','Abertura','A primeira cena da DUUK.','/admin/inicio']]
+
 export default function DashboardPage() {
- const auth=useAuth(),content=useContent(),{hasPermission}=auth
- const query=useCallback(async()=>{
-  const allowed=(key,work)=>hasPermission(key)?work():Promise.resolve([])
-  const [contracts,expenses,metrics,events,clients,activities]=await Promise.all([allowed('contracts',listContracts),allowed('finance',()=>listExpenses(today().slice(0,7))),allowed('insights',()=>listMetrics(30)),allowed('agenda',()=>listEvents(today().slice(0,7))),allowed('crm.dashboard',listClients),allowed('crm.dashboard',listActivities)])
-  return {contracts,expenses,metrics,events,clients,activities}
- },[hasPermission])
- const {data,error,reload}=useQuery(query)
- const totals=expenseTotals(data?.expenses||[]),metrics=metricSummary(data?.metrics||[]),pending=(data?.contracts||[]).filter(c=>['pending','partial'].includes(c.status))
- const upcoming=(data?.events||[]).filter(e=>e.end_date>=today()&&!['done','cancelled'].includes(e.status)).sort((a,b)=>a.start_date.localeCompare(b.start_date)||(a.start_time||'').localeCompare(b.start_time||'')).slice(0,4)
- const visibleShortcuts=shortcuts.filter(([key])=>hasPermission(key))
- const calendarLabel=new Intl.DateTimeFormat('pt-BR',{day:'numeric',month:'long',timeZone:'America/Sao_Paulo'}).format(new Date(`${today()}T12:00:00Z`))
- const noData=error?'Os dados não puderam ser carregados. Tente atualizar.':'Carregando seus dados…'
- return <div className="duuk-dashboard">
- <div className="dashboard-overview"><div className="admin-page-title office-dashboard-title"><span className="dashboard-frame" aria-hidden="true"/><div className="dashboard-hero-copy"><StudioGreeting name={auth.profile.name}/></div><div className="dashboard-hero-actions">{hasPermission('contracts')&&<ContractProgress records={data?.contracts}/>}<span className="dashboard-hero-date"><Icon name="calendar" size={15}/>{calendarLabel}</span><RefreshButton onRefresh={reload} inlineFeedback/></div></div>
- {error&&<p className="admin-error" role="alert">{error}</p>}
- <div className="admin-stats office-dashboard-stats">
- {auth.hasPermission('finance')&&<StatCard label="Despesas deste mês" icon="wallet" value={data?brl(totals.total):'…'} note="Vencimentos do mês atual"/>}
- {auth.hasPermission('contracts')&&<StatCard label="Contratos a assinar" icon="document" value={data?pending.length:'…'} note="Aguardando aceite"/>}
- {auth.hasPermission('insights')&&<StatCard label="Páginas vistas" icon="chart" value={data?metrics.view.toLocaleString('pt-BR'):'…'} note="Últimos 30 dias"/>}
- {auth.hasPermission('crm.dashboard')&&<><StatCard label="Clientes e leads" icon="users" value={data?data.clients.length:'…'} note="Base comercial da equipe"/><StatCard label="Contatos hoje" icon="activity" value={data?data.activities.filter(a=>localDay(a.occurred_at)===today()).length:'…'} note="Atividade comercial do dia"/></>}
- {auth.hasPermission('site')&&<StatCard label="Filmes no portfólio" icon="film" value={content.ready?content.draft.projects.filter(p=>p.status==='published').length:'…'} note="Projetos visíveis no site"/>}
- </div></div>
- {visibleShortcuts.length>0&&<section className="dashboard-workspace" aria-labelledby="dashboard-workspace-title"><div className="dashboard-block-heading"><div><p className="admin-eyebrow">SEU ESPAÇO DE TRABALHO</p><h2 id="dashboard-workspace-title">Da ideia à entrega<span>.</span></h2></div></div><div className="office-shortcuts">{visibleShortcuts.map(([,icon,title,subtitle,path])=><Link className="admin-panel office-shortcut" to={path} key={path}><span className="office-shortcut-icon"><Icon name={icon} size={21}/></span><div className="office-shortcut-copy"><h3>{title}</h3><p>{subtitle}</p></div><Icon name="arrow" size={17}/></Link>)}</div></section>}
- <div className="office-grid dashboard-activity">
- {auth.hasPermission('agenda')&&<section className="admin-panel office-panel office-upcoming"><SectionTitle icon="calendar" title="Próximas cenas do mês" label="Ver agenda" path="/admin/agenda"/>{upcoming.length?<div className="dashboard-events">{upcoming.map(e=><Link className="office-mini-row dashboard-event" to="/admin/agenda" key={e.id}><EventDate day={e.start_date}/><div className="dashboard-event-copy"><strong>{e.title}</strong><small>{eventCategories[e.category]} · {dateLabel(e.start_date)} · {eventTime(e)}</small></div><Icon name="arrow" size={16}/></Link>)}</div>:<EmptyState icon="calendar">{data?'A agenda está aberta para suas próximas produções.':noData}</EmptyState>}</section>}
- {auth.hasPermission('contracts')&&<section className="admin-panel office-panel dashboard-records"><SectionTitle icon="document" title="Contratos em andamento" label="Ver todos" path="/admin/contratos"/>{pending.length?pending.slice(0,5).map(c=><Link className="office-mini-row" to={`/admin/contratos/${c.id}`} key={c.id}><div><strong>{c.title}</strong><small>{c.client_name}</small></div><span className="office-badge is-pending">{contractStatuses[c.status]}</span></Link>):<EmptyState icon="document">{data?'Nenhum contrato aguardando assinatura.':noData}</EmptyState>}</section>}
- {auth.hasPermission('finance')&&<section className="admin-panel office-panel dashboard-records"><SectionTitle icon="wallet" title="Despesas a pagar no mês" label="Ver despesas" path="/admin/financeiro"/>{data?.expenses.some(e=>e.status==='pending')?data.expenses.filter(e=>e.status==='pending').slice(0,5).map(e=><div className="office-mini-row" key={e.id}><div><strong>{e.title}</strong><small>Vence em {dateLabel(e.due_date)}</small></div><strong className="dashboard-record-amount">{brl(e.amount_cents)}</strong></div>):<EmptyState icon="wallet">{data?'Nenhuma despesa pendente neste mês.':noData}</EmptyState>}</section>}
- </div></div>
+  const auth = useAuth(), content = useContent(), { hasPermission } = auth
+  const wide = useMediaQuery('(min-width: 1024px)'), medium = useMediaQuery('(min-width: 768px)')
+  const can = useMemo(() => ({
+    agenda: hasPermission('agenda'),
+    followups: hasPermission('crm.followups'),
+    pipeline: hasPermission('crm.pipeline'),
+    activity: hasPermission('crm.dashboard'),
+    clients: hasPermission('crm.clients'),
+    activities: hasPermission('crm.activities'),
+    contracts: hasPermission('contracts'),
+    finance: hasPermission('finance'),
+    insights: hasPermission('insights'),
+    site: hasPermission('site'),
+    social: hasPermission('social'),
+  }), [hasPermission])
+  const data = useDashboardData(can), clock = useMinute()
+  const day = today(), month = day.slice(0, 7), now = nowTime(clock)
+  const people = data.people.data
+  const names = useMemo(() => new Map((people || []).map(person => [person.id, firstName(person.name)])), [people])
+
+  const { events, clients, followups, activities, contracts, finance, metrics, social } = data
+  const views = {
+    agenda: events.data ? agendaView(events.data, day, now) : null,
+    followups: followups.data && clients.data ? followupView(followups.data, clients.data, day) : null,
+    pipeline: clients.data ? pipelineView(clients.data, followups.data) : null,
+    activity: activities.data && clients.data ? activityView(activities.data, clients.data) : null,
+    contracts: contracts.data ? contractView(contracts.data) : null,
+    finance: finance.data ? financeView(finance.data.records, month, day) : null,
+    metrics: metrics.data ? metricsView(metrics.data, day) : null,
+    social: social.data ? socialView(social.data, day) : null,
+  }
+  const actions = quickActions.filter(action => hasPermission(action.permission))
+  const clientLink = can.clients ? id => `/admin/comercial/clientes?cliente=${encodeURIComponent(id)}` : null
+
+  // The digest only speaks for sources the member can open; it never claims "nothing pending" before they load.
+  const digestSources = [can.agenda && [events], can.followups && [followups, clients], can.contracts && [contracts], can.finance && [finance], can.social && [social]].filter(Boolean).flat()
+  const digest = digestItems({ agenda: views.agenda, followups: views.followups, contracts: views.contracts, finance: views.finance, social: views.social }, day)
+
+  const cards = {
+    agenda: can.agenda && <AgendaCard state={combine(events)} view={views.agenda} day={day} names={names} />,
+    followups: can.followups && <FollowupsCard state={combine(followups, clients)} view={views.followups} day={day} names={names} />,
+    contracts: can.contracts && <ContractsCard state={combine(contracts)} view={views.contracts} />,
+    finance: can.finance && <FinanceCard state={combine(finance)} bank={combine(data.bank)} view={views.finance} month={month} day={day} canConnect={auth.profile?.is_super_admin === true} />,
+    actions: actions.length > 0 && <QuickActionsCard actions={actions} />,
+    pipeline: can.pipeline && <PipelineCard state={combine(clients)} view={views.pipeline} day={day} clientLink={clientLink} canCreateLead={can.clients} />,
+    activity: can.activity && <ActivityCard state={combine(activities, clients)} items={views.activity} day={day} names={names} userId={auth.user?.id} to={can.activities ? '/admin/comercial/contatos' : '/admin/comercial'} area={can.activities ? 'Contatos e atividades' : 'Comercial'} clientLink={clientLink} />,
+    social: can.social && <SocialCard state={combine(social)} view={views.social} day={day} />,
+    site: (can.insights || can.site) && <SiteCard insights={can.insights} site={can.site} state={combine(metrics)} view={views.metrics} content={content} day={day} />,
+  }
+  const layout = dashboardColumns(Object.keys(cards).filter(key => cards[key]), wide ? 'wide' : medium ? 'even' : 'single')
+
+  const refresh = async () => {
+    const [failed, siteFailed] = await Promise.all([data.refresh(), can.site ? content.refresh().then(() => false, () => true) : false])
+    const count = failed + (siteFailed ? 1 : 0)
+    return count ? { failed: true, error: count === 1 ? 'Um dos resumos não foi atualizado. Veja o aviso no cartão.' : 'Alguns resumos não foram atualizados. Veja os avisos nos cartões.' } : { ok: true }
+  }
+
+  return <div className="duuk-dashboard">
+    <header className="dashboard-head">
+      <StudioGreeting name={auth.profile?.name || ''} />
+      <RefreshButton onRefresh={refresh} />
+      {digestSources.length > 0 && <Digest items={digest} loading={digestSources.some(source => source.data == null && !source.error)} settled={digestSources.every(source => source.data != null)} />}
+    </header>
+    {layout.columns[0].length
+      ? <div className={`dashboard-grid dashboard-grid--${layout.kind}`}>
+        {layout.columns.map((keys, index) => <div className="dashboard-column" key={index}>{keys.map(key => <Fragment key={key}>{cards[key]}</Fragment>)}</div>)}
+      </div>
+      : <div className="ds-card dashboard-card"><EmptyState icon="grid" title="Nenhum módulo liberado para você">Quando um administrador liberar o acesso a agenda, comercial, contratos, financeiro, Social Media ou site, os resumos aparecem aqui.</EmptyState></div>}
+  </div>
 }

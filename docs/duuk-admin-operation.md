@@ -1,5 +1,11 @@
 # Operação do DUUK Admin
 
+## DUUK Admin 2.0 e Social Media — 2.0.0
+
+- Visual, navegação e temas: `docs/admin-2.0-design-system.md` e `docs/admin-2.0-plan.md`. O tema (claro, escuro ou sistema) é salvo por conta e aparelho; o atributo `data-duuk-admin-theme` só existe enquanto o Admin está aberto, então o site público não muda.
+- Social Media: `docs/social-media-setup.md` (Meta, permissões, Cron, limites, validação e reversão). A permissão `social` precisa ser concedida a quem não for superadministrador.
+- Reversão do frontend: promover na Vercel a implantação 1.12.0 (commit `ba229ab`). O banco só ganhou tabelas e funções novas, então a 1.12.0 continua funcionando com ele.
+
 ## Aparência e saudação — 1.9.1
 
 O botão de tema está visível no topo do celular e do desktop, no menu do celular e na entrada de login. O texto indica o modo que será ativado. O acesso mobile anterior era ocultado pelo contêiner do menu; a versão 1.9.1 corrige essa precedência sem alterar a preferência por conta/aparelho. As frases da saudação alternam automaticamente, sem botão de play/pausa; continuam respeitando movimento reduzido e aba oculta. A atualização usa o fluxo explícito da PWA, preservando formulários pendentes.

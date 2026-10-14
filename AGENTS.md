@@ -1,5 +1,13 @@
 # Fluxo de trabalho da DUUK
 
+## DUUK Admin 2.0 e Social Media — 2.0.0
+
+- Em 14/10/2026 o usuário pediu reformular todo o Admin: identidade neutra preto/branco/cinza (coral só como acento), design system em `src/admin/ds/` (tokens `--ds-*`, classes `ds-*`; guia em `docs/admin-2.0-design-system.md`), shell novo em `src/admin/shell/` (menu agrupado e recolhível, trilho no tablet, barra inferior no celular, busca Ctrl/⌘K, avisos em fila), tema claro/escuro/sistema e carregamento sem atraso artificial. Plano, decisões e ponto de recuperação: `docs/admin-2.0-plan.md` (cópia em `/mnt/project-files/admin-2.0/plano-2.0.md`).
+- Regras do pedido: não excluir dados, não remover funções em uso, preservar autenticação e permissões, manter reversão, não mexer no site público sem necessidade, nada pago, nenhuma interface que finja integração.
+- Social Media (`/admin/social`, permissão `social`, concedida só a superadministradores por padrão) usa apenas a API oficial do Instagram com login do Instagram. Migrações `20261014151930_duuk_social` e `20261014203900_duuk_social_functions` aplicadas; reversão em `supabase/rollbacks/20261014151930_duuk_social_down.sql`. Função `duuk-social` v1 publicada; Cron `duuk-social-dispatch` (minuto) e `duuk-social-daily`. Instalação, Meta e operação: `docs/social-media-setup.md`.
+- App ID/App Secret só pela tela Social Media › Conexão (Vault), nunca no chat ou repositório. O redirecionamento é `https://www.duukfilms.com/admin/social/conexao`: a conexão só termina em produção. Peça aprovação antes de publicar conteúdo real, mudar pessoas/permissões no Meta, enviar o app para análise ou ativar algo pago. Métricas indisponíveis aparecem como indisponíveis, nunca como zero.
+- Testes de tela: `node tests/e2e/screens.mjs` com o mock isolado de `tests/e2e/fixtures.mjs` (nunca dados reais). Pelo MCP do Supabase, confirmações de escrita podem expirar sem chegar ao usuário; o caminho alternativo é deixar o SQL em `/mnt/project-files/admin-2.0/` para ele rodar no SQL Editor e depois conferir e registrar a migração.
+
 ## Financeiro redesenhado — 1.12.0
 
 - Em 14/10/2026 o usuário pediu reformular o Financeiro em torno do Meu Pluggy, sem funções desnecessárias. `/admin/financeiro` tem três abas (`?aba=inicio|extrato|contas`) com um único mês: Início (saldo, KPIs, gráficos de 6 meses, saldo diário, categorias, formas de pagamento, cartões/investimentos e próximas contas), Extrato (Pluggy por dia, filtros, CSV) e Contas (receitas/despesas manuais, metas, Excel/CSV). Resumo, Fluxo de caixa, Metas e a importação OFX saíram da interface; tabelas, RPCs e dados OFX continuam no banco.

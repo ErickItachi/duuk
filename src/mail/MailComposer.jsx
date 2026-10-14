@@ -1,7 +1,7 @@
-import { lazy, Suspense, useRef, useState } from "react";
+import { lazy, Suspense, useId, useRef, useState } from "react";
 import { useUnsavedChanges } from "../admin/unsavedChanges";
 import { ConfirmModal, Icon, Modal } from "../admin/components";
-import { Field } from "../admin/forms";
+import { ErrorState, FieldError } from "../admin/forms";
 import { mailRequest } from "../admin/api";
 import {
   addressLabel,
@@ -14,6 +14,19 @@ import {
 const mailbox = "contato@duukfilms.com";
 const RichTextEditor = lazy(() => import("./RichTextEditor"));
 
+// The same address rules the mail function applies before sending.
+const addressPattern = /^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/;
+const addressList = (value) => value.split(/[,;]/).map((item) => item.trim());
+function recipientError(value, required) {
+  if (!value) return required ? "Informe o destinatário." : "";
+  if (value.length > 3000 || /[\r\n]/.test(value))
+    return "Use até 3.000 caracteres nos endereços.";
+  if (addressList(value).some((item) => item.length > 254 || !addressPattern.test(item)))
+    return "Confira os e-mails. Use endereços completos, separados por vírgula.";
+  return "";
+}
+const recipientCount = (value) => (value ? new Set(addressList(value)).size : 0);
+
 export default function MailComposer({
   clients,
   models,
@@ -24,6 +37,7 @@ export default function MailComposer({
   onClose,
   onSent,
 }) {
+  const uid = useId();
   const selectedClient = clients.find((c) => c.id === clientId),
     original = forward || reply;
   const [requestId] = useState(() => crypto.randomUUID());
@@ -62,6 +76,7 @@ export default function MailComposer({
     [busy, setBusy] = useState(false),
     [reading, setReading] = useState(false),
     [error, setError] = useState(""),
+    [errors, setErrors] = useState({}),
     [ccOpen, setCcOpen] = useState(!!form.cc),
     [bccOpen, setBccOpen] = useState(false),
     [dragging, setDragging] = useState(false),
@@ -78,12 +93,28 @@ export default function MailComposer({
     attachments.length
   );
   useUnsavedChanges(dirty || busy || reading);
-  const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+  const clearError = (key) =>
+    setErrors((old) => (old[key] ? { ...old, [key]: "" } : old));
+  const update = (key, value) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    clearError(key);
+  };
   const close = () => {
     if (!busy && !reading) {
       if (dirty) setDiscard(true);
       else onClose();
     }
+  };
+  // Enter moves to the next field instead of sending the message by accident.
+  const nextField = (event) => {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    const fields = [
+      ...event.currentTarget.form.querySelectorAll(
+        '[data-compose-field], [role="textbox"]',
+      ),
+    ];
+    fields[fields.indexOf(event.currentTarget) + 1]?.focus();
   };
   const addFiles = async (selected) => {
     if (processing.current || busy || !selected.length) return;
@@ -175,7 +206,69 @@ export default function MailComposer({
       setReading(false);
     }
   };
+  const validate = () => {
+    const found = {
+      to: recipientError(form.to, true),
+      cc: recipientError(form.cc, false),
+      bcc: recipientError(form.bcc, false),
+      subject: form.subject.trim() ? "" : "Informe o assunto.",
+      text: !form.text.trim()
+        ? "Escreva uma mensagem antes de enviar."
+        : form.text.length > 50000 || form.html.length > 200000
+          ? "A mensagem é muito longa. Reduza o texto antes de enviar."
+          : "",
+    };
+    if (
+      !found.to &&
+      !found.cc &&
+      !found.bcc &&
+      recipientCount(form.to) + recipientCount(form.cc) + recipientCount(form.bcc) > 20
+    )
+      found.to = "Use até 20 destinatários por mensagem, somando Para, Cc e Cco.";
+    return found;
+  };
   const totalBytes = attachments.reduce((sum, a) => sum + a.size, 0);
+  const locked = busy || reading;
+  const row = (key, label, props) => (
+    <>
+      <div className={`mail-compose__row${errors[key] ? " is-invalid" : ""}`}>
+        <label htmlFor={`${uid}-${key}`}>{label}</label>
+        <input
+          id={`${uid}-${key}`}
+          name={key}
+          data-compose-field
+          value={form[key]}
+          onChange={(e) => update(key, e.target.value)}
+          onKeyDown={nextField}
+          aria-invalid={errors[key] ? true : undefined}
+          aria-describedby={errors[key] ? `${uid}-${key}-error` : undefined}
+          enterKeyHint="next"
+          {...props}
+        />
+        {key === "to" && (
+          <div className="mail-compose__copies">
+            <button
+              type="button"
+              aria-pressed={ccOpen}
+              aria-label="Cópia (Cc)"
+              onClick={() => setCcOpen(!ccOpen || !!form.cc)}
+            >
+              Cc
+            </button>
+            <button
+              type="button"
+              aria-pressed={bccOpen}
+              aria-label="Cópia oculta (Cco)"
+              onClick={() => setBccOpen(!bccOpen || !!form.bcc)}
+            >
+              Cco
+            </button>
+          </div>
+        )}
+      </div>
+      <FieldError id={`${uid}-${key}-error`}>{errors[key]}</FieldError>
+    </>
+  );
   return (
     <>
       <Modal
@@ -192,18 +285,23 @@ export default function MailComposer({
       >
         <form
           className="mail-compose"
+          noValidate
           onSubmit={async (e) => {
             e.preventDefault();
             if (busy || reading) return;
-            if (!form.text.trim()) {
-              setError("Escreva uma mensagem antes de enviar.");
-              e.currentTarget.querySelector('[role="textbox"]')?.focus();
-              return;
-            }
-            if (form.text.length > 50000 || form.html.length > 200000) {
-              setError(
-                "A mensagem é muito longa. Reduza o texto antes de enviar.",
-              );
+            const found = validate();
+            setErrors(found);
+            const first = ["to", "cc", "bcc", "subject", "text"].find(
+              (key) => found[key],
+            );
+            if (first) {
+              if (first === "cc") setCcOpen(true);
+              if (first === "bcc") setBccOpen(true);
+              const target =
+                first === "text"
+                  ? e.currentTarget.querySelector('[role="textbox"]')
+                  : e.currentTarget.querySelector(`[name="${first}"]`);
+              target?.focus();
               return;
             }
             setBusy(true);
@@ -230,152 +328,134 @@ export default function MailComposer({
           }}
         >
           <div className="admin-modal__body mail-compose__body">
-            <div className="mail-compose__sender">
-              <span className="mail-avatar">D</span>
-              <div>
-                <strong>DUUK Films</strong>
-                <span>{mailbox}</span>
+            <fieldset disabled={locked} className="mail-compose__envelope">
+              <legend className="ds-visually-hidden">Destinatários e assunto</legend>
+              <div className="mail-compose__row mail-compose__from">
+                <span className="mail-compose__label">De</span>
+                <span className="mail-compose__sender">
+                  <strong>DUUK Films</strong>
+                  <span>{mailbox}</span>
+                </span>
+                <span className="mail-status-dot is-on" title="Caixa conectada" aria-hidden="true" />
               </div>
-              <span className="mail-connection-dot" title="Caixa conectada" />
-            </div>
-            <fieldset
-              disabled={busy || reading}
-              className="mail-compose__fields"
-            >
-              <div className="mail-compose__to">
-                <Field
-                  label="Para"
-                  value={form.to}
-                  onChange={(v) => update("to", v)}
-                  type="email"
-                  multiple
-                  required
-                  maxLength={3000}
-                  placeholder="cliente@empresa.com"
-                />
-                <div className="mail-compose__copies">
-                  <button
-                    type="button"
-                    aria-pressed={ccOpen}
-                    className="admin-text-button"
-                    onClick={() => setCcOpen(!ccOpen || !!form.cc)}
-                  >
-                    Cc
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={bccOpen}
-                    className="admin-text-button"
-                    onClick={() => setBccOpen(!bccOpen || !!form.bcc)}
-                  >
-                    Cco
-                  </button>
-                </div>
-              </div>
-              {ccOpen && (
-                <Field
-                  label="Cc · cópia"
-                  value={form.cc}
-                  onChange={(v) => update("cc", v)}
-                  type="email"
-                  multiple
-                  maxLength={3000}
-                  placeholder="E-mails separados por vírgula"
-                />
-              )}
-              {bccOpen && (
-                <Field
-                  label="Cco · cópia oculta"
-                  value={form.bcc}
-                  onChange={(v) => update("bcc", v)}
-                  type="email"
-                  multiple
-                  maxLength={3000}
-                  placeholder="Estes destinatários ficam ocultos"
-                />
-              )}
-              <Field
-                label="Assunto"
-                value={form.subject}
-                onChange={(v) => update("subject", v)}
-                required
-                maxLength={250}
-                placeholder="Sobre o que vamos conversar?"
-              />
-              {(clients.length > 0 || models.length > 0) && (
-                <details className="mail-compose__options">
-                  <summary>
-                    <Icon name="document" /> Cliente e modelo de mensagem{" "}
-                    <Icon name="down" />
-                  </summary>
-                  <div>
-                    {clients.length > 0 && (
-                      <Field label="Vincular a cliente">
-                        <select
-                          value={form.client_id}
-                          onChange={(e) => {
-                            const c = clients.find(
+              {row("to", "Para", {
+                type: "email",
+                multiple: true,
+                required: true,
+                maxLength: 3000,
+                autoComplete: "off",
+                placeholder: "cliente@empresa.com",
+              })}
+              {ccOpen &&
+                row("cc", "Cc", {
+                  type: "email",
+                  multiple: true,
+                  maxLength: 3000,
+                  autoComplete: "off",
+                  placeholder: "E-mails separados por vírgula",
+                })}
+              {bccOpen &&
+                row("bcc", "Cco", {
+                  type: "email",
+                  multiple: true,
+                  maxLength: 3000,
+                  autoComplete: "off",
+                  placeholder: "Estes destinatários ficam ocultos",
+                })}
+              {row("subject", "Assunto", {
+                required: true,
+                maxLength: 250,
+                autoComplete: "off",
+                placeholder: "Sobre o que vamos conversar?",
+              })}
+            </fieldset>
+            {(clients.length > 0 || models.length > 0) && (
+              <details className="mail-compose__options">
+                <summary>
+                  <Icon name="document" />
+                  <span>Cliente e modelo de mensagem</span>
+                  <Icon name="down" size={16} />
+                </summary>
+                <fieldset disabled={locked}>
+                  <legend className="ds-visually-hidden">Cliente e modelo de mensagem</legend>
+                  {clients.length > 0 && (
+                    <div className="admin-field">
+                      <label className="admin-label" htmlFor={`${uid}-client`}>
+                        Vincular a cliente
+                      </label>
+                      <select
+                        id={`${uid}-client`}
+                        value={form.client_id}
+                        onChange={(e) => {
+                          const c = clients.find(
+                            (item) => item.id === e.target.value,
+                          );
+                          setForm((f) => ({
+                            ...f,
+                            client_id: c?.id || "",
+                            to: c?.email || f.to,
+                          }));
+                          clearError("to");
+                        }}
+                      >
+                        <option value="">Sem vínculo</option>
+                        {clients.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {models.length > 0 && (
+                    <div className="admin-field">
+                      <label className="admin-label" htmlFor={`${uid}-model`}>
+                        Modelo de mensagem
+                      </label>
+                      <select
+                        id={`${uid}-model`}
+                        defaultValue=""
+                        onChange={(e) => {
+                          const t = models.find(
                               (item) => item.id === e.target.value,
+                            ),
+                            c = clients.find(
+                              (item) => item.id === form.client_id,
+                            );
+                          if (t) {
+                            const text = t.body.replaceAll(
+                              "{nome}",
+                              c?.name || "",
                             );
                             setForm((f) => ({
                               ...f,
-                              client_id: c?.id || "",
-                              to: c?.email || f.to,
-                            }));
-                          }}
-                        >
-                          <option value="">Sem vínculo</option>
-                          {clients.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </Field>
-                    )}
-                    {models.length > 0 && (
-                      <Field label="Modelo de mensagem">
-                        <select
-                          defaultValue=""
-                          onChange={(e) => {
-                            const t = models.find(
-                                (item) => item.id === e.target.value,
-                              ),
-                              c = clients.find(
-                                (item) => item.id === form.client_id,
-                              );
-                            if (t) {
-                              const text = t.body.replaceAll(
+                              subject: t.subject.replaceAll(
                                 "{nome}",
                                 c?.name || "",
-                              );
-                              setForm((f) => ({
-                                ...f,
-                                subject: t.subject.replaceAll(
-                                  "{nome}",
-                                  c?.name || "",
-                                ),
-                                text,
-                                html: textToHtml(text),
-                              }));
-                            }
-                          }}
-                        >
-                          <option value="">Escrever mensagem</option>
-                          {models.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.title}
-                            </option>
-                          ))}
-                        </select>
-                      </Field>
-                    )}
-                  </div>
-                </details>
-              )}
-            </fieldset>
+                              ),
+                              text,
+                              html: textToHtml(text),
+                            }));
+                            setErrors((old) => ({ ...old, subject: "", text: "" }));
+                          }
+                        }}
+                      >
+                        <option value="">Escrever mensagem</option>
+                        {models.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </fieldset>
+              </details>
+            )}
             <div className="mail-compose__message">
-              <span className="admin-label">Mensagem</span>
+              <span className="admin-label" id={`${uid}-message`}>
+                Mensagem
+              </span>
               <Suspense
                 fallback={
                   <div
@@ -388,12 +468,16 @@ export default function MailComposer({
               >
                 <RichTextEditor
                   value={form.html}
-                  disabled={busy || reading}
-                  onChange={(html, text) =>
-                    setForm((f) => ({ ...f, html, text }))
-                  }
+                  disabled={locked}
+                  invalid={!!errors.text}
+                  describedBy={errors.text ? `${uid}-text-error` : undefined}
+                  onChange={(html, text) => {
+                    setForm((f) => ({ ...f, html, text }));
+                    clearError("text");
+                  }}
                 />
               </Suspense>
+              <FieldError id={`${uid}-text-error`}>{errors.text}</FieldError>
             </div>
             <div
               className={`mail-attachments${dragging ? " is-dragging" : ""}`}
@@ -417,7 +501,7 @@ export default function MailComposer({
                 multiple
                 hidden
                 aria-label="Selecionar anexos"
-                disabled={busy || reading}
+                disabled={locked}
                 onChange={(e) => {
                   addFiles(Array.from(e.target.files));
                   e.target.value = "";
@@ -426,8 +510,9 @@ export default function MailComposer({
               <div className="mail-attachments__head">
                 <button
                   type="button"
-                  className="admin-button admin-button--secondary"
-                  disabled={busy || reading}
+                  className="admin-button admin-button--secondary admin-button--sm"
+                  disabled={locked}
+                  aria-busy={reading}
                   onClick={() => fileInput.current.click()}
                 >
                   <Icon name="attachment" />
@@ -452,7 +537,8 @@ export default function MailComposer({
                         type="button"
                         className="admin-icon-button"
                         aria-label={`Remover ${a.name}`}
-                        disabled={busy || reading}
+                        title="Remover anexo"
+                        disabled={locked}
                         onClick={() =>
                           setAttachments((current) =>
                             current.filter((item) => item.id !== a.id),
@@ -469,31 +555,28 @@ export default function MailComposer({
                 <button
                   type="button"
                   className="admin-text-button"
-                  disabled={busy || reading}
+                  disabled={locked}
                   onClick={copyOriginals}
                 >
+                  <Icon name="attachment" />
                   Incluir {forward.attachments.length} anexo(s) da mensagem
-                  original <Icon name="attachment" />
+                  original
                 </button>
               )}
             </div>
-            {error && (
-              <p className="admin-error" role="alert">
-                {error}
-              </p>
-            )}
+            {error && <ErrorState>{error}</ErrorState>}
           </div>
           <div className="admin-modal__foot mail-compose__foot">
             <button
               type="button"
               className="admin-button admin-button--secondary"
               onClick={close}
-              disabled={busy || reading}
+              disabled={locked}
             >
               <Icon name="trash" />
               Descartar
             </button>
-            <button className="admin-button" disabled={busy || reading}>
+            <button className="admin-button" disabled={locked} aria-busy={busy}>
               <Icon
                 name={busy ? "refresh" : "send"}
                 className={busy ? "is-spinning" : ""}

@@ -3,6 +3,7 @@ import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import { Icon } from "../admin/components";
+import { FieldError } from "../admin/forms";
 import { safeLink } from "./model";
 
 const extensions = [
@@ -20,7 +21,13 @@ const extensions = [
   Highlight,
 ];
 
-export default function RichTextEditor({ value, onChange, disabled = false }) {
+export default function RichTextEditor({
+  value,
+  onChange,
+  disabled = false,
+  invalid = false,
+  describedBy,
+}) {
   const id = useId();
   const [linkOpen, setLinkOpen] = useState(false),
     [url, setUrl] = useState(""),
@@ -37,6 +44,8 @@ export default function RichTextEditor({ value, onChange, disabled = false }) {
         "aria-label": "Mensagem",
         "aria-multiline": "true",
         "data-placeholder": "Escreva sua mensagem…",
+        "aria-describedby": [describedBy, `${id}-hint`].filter(Boolean).join(" "),
+        ...(invalid ? { "aria-invalid": "true" } : {}),
       },
     },
     onUpdate: ({ editor: current }) =>
@@ -92,7 +101,9 @@ export default function RichTextEditor({ value, onChange, disabled = false }) {
     setError("");
   };
   return (
-    <div className={`mail-editor${disabled ? " is-disabled" : ""}`}>
+    <div
+      className={`mail-editor${disabled ? " is-disabled" : ""}${invalid ? " is-invalid" : ""}`}
+    >
       <div
         className="mail-editor__toolbar"
         role="group"
@@ -176,7 +187,12 @@ export default function RichTextEditor({ value, onChange, disabled = false }) {
               inputMode="url"
               autoFocus
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                setError("");
+              }}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? `${id}-error` : undefined}
               placeholder="https://"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -206,15 +222,11 @@ export default function RichTextEditor({ value, onChange, disabled = false }) {
               Remover link
             </button>
           )}
-          {error && (
-            <p className="admin-error" role="alert">
-              {error}
-            </p>
-          )}
+          <FieldError id={`${id}-error`}>{error}</FieldError>
         </div>
       )}
       <EditorContent editor={editor} />
-      <small className="mail-editor__hint">
+      <small className="mail-editor__hint" id={`${id}-hint`}>
         Selecione um trecho para formatar. Ctrl / ⌘ + B para negrito.
       </small>
     </div>

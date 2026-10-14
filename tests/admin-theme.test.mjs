@@ -36,3 +36,14 @@ test('blocked browser storage does not prevent switching the current tab theme',
   assert.equal(readAdminTheme(null, 'member-a'), 'dark')
   assert.equal(writeAdminTheme(null, 'member-a', 'light'), 'light')
 })
+
+test('members can follow the device theme and the choice is resolved per device', async () => {
+  const { resolveAdminTheme } = await import('../src/admin/themeStorage.mjs')
+  const storage = memoryStorage()
+  assert.equal(writeAdminTheme(storage, 'member-a', 'system'), 'system')
+  assert.equal(readAdminTheme(storage, 'member-a'), 'system')
+  assert.equal(resolveAdminTheme('system', true), 'light')
+  assert.equal(resolveAdminTheme('system', false), 'dark')
+  assert.equal(resolveAdminTheme('light', false), 'light')
+  assert.equal(resolveAdminTheme('unexpected', true), 'dark')
+})

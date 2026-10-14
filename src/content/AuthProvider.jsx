@@ -3,7 +3,7 @@ import { AuthContext } from './AuthContext'
 import { supabase } from './supabase'
 import { teamRequest, notificationRequest } from '../admin/api'
 
-const empty = { ready: !supabase, user: null, profile: null, permissions: {}, isAdmin: false, error: '' }
+const empty = { ready: !supabase, stage: 'session', user: null, profile: null, permissions: {}, isAdmin: false, error: '' }
 export function AuthProvider({ children }) {
   const [state, setState] = useState(empty)
   const [presence, setPresence] = useState({ ready: false, ids: [] })
@@ -19,6 +19,8 @@ export function AuthProvider({ children }) {
       if (!session) { if (active.current && current === revision.current) setState({ ...empty, ready: true }); return }
       const { data: { user }, error } = await supabase.auth.getUser()
       if (error) throw error
+      // The start screen reports the real step: the session is valid, permissions come next.
+      if (active.current && current === revision.current) setState(previous => previous.ready ? previous : { ...previous, stage: 'access' })
       try {
         const context = await teamRequest({ action: 'context' })
         if (active.current && current === revision.current) setState({ ready: true, user, ...context, isAdmin: true, error: '' })

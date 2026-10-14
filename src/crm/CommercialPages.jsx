@@ -1,11 +1,22 @@
 import { useUnsavedChanges } from "../admin/unsavedChanges";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useCreateIntent, useMediaQuery } from "../admin/shell/hooks";
+import "./crm.css";
 import { useAuth } from "../content/AuthContext";
 import { useQuery } from "../office/useQuery";
 import { brl, cents } from "../office/model";
 import { ConfirmModal, Icon, Modal, RefreshButton } from "../admin/components";
-import { Avatar, Field, PageTitle, QueryState } from "../admin/forms";
+import {
+  Avatar,
+  EmptyState,
+  ErrorState,
+  FieldError,
+  PageTitle,
+  Pagination,
+  SearchField,
+} from "../admin/forms";
+import { matchesQuery, usePagination } from "../admin/ds/list";
 import {
   recordContact,
   addFollowup,
@@ -28,9 +39,10 @@ import {
   timestamp,
 } from "./model";
 
-import PipelineBoard from "./PipelineBoard";
-import { WhatsAppComposer } from './WhatsAppMessages';
-import { whatsappPhone } from './whatsapp';
+import PipelineBoard, { StageIcon } from "./PipelineBoard";
+import { WhatsAppComposer } from "./WhatsAppMessages";
+import { whatsappPhone } from "./whatsapp";
+import { focusFirstError, formErrors, hasErrors } from "./formErrors";
 
 import { ClientProposals, ClientDocuments } from "../office/DriveDocuments";
 
@@ -55,8 +67,64 @@ const initialClient = {
   project_name: "",
   event_date: "",
 };
+const phoneError =
+  "Informe um telefone válido com DDI e DDD. Exemplo: +55 11 99999-9999.";
+const channelIcons = {
+  call: "phone",
+  whatsapp: "message",
+  email: "mail",
+  instagram: "instagram",
+  meeting: "users",
+  other: "comment",
+};
+const periods = [
+  ["pending", "Pendentes"],
+  ["overdue", "Atrasados"],
+  ["today", "Hoje"],
+  ["tomorrow", "Amanhã"],
+  ["upcoming", "Próximos"],
+  ["done", "Concluídos"],
+];
+const channelLabel = (key) => channels.find((c) => c[0] === key)?.[1] || "Outro";
+
+// Label, control, hint and field-level error, linked for assistive technology.
+function Control({ id, label, error, hint, wide, children }) {
+  return (
+    <div className={`admin-field${wide ? " ds-span-2" : ""}`}>
+      <label className="admin-label" htmlFor={id}>
+        {label}
+      </label>
+      {children}
+      {hint && !error && <small id={`${id}-hint`}>{hint}</small>}
+      <FieldError id={`${id}-error`}>{error}</FieldError>
+    </div>
+  );
+}
+const fieldProps = (uid, key, errors, hint) => ({
+  id: `${uid}-${key}`,
+  name: key,
+  "aria-invalid": errors[key] ? true : undefined,
+  "aria-describedby": errors[key]
+    ? `${uid}-${key}-error`
+    : hint
+      ? `${uid}-${key}-hint`
+      : undefined,
+});
+
+function StageBadge({ stage }) {
+  const tone =
+    stage === "won" ? " ds-badge--success" : stage === "lost" ? " crm-stage--lost" : "";
+  return (
+    <span className={`ds-badge crm-stage${tone}`}>
+      <StageIcon stage={stage} size={12} />
+      {stageLabel(stage)}
+    </span>
+  );
+}
+
 function ClientEditor({ record, people, onClose, onSaved }) {
   const auth = useAuth(),
+    uid = useId(),
     [form, setForm] = useState(() =>
       record
         ? {
@@ -67,17 +135,72 @@ function ClientEditor({ record, people, onClose, onSaved }) {
             next_follow_up: record.next_follow_up
               ? localInput(record.next_follow_up)
               : "",
-            estimated: String(record.estimated_cents / 100).replace(".", ","),
+            // An empty field saves the same zero value without asking for "0,00".
+            estimated: record.estimated_cents
+              ? String(record.estimated_cents / 100).replace(".", ",")
+              : "",
             tags: record.tags.join(", "),
           }
         : { ...initialClient, owner_id: auth.user.id },
     );
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [errors, setErrors] = useState({});
   useUnsavedChanges(true);
-  const update = (key, value) => setForm((old) => ({ ...old, [key]: value }));
+  const update = (key, value) => {
+    setForm((old) => ({ ...old, [key]: value }));
+    setErrors((old) => (old[key] ? { ...old, [key]: "" } : old));
+  };
+  const hints = {
+    phone: "Inclua DDI e DDD. Exemplo: +55 11 99999-9999.",
+    tags: "Separe com vírgulas. Até 20 tags.",
+  };
+  const text = (key, label, max, extra = {}) => (
+    <Control
+      id={`${uid}-${key}`}
+      label={label}
+      error={errors[key]}
+      hint={hints[key]}
+    >
+      <input
+        {...fieldProps(uid, key, errors, hints[key])}
+        type="text"
+        value={form[key] ?? ""}
+        onChange={(e) => update(key, e.target.value)}
+        maxLength={max}
+        {...extra}
+      />
+    </Control>
+  );
   const submit = async (e) => {
     e.preventDefault();
+    if (busy) return;
+    const custom = {};
+    if (!form.name.trim()) custom.name = "Informe o nome do cliente.";
+    if (!form.phone) custom.phone = "Informe o telefone com DDI e DDD.";
+    else if (!whatsappPhone(form.phone)) custom.phone = phoneError;
+    if (form.whatsapp && !whatsappPhone(form.whatsapp))
+      custom.whatsapp = phoneError;
+    if (form.estimated) {
+      try {
+        cents(form.estimated);
+      } catch (cause) {
+        custom.estimated = cause.message;
+      }
+    }
+    const tagList = form.tags
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 20);
+    if (tagList.join(",").length > 1200)
+      custom.tags = "Use até 1.200 caracteres no total das tags.";
+    const found = formErrors(e.currentTarget, custom);
+    setErrors(found);
+    if (hasErrors(found)) {
+      focusFirstError(e.currentTarget, found);
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -88,21 +211,17 @@ function ClientEditor({ record, people, onClose, onSaved }) {
       );
       payload.owner_id = payload.owner_id || null;
       payload.event_date = payload.event_date || null;
-      for (const key of ['phone', 'whatsapp']) {
+      for (const key of ["phone", "whatsapp"]) {
         if (payload[key]) {
           const phone = whatsappPhone(payload[key]);
-          if (!phone) throw new Error('Informe um telefone válido com DDI e DDD. Exemplo: +55 11 99999-9999.');
+          if (!phone) throw new Error(phoneError);
           payload[key] = phone.number;
         }
       }
       payload.first_contact = payload.first_contact || null;
       payload.next_follow_up = timestamp(payload.next_follow_up);
       payload.estimated_cents = form.estimated ? cents(form.estimated) : 0;
-      payload.tags = form.tags
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .slice(0, 20);
+      payload.tags = tagList;
       await saveClient(payload, record);
       await onSaved();
       onClose();
@@ -119,96 +238,99 @@ function ClientEditor({ record, people, onClose, onSaved }) {
       onClose={() => !busy && onClose()}
       wide
     >
-      <form onSubmit={submit}>
-        <div className="admin-modal__body admin-form-grid">
-          {[
-            ["name", "Nome", 160],
-            ["company", "Empresa", 160],
-            ["phone", "Telefone com DDI e DDD", 40],
-            ["whatsapp", "Outro número de WhatsApp (opcional)", 40],
-            ["project_name", "Nome do projeto", 160],
-            ["email", "E-mail", 254],
-            ["instagram", "Instagram", 160],
-            ["website", "Site", 500],
-            ["city", "Cidade", 120],
-            ["segment", "Segmento", 120],
-            ["source", "Origem do lead", 120],
-          ].map(([key, label, max]) => (
-            <Field
-              key={key}
-              label={label}
-              value={form[key]}
-              onChange={(v) => update(key, v)}
-              maxLength={max}
-              type={
-                key === "email" ? "email" : key === "website" ? "url" : ['phone', 'whatsapp'].includes(key) ? 'tel' : "text"
-              }
-              placeholder={['phone', 'whatsapp'].includes(key) ? '+55 11 99999-9999' : undefined}
-              required={key === "name" || key === 'phone'}
-            />
-          ))}
-          <Field label="Data do evento" type="date" value={form.event_date} onChange={value => update('event_date', value)} />
-          <Field label="Responsável">
-            <select
-              value={form.owner_id}
-              onChange={(e) => update("owner_id", e.target.value)}
-            >
-              <option value="">Sem responsável</option>
-              {people.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Etapa">
-            <select
-              value={form.stage}
-              onChange={(e) => update("stage", e.target.value)}
-            >
-              {stages.map(([k, l]) => (
-                <option key={k} value={k}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field
-            label="Primeiro contato"
-            type="date"
-            value={form.first_contact}
-            onChange={(v) => update("first_contact", v)}
-          />
-          <Field
-            label="Próximo follow-up"
-            type="datetime-local"
-            value={form.next_follow_up}
-            onChange={(v) => update("next_follow_up", v)}
-          />
-          <Field
-            label="Valor estimado (R$)"
-            inputMode="decimal"
-            value={form.estimated}
-            onChange={(v) => update("estimated", v)}
-          />
-          <Field
-            label="Tags (separadas por vírgula)"
-            value={form.tags}
-            onChange={(v) => update("tags", v)}
-          />
-          <Field label="Observações">
-            <textarea
-              rows={4}
-              maxLength={5000}
-              value={form.notes}
-              onChange={(e) => update("notes", e.target.value)}
-            />
-          </Field>
-          {error && (
-            <p className="admin-error" role="alert">
-              {error}
-            </p>
-          )}
+      <form onSubmit={submit} noValidate>
+        <div className="admin-modal__body crm-form">
+          <fieldset className="crm-form__section" disabled={busy}>
+            <legend>Contato</legend>
+            <div className="admin-form-grid">
+              {text("name", "Nome", 160, { required: true, autoComplete: "off" })}
+              {text("company", "Empresa", 160, { autoComplete: "off" })}
+              {text("phone", "Telefone com DDI e DDD", 40, {
+                type: "tel",
+                required: true,
+                placeholder: "+55 11 99999-9999",
+                autoComplete: "off",
+              })}
+              {text("whatsapp", "Outro número de WhatsApp (opcional)", 40, {
+                type: "tel",
+                placeholder: "+55 11 99999-9999",
+                autoComplete: "off",
+              })}
+              {text("email", "E-mail", 254, { type: "email", autoComplete: "off" })}
+              {text("instagram", "Instagram", 160, { autoComplete: "off" })}
+              {text("website", "Site", 500, {
+                type: "url",
+                placeholder: "https://",
+                autoComplete: "off",
+              })}
+            </div>
+          </fieldset>
+          <fieldset className="crm-form__section" disabled={busy}>
+            <legend>Projeto e origem</legend>
+            <div className="admin-form-grid">
+              {text("project_name", "Nome do projeto", 160)}
+              {text("event_date", "Data do evento", undefined, { type: "date" })}
+              {text("city", "Cidade", 120)}
+              {text("segment", "Segmento", 120)}
+              {text("source", "Origem do lead", 120)}
+            </div>
+          </fieldset>
+          <fieldset className="crm-form__section" disabled={busy}>
+            <legend>Negociação</legend>
+            <div className="admin-form-grid">
+              <Control id={`${uid}-owner_id`} label="Responsável">
+                <select
+                  {...fieldProps(uid, "owner_id", errors)}
+                  value={form.owner_id}
+                  onChange={(e) => update("owner_id", e.target.value)}
+                >
+                  <option value="">Sem responsável</option>
+                  {people.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </Control>
+              <Control id={`${uid}-stage`} label="Etapa">
+                <select
+                  {...fieldProps(uid, "stage", errors)}
+                  value={form.stage}
+                  onChange={(e) => update("stage", e.target.value)}
+                >
+                  {stages.map(([k, l]) => (
+                    <option key={k} value={k}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </Control>
+              {text("first_contact", "Primeiro contato", undefined, { type: "date" })}
+              {text("next_follow_up", "Próximo follow-up", undefined, {
+                type: "datetime-local",
+              })}
+              {text("estimated", "Valor estimado (R$)", undefined, {
+                inputMode: "decimal",
+                placeholder: "0,00",
+              })}
+              {text("tags", "Tags (separadas por vírgula)", undefined)}
+              <Control
+                id={`${uid}-notes`}
+                label="Observações"
+                error={errors.notes}
+                wide
+              >
+                <textarea
+                  {...fieldProps(uid, "notes", errors)}
+                  rows={4}
+                  maxLength={5000}
+                  value={form.notes}
+                  onChange={(e) => update("notes", e.target.value)}
+                />
+              </Control>
+            </div>
+          </fieldset>
+          {error && <ErrorState>{error}</ErrorState>}
         </div>
         <div className="admin-modal__foot">
           <button
@@ -219,7 +341,7 @@ function ClientEditor({ record, people, onClose, onSaved }) {
           >
             Cancelar
           </button>
-          <button className="admin-button" disabled={busy}>
+          <button className="admin-button" disabled={busy} aria-busy={busy}>
             {busy ? "Salvando…" : "Salvar cliente"}
           </button>
         </div>
@@ -228,7 +350,8 @@ function ClientEditor({ record, people, onClose, onSaved }) {
   );
 }
 function ActivityEditor({ clients, clientId, onClose, onSaved }) {
-  const auth = useAuth();
+  const auth = useAuth(),
+    uid = useId();
   const [requestId] = useState(() => crypto.randomUUID());
   const [form, setForm] = useState({
       client_id: clientId || clients[0]?.id || "",
@@ -241,35 +364,64 @@ function ActivityEditor({ clients, clientId, onClose, onSaved }) {
       next_due: "",
     }),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [errors, setErrors] = useState({});
   useUnsavedChanges(true);
-  const update = (k, v) => setForm((old) => ({ ...old, [k]: v }));
+  const update = (k, v) => {
+    setForm((old) => ({ ...old, [k]: v }));
+    setErrors((old) => (old[k] ? { ...old, [k]: "" } : old));
+  };
+  const submit = async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    // The contact RPC rejects empty notes, future contact dates and past next contacts.
+    const custom = {};
+    if (!form.notes.trim()) custom.notes = "Descreva o que foi conversado.";
+    if (
+      form.occurred_at &&
+      Date.parse(timestamp(form.occurred_at)) > Date.now() + 5 * 60000
+    )
+      custom.occurred_at =
+        "Use a data e o horário em que o contato aconteceu, sem datas futuras.";
+    if (form.next_due && Date.parse(timestamp(form.next_due)) <= Date.now())
+      custom.next_due = "Escolha uma data futura para o próximo contato.";
+    const found = formErrors(e.currentTarget, custom);
+    setErrors(found);
+    if (hasErrors(found)) {
+      focusFirstError(e.currentTarget, found);
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const client = clients.find((item) => item.id === form.client_id);
+      await recordContact({
+        target: form.client_id,
+        revision: client.version,
+        request_id: requestId,
+        contacted_at: timestamp(form.occurred_at),
+        contact_channel: form.channel,
+        contact_notes: form.notes,
+        outcome: form.result,
+        next_step: form.next_step,
+        next_due: timestamp(form.next_due),
+        new_stage: form.new_stage || null,
+      });
+      await onSaved();
+      onClose();
+    } catch (cause) {
+      setError(cause.message);
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <Modal title="Registrar contato realizado" onClose={() => !busy && onClose()}>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          try {
-            const client = clients.find(item => item.id === form.client_id);
-            await recordContact({
-              target: form.client_id, revision: client.version, request_id: requestId,
-              contacted_at: timestamp(form.occurred_at), contact_channel: form.channel,
-              contact_notes: form.notes, outcome: form.result, next_step: form.next_step,
-              next_due: timestamp(form.next_due), new_stage: form.new_stage || null,
-            });
-            await onSaved();
-            onClose();
-          } catch (cause) {
-            setError(cause.message);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
+      <form onSubmit={submit} noValidate>
         <div className="admin-modal__body admin-form-grid">
-          <Field label="Cliente">
+          <Control id={`${uid}-client_id`} label="Cliente" error={errors.client_id}>
             <select
+              {...fieldProps(uid, "client_id", errors)}
               required
               value={form.client_id}
               onChange={(e) => update("client_id", e.target.value)}
@@ -280,16 +432,23 @@ function ActivityEditor({ clients, clientId, onClose, onSaved }) {
                 </option>
               ))}
             </select>
-          </Field>
-          <Field
+          </Control>
+          <Control
+            id={`${uid}-occurred_at`}
             label="Data e horário · Brasília"
-            type="datetime-local"
-            required
-            value={form.occurred_at}
-            onChange={(v) => update("occurred_at", v)}
-          />
-          <Field label="Canal">
+            error={errors.occurred_at}
+          >
+            <input
+              {...fieldProps(uid, "occurred_at", errors)}
+              type="datetime-local"
+              required
+              value={form.occurred_at}
+              onChange={(e) => update("occurred_at", e.target.value)}
+            />
+          </Control>
+          <Control id={`${uid}-channel`} label="Canal">
             <select
+              {...fieldProps(uid, "channel", errors)}
               value={form.channel}
               onChange={(e) => update("channel", e.target.value)}
             >
@@ -299,38 +458,84 @@ function ActivityEditor({ clients, clientId, onClose, onSaved }) {
                 </option>
               ))}
             </select>
-          </Field>
-          <Field label="O que foi conversado?">
+          </Control>
+          <Control
+            id={`${uid}-notes`}
+            label="O que foi conversado?"
+            error={errors.notes}
+            wide
+          >
             <textarea
+              {...fieldProps(uid, "notes", errors)}
               required
               maxLength={3000}
               rows={4}
               value={form.notes}
               onChange={(e) => update("notes", e.target.value)}
             />
-          </Field>
-          <Field
-            label="Resultado"
-            maxLength={500}
-            value={form.result}
-            onChange={(v) => update("result", v)}
-          />
-          <Field
-            label="Próximo passo"
-            maxLength={500}
-            value={form.next_step}
-            onChange={(v) => update("next_step", v)}
-          />
-          {(auth.hasPermission('crm.pipeline') || auth.hasPermission('crm.clients')) && <Field label="Atualizar negociação"><select value={form.new_stage} onChange={event => update('new_stage', event.target.value)}><option value="">Manter etapa atual</option>{stages.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></Field>}
-          {auth.hasPermission('crm.followups') && <Field label="Próximo contato (opcional)" type="datetime-local" value={form.next_due} onChange={value => update('next_due', value)} />}
-          {error && (
-            <p className="admin-error" role="alert">
-              {error}
-            </p>
+          </Control>
+          <Control id={`${uid}-result`} label="Resultado" error={errors.result}>
+            <input
+              {...fieldProps(uid, "result", errors)}
+              maxLength={500}
+              value={form.result}
+              onChange={(e) => update("result", e.target.value)}
+            />
+          </Control>
+          <Control id={`${uid}-next_step`} label="Próximo passo" error={errors.next_step}>
+            <input
+              {...fieldProps(uid, "next_step", errors)}
+              maxLength={500}
+              value={form.next_step}
+              onChange={(e) => update("next_step", e.target.value)}
+            />
+          </Control>
+          {(auth.hasPermission("crm.pipeline") || auth.hasPermission("crm.clients")) && (
+            <Control id={`${uid}-new_stage`} label="Atualizar negociação">
+              <select
+                {...fieldProps(uid, "new_stage", errors)}
+                value={form.new_stage}
+                onChange={(event) => update("new_stage", event.target.value)}
+              >
+                <option value="">Manter etapa atual</option>
+                {stages.map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </Control>
           )}
+          {auth.hasPermission("crm.followups") && (
+            <Control
+              id={`${uid}-next_due`}
+              label="Próximo contato (opcional)"
+              error={errors.next_due}
+            >
+              <input
+                {...fieldProps(uid, "next_due", errors)}
+                type="datetime-local"
+                value={form.next_due}
+                onChange={(e) => update("next_due", e.target.value)}
+              />
+            </Control>
+          )}
+          {error && <ErrorState>{error}</ErrorState>}
         </div>
         <div className="admin-modal__foot">
-          <button className="admin-button" disabled={busy || !clients.length}>
+          <button
+            type="button"
+            className="admin-button admin-button--secondary"
+            onClick={onClose}
+            disabled={busy}
+          >
+            Cancelar
+          </button>
+          <button
+            className="admin-button"
+            disabled={busy || !clients.length}
+            aria-busy={busy}
+          >
             {busy ? "Salvando…" : "Registrar contato realizado"}
           </button>
         </div>
@@ -348,6 +553,7 @@ function FollowupEditor({
   reschedule,
 }) {
   const auth = useAuth(),
+    uid = useId(),
     [form, setForm] = useState({
       client_id: reschedule?.client_id || clientId || clients[0]?.id || "",
       owner_id: reschedule?.owner_id || auth.user.id,
@@ -358,66 +564,96 @@ function FollowupEditor({
       new_stage: "",
     }),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [errors, setErrors] = useState({});
   useUnsavedChanges(true);
-  const update = (k, v) => setForm((old) => ({ ...old, [k]: v }));
+  const update = (k, v) => {
+    setForm((old) => ({ ...old, [k]: v }));
+    setErrors((old) => (old[k] ? { ...old, [k]: "" } : old));
+  };
+  const clientName = clients.find(
+    (c) => c.id === (complete?.client_id || reschedule?.client_id),
+  )?.name;
+  const submit = async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    const custom = {};
+    if (complete && !form.result.trim())
+      custom.result = "Informe o resultado do contato.";
+    const found = formErrors(e.currentTarget, custom);
+    setErrors(found);
+    if (hasErrors(found)) {
+      focusFirstError(e.currentTarget, found);
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      if (complete)
+        await completeFollowup({
+          target: complete.id,
+          revision: complete.version,
+          outcome: form.result,
+          next_due: timestamp(form.next_due),
+          new_stage: form.new_stage || null,
+        });
+      else if (reschedule) await rescheduleFollowup(reschedule, timestamp(form.due_at));
+      else
+        await addFollowup({
+          client_id: form.client_id,
+          owner_id: form.owner_id,
+          due_at: timestamp(form.due_at),
+          notes: form.notes,
+        });
+      await onSaved();
+      onClose();
+    } catch (cause) {
+      setError(cause.message);
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <Modal
-      title={complete ? "Concluir follow-up" : reschedule ? 'Reagendar follow-up' : "Agendar follow-up"}
+      title={complete ? "Concluir follow-up" : reschedule ? "Reagendar follow-up" : "Agendar follow-up"}
+      subtitle={complete || reschedule ? clientName : undefined}
       onClose={() => !busy && onClose()}
     >
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          try {
-            if (complete)
-              await completeFollowup({
-                target: complete.id,
-                revision: complete.version,
-                outcome: form.result,
-                next_due: timestamp(form.next_due),
-                new_stage: form.new_stage || null,
-              });
-            else if (reschedule) await rescheduleFollowup(reschedule, timestamp(form.due_at));
-            else
-              await addFollowup({
-                client_id: form.client_id,
-                owner_id: form.owner_id,
-                due_at: timestamp(form.due_at),
-                notes: form.notes,
-              });
-            await onSaved();
-            onClose();
-          } catch (cause) {
-            setError(cause.message);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
+      <form onSubmit={submit} noValidate>
         <div className="admin-modal__body admin-form-grid">
           {complete ? (
             <>
-              <p>{clients.find((c) => c.id === complete.client_id)?.name}</p>
-              <Field label="Resultado do contato">
+              <Control
+                id={`${uid}-result`}
+                label="Resultado do contato"
+                error={errors.result}
+                wide
+              >
                 <textarea
+                  {...fieldProps(uid, "result", errors)}
                   required
                   maxLength={1000}
                   rows={3}
                   value={form.result}
                   onChange={(e) => update("result", e.target.value)}
                 />
-              </Field>
-              <Field
+              </Control>
+              <Control
+                id={`${uid}-next_due`}
                 label="Próximo follow-up (opcional)"
-                type="datetime-local"
-                value={form.next_due}
-                onChange={(v) => update("next_due", v)}
-              />
-              <Field label="Atualizar etapa">
+                error={errors.next_due}
+              >
+                <input
+                  {...fieldProps(uid, "next_due", errors)}
+                  type="datetime-local"
+                  value={form.next_due}
+                  onChange={(e) => update("next_due", e.target.value)}
+                />
+              </Control>
+              <Control id={`${uid}-new_stage`} label="Atualizar etapa">
                 <select
-                  disabled={!auth.hasPermission('crm.pipeline') && !auth.hasPermission('crm.clients')}
+                  {...fieldProps(uid, "new_stage", errors)}
+                  disabled={!auth.hasPermission("crm.pipeline") && !auth.hasPermission("crm.clients")}
                   value={form.new_stage}
                   onChange={(e) => update("new_stage", e.target.value)}
                 >
@@ -428,12 +664,13 @@ function FollowupEditor({
                     </option>
                   ))}
                 </select>
-              </Field>
+              </Control>
             </>
           ) : (
             <>
-              <Field label="Cliente">
+              <Control id={`${uid}-client_id`} label="Cliente" error={errors.client_id}>
                 <select
+                  {...fieldProps(uid, "client_id", errors)}
                   required
                   disabled={!!reschedule}
                   value={form.client_id}
@@ -445,9 +682,10 @@ function FollowupEditor({
                     </option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Responsável">
+              </Control>
+              <Control id={`${uid}-owner_id`} label="Responsável" error={errors.owner_id}>
                 <select
+                  {...fieldProps(uid, "owner_id", errors)}
                   required
                   disabled={!!reschedule}
                   value={form.owner_id}
@@ -459,43 +697,72 @@ function FollowupEditor({
                     </option>
                   ))}
                 </select>
-              </Field>
-              <Field
+              </Control>
+              <Control
+                id={`${uid}-due_at`}
                 label="Data e horário · Brasília"
-                required
-                type="datetime-local"
-                value={form.due_at}
-                onChange={(v) => update("due_at", v)}
-              />
-              <Field label="Observações">
+                error={errors.due_at}
+              >
+                <input
+                  {...fieldProps(uid, "due_at", errors)}
+                  required
+                  type="datetime-local"
+                  value={form.due_at}
+                  onChange={(e) => update("due_at", e.target.value)}
+                />
+              </Control>
+              <Control id={`${uid}-notes`} label="Observações" error={errors.notes} wide>
                 <textarea
+                  {...fieldProps(uid, "notes", errors)}
                   disabled={!!reschedule}
                   maxLength={2000}
                   rows={3}
                   value={form.notes}
                   onChange={(e) => update("notes", e.target.value)}
                 />
-              </Field>
+              </Control>
             </>
           )}
-          {error && (
-            <p className="admin-error" role="alert">
-              {error}
-            </p>
-          )}
+          {error && <ErrorState>{error}</ErrorState>}
         </div>
         <div className="admin-modal__foot">
-          <button className="admin-button" disabled={busy || !clients.length}>
+          <button
+            type="button"
+            className="admin-button admin-button--secondary"
+            onClick={onClose}
+            disabled={busy}
+          >
+            Cancelar
+          </button>
+          <button
+            className="admin-button"
+            disabled={busy || !clients.length}
+            aria-busy={busy}
+          >
             {busy
               ? "Salvando…"
               : complete
                 ? "Concluir contato"
-                : reschedule ? 'Reagendar'
-                : "Agendar follow-up"}
+                : reschedule
+                  ? "Reagendar"
+                  : "Agendar follow-up"}
           </button>
         </div>
       </form>
     </Modal>
+  );
+}
+
+function DetailList({ items }) {
+  return (
+    <dl className="crm-detail__grid">
+      {items.map(([label, value]) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd className={value ? undefined : "is-empty"}>{value || "—"}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 function ClientDetail({
@@ -514,6 +781,7 @@ function ClientDetail({
   const query = useQuery(
     useCallback(() => clientHistory(client.id), [client.id]),
   );
+  const owner = people.find((p) => p.id === client.owner_id);
   return (
     <Modal
       title={client.name}
@@ -521,102 +789,203 @@ function ClientDetail({
       onClose={onClose}
       wide
     >
-      <div className="admin-modal__body">
-        <div className="platform-detail-grid">
-          {[
-            ["Etapa", stageLabel(client.stage)],
-            [
-              "Responsável",
-              people.find((p) => p.id === client.owner_id)?.name ||
-                "Sem responsável",
-            ],
-            ["E-mail", client.email],
-            ["Telefone", client.phone],
-            ["WhatsApp", client.whatsapp],
-            ['Projeto', client.project_name],
-            ['Data do evento', client.event_date?.split('-').reverse().join('/')],
-            ["Instagram", client.instagram],
-            ["Site", client.website],
-            ["Cidade", client.city],
-            ["Segmento", client.segment],
-            ["Origem", client.source],
-            ["Valor estimado", brl(client.estimated_cents)],
-            ["Último contato", fmtTime(client.last_contact)],
-            ["Próximo follow-up", fmtTime(client.next_follow_up)],
-            ["Tags", client.tags.join(", ")],
-          ].map(([k, v]) => (
-            <div key={k}>
-              <small>{k}</small>
-              <p>{v || "—"}</p>
-            </div>
-          ))}
-        </div>
-        {client.notes && <p className="crm-notes">{client.notes}</p>}
-        {canProposals && <><ClientProposals client={client} notify={notify} /><ClientDocuments client={client} notify={notify} /></>}
-        <h3 className="platform-subheading">Histórico do cliente</h3>
-        <QueryState query={query}>
-          <div className="platform-timeline">
-            {query.data?.map((h) => (
-              <article key={h.id}>
-                <span />
-                <div>
-                  <h4>{h.action}</h4>
-                  <small>
-                    {h.actor_name} · {fmtTime(h.created_at)}
-                  </small>
-                  {h.details.stage && (
-                    <p>
-                      {h.details.previous_stage
-                        ? `${stageLabel(h.details.previous_stage)} → `
-                        : ""}
-                      {stageLabel(h.details.stage)}
-                    </p>
-                  )}
-                  {h.details.notes && <p>{h.details.notes}</p>}
-                  {h.details.result && <p>Resultado: {h.details.result}</p>}
-                </div>
-              </article>
-            ))}
+      <div className="admin-modal__body crm-detail">
+        <dl className="crm-detail__summary">
+          <div>
+            <dt>Etapa</dt>
+            <dd>
+              <StageBadge stage={client.stage} />
+            </dd>
           </div>
-        </QueryState>
+          <div>
+            <dt>Responsável</dt>
+            <dd className="crm-person">
+              <Avatar profile={owner} size={20} />
+              <span>{owner?.name || "Sem responsável"}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Valor estimado</dt>
+            <dd className="crm-detail__money">{brl(client.estimated_cents)}</dd>
+          </div>
+          <div>
+            <dt>Próximo follow-up</dt>
+            <dd>{fmtTime(client.next_follow_up)}</dd>
+          </div>
+        </dl>
+        <section className="crm-detail__section">
+          <h3>Contato</h3>
+          <DetailList
+            items={[
+              ["E-mail", client.email],
+              ["Telefone", client.phone],
+              ["WhatsApp", client.whatsapp],
+              ["Instagram", client.instagram],
+              ["Site", client.website],
+            ]}
+          />
+        </section>
+        <section className="crm-detail__section">
+          <h3>Projeto e origem</h3>
+          <DetailList
+            items={[
+              ["Projeto", client.project_name],
+              ["Data do evento", client.event_date?.split("-").reverse().join("/")],
+              ["Cidade", client.city],
+              ["Segmento", client.segment],
+              ["Origem", client.source],
+              ["Último contato", client.last_contact ? fmtTime(client.last_contact) : ""],
+              ["Tags", client.tags.join(", ")],
+            ]}
+          />
+        </section>
+        {client.notes && (
+          <section className="crm-detail__section">
+            <h3>Observações</h3>
+            <p className="crm-notes">{client.notes}</p>
+          </section>
+        )}
+        {canProposals && (
+          <div className="crm-detail__files">
+            <ClientProposals client={client} notify={notify} />
+            <ClientDocuments client={client} notify={notify} />
+          </div>
+        )}
+        <section className="crm-detail__section">
+          <h3>Histórico do cliente</h3>
+          {query.error && (
+            <ErrorState onRetry={query.reload}>
+              Não foi possível carregar o histórico. {query.error}
+            </ErrorState>
+          )}
+          {query.loading && !query.data ? (
+            <div className="crm-timeline-skeleton" role="status">
+              <span className="ds-visually-hidden">Carregando o histórico…</span>
+              {[0, 1, 2].map((item) => (
+                <div key={item} aria-hidden="true">
+                  <span className="ds-skeleton ds-skeleton--circle" />
+                  <span className="ds-skeleton ds-skeleton--text" />
+                </div>
+              ))}
+            </div>
+          ) : query.data?.length ? (
+            <ol className="crm-timeline">
+              {query.data.map((h) => (
+                <li key={h.id}>
+                  <span className="crm-timeline__dot" aria-hidden="true" />
+                  <div>
+                    <h4>{h.action}</h4>
+                    <p className="crm-timeline__meta">
+                      {h.actor_name} ·{" "}
+                      <time dateTime={h.created_at}>{fmtTime(h.created_at)}</time>
+                    </p>
+                    {h.details.stage && (
+                      <p>
+                        {h.details.previous_stage
+                          ? `${stageLabel(h.details.previous_stage)} → `
+                          : ""}
+                        {stageLabel(h.details.stage)}
+                      </p>
+                    )}
+                    {h.details.notes && <p>{h.details.notes}</p>}
+                    {h.details.result && <p>Resultado: {h.details.result}</p>}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            query.data && (
+              <p className="crm-detail__empty">
+                Nenhum registro no histórico deste cliente ainda.
+              </p>
+            )
+          )}
+        </section>
       </div>
-      <div className="admin-modal__foot crm-client-actions">
-        <button className="admin-button admin-button--secondary" onClick={onWhatsApp}><Icon name="message" />Conversar no WhatsApp</button>
-        {onEmail && (
-          <Link
-            className="admin-button admin-button--secondary"
-            to={`/admin/comercial/emails?cliente=${client.id}&compor=1`}
-          >
-            <Icon name="mail" />
-            Enviar e-mail
-          </Link>
-        )}
-        {onEdit && (
+      <div className="admin-modal__foot crm-detail__actions">
+        <div className="crm-detail__quick">
           <button
+            type="button"
             className="admin-button admin-button--secondary"
-            onClick={onEdit}
+            onClick={onWhatsApp}
+            aria-label="Conversar no WhatsApp"
           >
-            <Icon name="edit" />
-            Editar
+            <Icon name="message" />
+            <span className="crm-long">Conversar no WhatsApp</span>
+            <span className="crm-short">WhatsApp</span>
           </button>
-        )}
-        {onFollowup && (
-          <button
-            className="admin-button admin-button--secondary"
-            onClick={onFollowup}
-          >
-            <Icon name="clock" />
-            Follow-up
-          </button>
-        )}
+          {onEmail && (
+            <Link
+              className="admin-button admin-button--secondary"
+              to={`/admin/comercial/emails?cliente=${client.id}&compor=1`}
+              aria-label="Enviar e-mail"
+            >
+              <Icon name="mail" />
+              <span className="crm-long">Enviar e-mail</span>
+              <span className="crm-short">E-mail</span>
+            </Link>
+          )}
+          {onEdit && (
+            <button
+              type="button"
+              className="admin-button admin-button--secondary"
+              onClick={onEdit}
+            >
+              <Icon name="edit" />
+              Editar
+            </button>
+          )}
+          {onFollowup && (
+            <button
+              type="button"
+              className="admin-button admin-button--secondary"
+              onClick={onFollowup}
+            >
+              <Icon name="clock" />
+              Follow-up
+            </button>
+          )}
+        </div>
         {onActivity && (
-          <button className="admin-button" onClick={onActivity}>
+          <button type="button" className="admin-button" onClick={onActivity}>
             <Icon name="plus" />
             Registrar contato realizado
           </button>
         )}
       </div>
     </Modal>
+  );
+}
+
+// Single-series bar list. Values are written next to each label, so the bars only add shape.
+function BarList({ label, items, empty }) {
+  if (!items.length) return <p className="crm-chart__empty">{empty}</p>;
+  return (
+    <ul className="crm-bars" aria-label={label}>
+      {items.map((item) => (
+        <li key={item.key}>
+          <div className="crm-bars__label">
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+          </div>
+          <span className="crm-bars__track" aria-hidden="true">
+            <i style={{ width: `${Math.min(1, item.share) * 100}%` }} />
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+function ChartCard({ title, description, children }) {
+  const id = useId();
+  return (
+    <section className="ds-card crm-chart" aria-labelledby={id}>
+      <div className="crm-chart__head">
+        <h2 id={id}>{title}</h2>
+        {description && <p>{description}</p>}
+      </div>
+      {children}
+    </section>
   );
 }
 function CommercialOverview({ data, report = false, filters }) {
@@ -662,9 +1031,10 @@ function CommercialOverview({ data, report = false, filters }) {
     .sort((a, b) => b[0].localeCompare(a[0]))
     .slice(0, 14)
     .reverse();
+  const busiestDay = Math.max(...days.map((d) => d[1]), 1);
   return (
     <>
-      <div className="crm-stats">
+      <dl className="crm-stats crm-kpis">
         {[
           ["Clientes cadastrados", stats.total],
           ["Negociações em andamento", stats.inProgress],
@@ -679,103 +1049,652 @@ function CommercialOverview({ data, report = false, filters }) {
           ["Follow-ups pendentes", stats.pending],
           ["Conversão de oportunidades concluídas", `${stats.conversion}%`],
         ].map(([label, value]) => (
-          <article className="admin-panel" key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-          </article>
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>
+              <strong>{value}</strong>
+            </dd>
+          </div>
         ))}
-      </div>
-      <div className="platform-two-columns">
-        <section className="admin-panel platform-form">
-          <h2>Contatos por pessoa</h2>
-          {data.people.map((p) => {
-            const count = activities.filter((a) => a.user_id === p.id).length;
-            return (
-              <div className="crm-bar" key={p.id}>
-                <div>
-                  <span className="crm-person">
-                    <Avatar profile={p} size={24} />
+      </dl>
+      <div className="crm-charts">
+        <ChartCard title="Contatos por pessoa">
+          <BarList
+            label="Contatos registrados por pessoa"
+            empty="A equipe aparece após o primeiro cadastro."
+            items={data.people.map((p) => {
+              const count = activities.filter((a) => a.user_id === p.id).length;
+              return {
+                key: p.id,
+                label: (
+                  <>
+                    <Avatar profile={p} size={20} />
                     {p.name}
-                  </span>
-                  <strong>{count}</strong>
-                </div>
-                <span>
-                  <i
-                    style={{
-                      width: `${activities.length ? (count / activities.length) * 100 : 0}%`,
-                    }}
-                  />
-                </span>
-              </div>
-            );
-          })}
-          {!data.people.length && (
-            <p className="platform-muted">
-              A equipe aparece após o primeiro cadastro.
-            </p>
-          )}
-        </section>
-        <section className="admin-panel platform-form">
-          <h2>Origem dos leads</h2>
-          {origin.map(([name, count]) => (
-            <div className="crm-bar" key={name}>
-              <div>
-                <span>{name}</span>
-                <strong>{count}</strong>
-              </div>
-              <span>
-                <i
-                  style={{
-                    width: `${clients.length ? (count / clients.length) * 100 : 0}%`,
-                  }}
-                />
-              </span>
-            </div>
-          ))}
-          {!origin.length && (
-            <p className="platform-muted">
-              Adicione leads para acompanhar as origens.
-            </p>
-          )}
-        </section>
+                  </>
+                ),
+                value: count,
+                share: activities.length ? count / activities.length : 0,
+              };
+            })}
+          />
+        </ChartCard>
+        <ChartCard title="Origem dos leads">
+          <BarList
+            label="Leads por origem"
+            empty="Adicione leads para acompanhar as origens."
+            items={origin.map(([name, count]) => ({
+              key: name,
+              label: name,
+              value: count,
+              share: clients.length ? count / clients.length : 0,
+            }))}
+          />
+        </ChartCard>
+        {report && (
+          <>
+            <ChartCard
+              title="Contatos por dia"
+              description="Dias mais recentes com contatos registrados no período."
+            >
+              <BarList
+                label="Contatos por dia"
+                empty="Nenhum contato no período."
+                items={days.map(([day, count]) => ({
+                  key: day,
+                  label: day.split("-").reverse().join("/"),
+                  value: count,
+                  share: count / busiestDay,
+                }))}
+              />
+            </ChartCard>
+            <ChartCard title="Oportunidades por etapa">
+              <BarList
+                label="Oportunidades por etapa"
+                empty="Nenhuma oportunidade cadastrada."
+                items={stages.map(([key, label]) => {
+                  const count = clients.filter((c) => c.stage === key).length;
+                  return {
+                    key,
+                    label: (
+                      <>
+                        <StageIcon stage={key} />
+                        {label}
+                      </>
+                    ),
+                    value: count,
+                    share: clients.length ? count / clients.length : 0,
+                  };
+                })}
+              />
+            </ChartCard>
+          </>
+        )}
       </div>
-      {report && (
-        <div className="platform-two-columns">
-          <section className="admin-panel platform-form">
-            <h2>Contatos por dia</h2>
-            {days.map(([day, count]) => (
-              <div className="crm-bar" key={day}>
-                <div>
-                  <span>{day.split("-").reverse().join("/")}</span>
-                  <strong>{count}</strong>
-                </div>
-                <span>
-                  <i
-                    style={{
-                      width: `${(count / Math.max(...days.map((d) => d[1]), 1)) * 100}%`,
-                    }}
-                  />
-                </span>
-              </div>
-            ))}
-            {!days.length && (
-              <p className="platform-muted">Nenhum contato no período.</p>
-            )}
-          </section>
-          <section className="admin-panel platform-form">
-            <h2>Oportunidades por etapa</h2>
-            {stages.map(([key, label]) => (
-              <div className="crm-stage-summary" key={key}>
-                <span>{label}</span>
-                <strong>{clients.filter((c) => c.stage === key).length}</strong>
-              </div>
-            ))}
-          </section>
-        </div>
-      )}
     </>
   );
 }
+
+function ReportFilters({ data, filters, onChange, withSource = false }) {
+  const uid = useId(),
+    [open, setOpen] = useState(false);
+  const set = (key, value) => onChange((previous) => ({ ...previous, [key]: value }));
+  const invalidRange = !!(filters.from && filters.to && filters.to < filters.from);
+  const count = [filters.owner, filters.source, filters.from, filters.to].filter(Boolean).length;
+  return (
+    <section className="crm-report-filters" aria-label="Filtros do relatório">
+      <button
+        type="button"
+        className="admin-button admin-button--secondary crm-report-filters__toggle"
+        aria-expanded={open}
+        aria-controls={`${uid}-fields`}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <Icon name="filter" />
+        Filtros
+        {count > 0 && (
+          <span className="crm-toolbar__count">
+            {count}
+            <span className="ds-visually-hidden"> ativos</span>
+          </span>
+        )}
+      </button>
+      <div
+        id={`${uid}-fields`}
+        className={`crm-report-filters__fields${open || invalidRange ? " is-open" : ""}`}
+      >
+        <div className="admin-field">
+          <label className="admin-label" htmlFor={`${uid}-owner`}>
+            Responsável
+          </label>
+          <select
+            id={`${uid}-owner`}
+            value={filters.owner}
+            onChange={(event) => set("owner", event.target.value)}
+          >
+            <option value="">Toda a equipe</option>
+            {data.people.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {withSource && (
+          <div className="admin-field">
+            <label className="admin-label" htmlFor={`${uid}-source`}>
+              Origem
+            </label>
+            <select
+              id={`${uid}-source`}
+              value={filters.source}
+              onChange={(event) => set("source", event.target.value)}
+            >
+              <option value="">Todas</option>
+              {[...new Set(data.clients.map((c) => c.source).filter(Boolean))].map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div className="admin-field">
+          <label className="admin-label" htmlFor={`${uid}-from`}>
+            Contatos a partir de
+          </label>
+          <input
+            id={`${uid}-from`}
+            type="date"
+            value={filters.from}
+            onChange={(event) => set("from", event.target.value)}
+          />
+        </div>
+        <div className="admin-field">
+          <label className="admin-label" htmlFor={`${uid}-to`}>
+            Até
+          </label>
+          <input
+            id={`${uid}-to`}
+            type="date"
+            min={filters.from}
+            value={filters.to}
+            aria-invalid={invalidRange || undefined}
+            aria-describedby={invalidRange ? `${uid}-to-error` : undefined}
+            onChange={(event) => set("to", event.target.value)}
+          />
+          <FieldError id={`${uid}-to-error`}>
+            {invalidRange && "Escolha uma data igual ou posterior ao início."}
+          </FieldError>
+        </div>
+        {count > 0 && (
+          <button
+            type="button"
+            className="admin-text-button crm-report-filters__clear"
+            onClick={() => onChange({ owner: "", source: "", from: "", to: "" })}
+          >
+            Limpar filtros
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Search on the left; filters inline on larger screens and behind one button on phones.
+function FilterBar({ search, onSearch, placeholder, active, onClear, children }) {
+  const [open, setOpen] = useState(false),
+    id = useId();
+  return (
+    <div className="crm-toolbar">
+      <div className="crm-toolbar__search">
+        <SearchField
+          value={search}
+          onChange={onSearch}
+          label="Buscar no Comercial"
+          placeholder={placeholder}
+        />
+        <button
+          type="button"
+          className="admin-button admin-button--secondary crm-toolbar__toggle"
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <Icon name="filter" />
+          Filtros
+          {active > 0 && (
+            <span className="crm-toolbar__count">
+              {active}
+              <span className="ds-visually-hidden"> ativos</span>
+            </span>
+          )}
+        </button>
+      </div>
+      <div
+        id={id}
+        className={`crm-toolbar__filters${open ? " is-open" : ""}`}
+        role="group"
+        aria-label="Filtros"
+      >
+        {children}
+        {(active > 0 || search) && (
+          <button type="button" className="admin-text-button crm-toolbar__clear" onClick={onClear}>
+            Limpar filtros
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+function FilterSelect({ label, value, onChange, children }) {
+  return (
+    <select
+      className="ds-input ds-select"
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      {children}
+    </select>
+  );
+}
+
+function ClientList({
+  clients,
+  people,
+  resetKey,
+  filtered,
+  canCreate,
+  onCreate,
+  onClear,
+  onOpen,
+  onWhatsApp,
+  onEdit,
+  onDelete,
+}) {
+  const pager = usePagination(clients, { pageSize: 25, resetKey });
+  if (!clients.length)
+    return (
+      <section className="admin-panel">
+        {filtered ? (
+          <EmptyState
+            icon="search"
+            title="Nenhum cliente encontrado"
+            action={
+              <button type="button" className="admin-button admin-button--secondary" onClick={onClear}>
+                Limpar filtros
+              </button>
+            }
+          >
+            Ajuste a busca ou os filtros para ver mais resultados.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            icon="users"
+            title="Nenhum cliente ainda"
+            action={
+              canCreate && (
+                <button type="button" className="admin-button" onClick={onCreate}>
+                  <Icon name="plus" />
+                  Novo lead
+                </button>
+              )
+            }
+          >
+            Cadastre o primeiro lead para acompanhar cada conversa até o fechamento.
+          </EmptyState>
+        )}
+      </section>
+    );
+  return (
+    <section className="admin-panel crm-clients" aria-label="Clientes e leads">
+      <div className="crm-clients__head" aria-hidden="true">
+        <span>Cliente</span>
+        <span>Responsável</span>
+        <span>Etapa</span>
+        <span className="is-number">Valor estimado</span>
+        <span />
+      </div>
+      {pager.items.map((c) => {
+        const owner = people.find((p) => p.id === c.owner_id);
+        return (
+          <article className="crm-client" key={c.id}>
+            <div className="crm-client__main">
+              <h2>
+                <button type="button" className="crm-client__open" onClick={() => onOpen(c)}>
+                  {c.name}
+                </button>
+              </h2>
+              <p>{c.company || c.email || "Novo contato"}</p>
+              {c.tags.length > 0 && <small>{c.tags.join(" · ")}</small>}
+            </div>
+            <div className="crm-client__meta">
+              <span className="crm-client__owner crm-person">
+                <Avatar profile={owner} size={22} />
+                <span>
+                  <span className="ds-visually-hidden">Responsável: </span>
+                  {owner?.name || "Sem responsável"}
+                </span>
+              </span>
+              <span className="crm-client__stage">
+                <StageBadge stage={c.stage} />
+              </span>
+            </div>
+            <span className="crm-client__value">
+              <span className="ds-visually-hidden">Valor estimado: </span>
+              {brl(c.estimated_cents)}
+            </span>
+            <div className="admin-row-actions crm-client__actions">
+              <button
+                type="button"
+                className="admin-icon-button"
+                aria-label={`Conversar no WhatsApp com ${c.name}`}
+                title="Conversar no WhatsApp"
+                onClick={() => onWhatsApp(c)}
+              >
+                <Icon name="message" />
+              </button>
+              <button
+                type="button"
+                className="admin-icon-button"
+                aria-label={`Editar ${c.name}`}
+                title="Editar"
+                onClick={() => onEdit(c)}
+              >
+                <Icon name="edit" />
+              </button>
+              <button
+                type="button"
+                className="admin-icon-button admin-icon-button--danger"
+                aria-label={`Excluir ${c.name}`}
+                title="Excluir"
+                onClick={() => onDelete(c)}
+              >
+                <Icon name="trash" />
+              </button>
+            </div>
+          </article>
+        );
+      })}
+      <Pagination pager={pager} noun="clientes" label="Páginas de clientes" />
+    </section>
+  );
+}
+
+function ActivityList({
+  activities,
+  clients,
+  people,
+  resetKey,
+  filtered,
+  canCreate,
+  onCreate,
+  onClear,
+  onOpenClient,
+}) {
+  const pager = usePagination(activities, { pageSize: 25, resetKey });
+  if (!activities.length)
+    return (
+      <section className="admin-panel">
+        {filtered ? (
+          <EmptyState
+            icon="search"
+            title="Nenhum contato encontrado"
+            action={
+              <button type="button" className="admin-button admin-button--secondary" onClick={onClear}>
+                Limpar filtros
+              </button>
+            }
+          >
+            Ajuste a busca ou os filtros para ver mais resultados.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            icon="activity"
+            title="Nenhum contato registrado"
+            action={
+              canCreate && (
+                <button type="button" className="admin-button" onClick={onCreate}>
+                  <Icon name="plus" />
+                  Registrar contato
+                </button>
+              )
+            }
+          >
+            Registre o primeiro contato da equipe para acompanhar o ritmo da prospecção.
+          </EmptyState>
+        )}
+      </section>
+    );
+  return (
+    <section className="admin-panel crm-feed" aria-label="Contatos registrados">
+      {pager.items.map((a) => {
+        const client = clients.find((c) => c.id === a.client_id),
+          person = people.find((p) => p.id === a.user_id);
+        return (
+          <article className="crm-activity" key={a.id}>
+            <span className="crm-activity__icon" aria-hidden="true">
+              <Icon name={channelIcons[a.channel] || "comment"} size={16} />
+            </span>
+            <div className="crm-activity__main">
+              <div className="crm-activity__head">
+                <h2>
+                  {client ? (
+                    <button type="button" className="crm-link" onClick={() => onOpenClient(client)}>
+                      {client.name}
+                    </button>
+                  ) : (
+                    "Cliente"
+                  )}
+                </h2>
+                <time dateTime={a.occurred_at}>{fmtTime(a.occurred_at)}</time>
+              </div>
+              <p className="crm-activity__notes">{a.notes}</p>
+              {(a.result || a.next_step) && (
+                <dl className="crm-activity__facts">
+                  {a.result && (
+                    <div>
+                      <dt>Resultado</dt>
+                      <dd>{a.result}</dd>
+                    </div>
+                  )}
+                  {a.next_step && (
+                    <div>
+                      <dt>Próximo passo</dt>
+                      <dd>{a.next_step}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+              <p className="crm-activity__meta">
+                <span className="crm-activity__channel">{channelLabel(a.channel)}</span>
+                <span aria-hidden="true">·</span>
+                <span className="crm-person">
+                  <Avatar profile={person} size={18} />
+                  <span>{person?.name}</span>
+                </span>
+              </p>
+            </div>
+          </article>
+        );
+      })}
+      <Pagination pager={pager} noun="contatos" label="Páginas de contatos" />
+    </section>
+  );
+}
+
+function FollowupList({
+  followups,
+  clients,
+  people,
+  today,
+  resetKey,
+  filtered,
+  period,
+  onClear,
+  onOpenClient,
+  onWhatsApp,
+  onReschedule,
+  onComplete,
+}) {
+  const pager = usePagination(followups, { pageSize: 25, resetKey });
+  if (!followups.length)
+    return (
+      <section className="admin-panel">
+        {filtered ? (
+          <EmptyState
+            icon="search"
+            title="Nenhum follow-up encontrado"
+            action={
+              <button type="button" className="admin-button admin-button--secondary" onClick={onClear}>
+                Limpar filtros
+              </button>
+            }
+          >
+            Ajuste a busca ou os filtros para ver mais resultados.
+          </EmptyState>
+        ) : (
+          <EmptyState icon="clock" title="Nenhum follow-up neste filtro">
+            {period === "overdue"
+              ? "Nenhum contato atrasado. A equipe está em dia."
+              : period === "done"
+                ? "Os follow-ups concluídos aparecem aqui."
+                : "Agende o próximo contato para não perder o ritmo da negociação."}
+          </EmptyState>
+        )}
+      </section>
+    );
+  return (
+    <section className="admin-panel crm-feed" aria-label="Follow-ups">
+      {pager.items.map((f) => {
+        const client = clients.find((c) => c.id === f.client_id),
+          owner = people.find((p) => p.id === f.owner_id),
+          day = localDay(f.due_at),
+          overdue = !f.completed_at && day < today,
+          dueToday = !f.completed_at && day === today;
+        return (
+          <article
+            className={`crm-followup${overdue ? " is-overdue" : ""}${f.completed_at ? " is-done" : ""}`}
+            key={f.id}
+          >
+            <Avatar profile={owner} size={32} />
+            <div className="crm-followup__main">
+              <h2>
+                {client ? (
+                  <button type="button" className="crm-link" onClick={() => onOpenClient(client)}>
+                    {client.name}
+                  </button>
+                ) : null}
+              </h2>
+              <p>{f.notes || "Retomar contato"}</p>
+              <p className="crm-followup__due">
+                <Icon name="clock" size={14} />
+                <time dateTime={f.due_at}>{fmtTime(f.due_at)}</time>
+                <span aria-hidden="true">·</span>
+                <span>{owner?.name}</span>
+                {overdue && (
+                  <span className="ds-badge ds-badge--danger">
+                    <Icon name="alertCircle" size={12} />
+                    Atrasado
+                  </span>
+                )}
+                {dueToday && <span className="ds-badge">Hoje</span>}
+                {f.completed_at && (
+                  <span className="ds-badge ds-badge--success">
+                    <Icon name="check" size={12} />
+                    Concluído
+                  </span>
+                )}
+              </p>
+              {f.result && (
+                <p className="crm-followup__result">
+                  <span>Resultado: </span>
+                  {f.result}
+                </p>
+              )}
+            </div>
+            {!f.completed_at && (
+              <div className="crm-followup__actions">
+                <button
+                  type="button"
+                  className="admin-icon-button"
+                  aria-label={`Conversar no WhatsApp com ${client?.name}`}
+                  title="Conversar no WhatsApp"
+                  onClick={() => onWhatsApp(client)}
+                >
+                  <Icon name="message" />
+                </button>
+                <button
+                  type="button"
+                  className="admin-icon-button"
+                  aria-label={`Reagendar follow-up de ${client?.name}`}
+                  title="Reagendar"
+                  onClick={() => onReschedule(f)}
+                >
+                  <Icon name="calendar" />
+                </button>
+                <button
+                  type="button"
+                  className="admin-button admin-button--secondary admin-button--sm"
+                  onClick={() => onComplete(f)}
+                >
+                  <Icon name="check" />
+                  Concluir
+                </button>
+              </div>
+            )}
+          </article>
+        );
+      })}
+      <Pagination pager={pager} noun="follow-ups" label="Páginas de follow-ups" />
+    </section>
+  );
+}
+
+// Skeletons follow the layout that is about to appear.
+function PageSkeleton({ mode }) {
+  const label = <span className="ds-visually-hidden">Carregando o Comercial…</span>;
+  if (mode === "dashboard" || mode === "reports")
+    return (
+      <div className="crm-skeleton" role="status">
+        {label}
+        <div className="crm-kpis" aria-hidden="true">
+          {Array.from({ length: 8 }, (_, index) => (
+            <div key={index}>
+              <span className="ds-skeleton ds-skeleton--text" />
+              <span className="ds-skeleton ds-skeleton--title" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  if (mode === "pipeline")
+    return (
+      <div className="crm-skeleton crm-skeleton--board" role="status">
+        {label}
+        {[0, 1, 2, 3].map((column) => (
+          <div className="crm-kanban-column" key={column} aria-hidden="true">
+            <span className="ds-skeleton ds-skeleton--text" />
+            <span className="ds-skeleton" />
+            <span className="ds-skeleton" />
+          </div>
+        ))}
+      </div>
+    );
+  return (
+    <div className="admin-panel crm-skeleton crm-skeleton--list" role="status">
+      {label}
+      {Array.from({ length: 6 }, (_, index) => (
+        <div key={index} aria-hidden="true">
+          <span className="ds-skeleton ds-skeleton--circle" />
+          <span>
+            <span className="ds-skeleton ds-skeleton--text" />
+            <span className="ds-skeleton ds-skeleton--text" />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const titles = {
   dashboard: ["Comercial", "Conversas que se transformam em histórias."],
   clients: ["Clientes e leads", "Todas as suas oportunidades em um só lugar."],
@@ -792,11 +1711,13 @@ const titles = {
 };
 export default function CommercialPage({ mode = "dashboard", notify }) {
   const auth = useAuth(),
-    [params] = useSearchParams();
+    [params] = useSearchParams(),
+    phone = useMediaQuery("(max-width: 767px)");
   const query = useQuery(useCallback(() => commercialData(), [])),
     [search, setSearch] = useState(""),
     [stage, setStage] = useState(""),
     [owner, setOwner] = useState(""),
+    [channel, setChannel] = useState(""),
     [sort, setSort] = useState("recent"),
     [period, setPeriod] = useState(() =>
       ["pending", "overdue", "today", "tomorrow", "upcoming", "done"].includes(
@@ -824,6 +1745,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
     followups: [],
     people: [],
   };
+  useCreateIntent("lead", () => setEditing("new"), mode === "clients" && !!query.data);
   const requestedClient=params.get('cliente'),openedClient=useRef('');
   useEffect(()=>{const client=data.clients.find(item=>item.id===requestedClient);if(!client||openedClient.current===requestedClient)return;const timer=setTimeout(()=>{openedClient.current=requestedClient;setDetail(client)},0);return()=>clearTimeout(timer)},[data.clients,requestedClient]);
   const filtered = useMemo(
@@ -833,9 +1755,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
           (c) =>
             (!stage || c.stage === stage) &&
             (!owner || c.owner_id === owner) &&
-            `${c.name} ${c.company} ${c.email} ${c.tags.join(" ")}`
-              .toLowerCase()
-              .includes(search.toLowerCase()),
+            matchesQuery(search, c.name, c.company, c.email, c.tags),
         )
         .sort((a, b) =>
           sort === "name"
@@ -890,82 +1810,106 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
   const [clock] = useState(() => new Date());
   const today = localDay(clock),
     tomorrow = localDay(clock.getTime() + 86400000);
-  const followups = data.followups.filter(
+  const clientName = (id) => data.clients.find((c) => c.id === id)?.name;
+  const inPeriod = (f, key) =>
+    key === "done"
+      ? !!f.completed_at
+      : !f.completed_at &&
+        (key === "pending" ||
+          (key === "overdue" && localDay(f.due_at) < today) ||
+          (key === "today" && localDay(f.due_at) === today) ||
+          (key === "tomorrow" && localDay(f.due_at) === tomorrow) ||
+          (key === "upcoming" && localDay(f.due_at) > tomorrow));
+  const followupBase = data.followups.filter(
     (f) =>
       (!owner || f.owner_id === owner) &&
-      (!search ||
-        data.clients
-          .find((c) => c.id === f.client_id)
-          ?.name.toLowerCase()
-          .includes(search.toLowerCase())) &&
-      (period === "done"
-        ? !!f.completed_at
-        : !f.completed_at &&
-          (period === "pending" ||
-            (period === "overdue" && localDay(f.due_at) < today) ||
-            (period === "today" && localDay(f.due_at) === today) ||
-            (period === "tomorrow" && localDay(f.due_at) === tomorrow) ||
-            (period === "upcoming" && localDay(f.due_at) > tomorrow))),
+      (!search || matchesQuery(search, clientName(f.client_id), f.notes)),
   );
-  const toolbar = (
-    <div className="crm-toolbar">
-      <label className="admin-search">
-        <Icon name="search" />
-        <input
-          type="search"
-          aria-label="Buscar no Comercial"
-          placeholder="Buscar cliente…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </label>
-      <select
-        aria-label="Filtrar responsável"
-        value={owner}
-        onChange={(e) => setOwner(e.target.value)}
-      >
-        <option value="">Toda a equipe</option>
-        {data.people.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
+  const followups = followupBase.filter((f) => inPeriod(f, period));
+  const activities = data.activities.filter(
+    (a) =>
+      (!owner || a.user_id === owner) &&
+      (!channel || a.channel === channel) &&
+      (!search ||
+        matchesQuery(search, clientName(a.client_id), a.notes, a.result, a.next_step)),
+  );
+  const clearFilters = () => {
+    setSearch("");
+    setOwner("");
+    setStage("");
+    setChannel("");
+  };
+  const ownerSelect = (
+    <FilterSelect label="Filtrar responsável" value={owner} onChange={setOwner}>
+      <option value="">Toda a equipe</option>
+      {data.people.map((p) => (
+        <option key={p.id} value={p.id}>
+          {p.name}
+        </option>
+      ))}
+    </FilterSelect>
+  );
+  const toolbar = ["clients", "pipeline"].includes(mode) ? (
+    <FilterBar
+      search={search}
+      onSearch={setSearch}
+      placeholder={phone ? "Buscar clientes…" : "Buscar cliente, empresa, e-mail ou tag…"}
+      active={(owner ? 1 : 0) + (stage ? 1 : 0)}
+      onClear={clearFilters}
+    >
+      {ownerSelect}
+      <FilterSelect label="Filtrar etapa" value={stage} onChange={setStage}>
+        <option value="">Todas as etapas</option>
+        {stages.map(([k, l]) => (
+          <option key={k} value={k}>
+            {l}
           </option>
         ))}
-      </select>
-      {["clients", "pipeline"].includes(mode) && (
-        <>
-          <select
-            aria-label="Filtrar etapa"
-            value={stage}
-            onChange={(e) => setStage(e.target.value)}
-          >
-            <option value="">Todas as etapas</option>
-            {stages.map(([k, l]) => (
-              <option key={k} value={k}>
-                {l}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Ordenar clientes"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-          >
-            <option value="recent">Mais recentes</option>
-            <option value="name">Nome</option>
-            <option value="value">Maior valor</option>
-          </select>
-        </>
-      )}
-    </div>
-  );
+      </FilterSelect>
+      <FilterSelect label="Ordenar clientes" value={sort} onChange={setSort}>
+        <option value="recent">Mais recentes</option>
+        <option value="name">Nome</option>
+        <option value="value">Maior valor</option>
+      </FilterSelect>
+    </FilterBar>
+  ) : mode === "activities" ? (
+    <FilterBar
+      search={search}
+      onSearch={setSearch}
+      placeholder={phone ? "Buscar contatos…" : "Buscar cliente ou anotação…"}
+      active={(owner ? 1 : 0) + (channel ? 1 : 0)}
+      onClear={clearFilters}
+    >
+      {ownerSelect}
+      <FilterSelect label="Filtrar canal" value={channel} onChange={setChannel}>
+        <option value="">Todos os canais</option>
+        {channels.map(([k, l]) => (
+          <option key={k} value={k}>
+            {l}
+          </option>
+        ))}
+      </FilterSelect>
+    </FilterBar>
+  ) : mode === "followups" ? (
+    <FilterBar
+      search={search}
+      onSearch={setSearch}
+      placeholder={phone ? "Buscar follow-ups…" : "Buscar cliente ou observação…"}
+      active={owner ? 1 : 0}
+      onClear={clearFilters}
+    >
+      {ownerSelect}
+    </FilterBar>
+  ) : null;
+  const openWhatsApp = (client) => client && setWhatsApp(client);
   return (
-    <>
+    <div className={`crm-page crm-page--${mode}`}>
       <PageTitle
         eyebrow="DUUK / COMERCIAL"
         title={titles[mode][0]}
         description={titles[mode][1]}
       >
-        <RefreshButton onRefresh={query.reload} disabled={!!moving} />
+        <RefreshButton onRefresh={query.reload} disabled={!!moving} compact={phone} />
         {["clients", "pipeline"].includes(mode) ? (
           auth.hasPermission("crm.clients") && (
             <button className="admin-button" onClick={() => setEditing("new")}>
@@ -993,238 +1937,165 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
           </button>
         ) : (
           auth.hasPermission("crm.clients") && (
-            <Link to="/admin/comercial/clientes" className="admin-button">
+            <Link
+              to="/admin/comercial/clientes"
+              className="admin-button admin-button--secondary"
+            >
               Ver clientes
               <Icon name="arrow" />
             </Link>
           )
         )}
       </PageTitle>
-      <QueryState query={query}>
-        {mode === "dashboard" && <>
-          <section className="admin-panel crm-report-filters">
-            <Field label="Responsável"><select value={reportFilters.owner} onChange={event => setReportFilters(previous => ({ ...previous, owner: event.target.value }))}><option value="">Toda a equipe</option>{data.people.map(person => <option key={person.id} value={person.id}>{person.name}</option>)}</select></Field>
-            <Field label="Contatos a partir de" type="date" value={reportFilters.from} onChange={value => setReportFilters(previous => ({ ...previous, from: value }))} />
-            <Field label="Até" type="date" min={reportFilters.from} value={reportFilters.to} onChange={value => setReportFilters(previous => ({ ...previous, to: value }))} />
-          </section>
-          <CommercialOverview data={data} filters={reportFilters} />
-        </>}{" "}
-        {["clients", "pipeline", "activities", "followups"].includes(mode) &&
-          toolbar}
-        {mode === "clients" && (
-          <section className="admin-panel platform-list">
-            {filtered.map((c) => (
-              <article className="platform-row" key={c.id}>
-                <button
-                  className="crm-client-button platform-row__main"
-                  onClick={() => setDetail(c)}
+      {query.loading && !query.data ? (
+        <PageSkeleton mode={mode} />
+      ) : query.error && !query.data ? (
+        <ErrorState onRetry={query.reload}>
+          Não foi possível carregar o Comercial. {query.error}
+        </ErrorState>
+      ) : (
+        <>
+          {query.error && (
+            <ErrorState onRetry={query.reload}>
+              Não foi possível atualizar os dados. {query.error}
+            </ErrorState>
+          )}
+          {(mode === "dashboard" || mode === "reports") && (
+            <>
+              <ReportFilters
+                data={data}
+                filters={reportFilters}
+                onChange={setReportFilters}
+                withSource={mode === "reports"}
+              />
+              <CommercialOverview
+                data={data}
+                report={mode === "reports"}
+                filters={reportFilters}
+              />
+            </>
+          )}
+          {toolbar}
+          {mode === "clients" && (
+            <ClientList
+              clients={filtered}
+              people={data.people}
+              resetKey={[search, stage, owner, sort].join("|")}
+              filtered={!!(search || stage || owner)}
+              canCreate={auth.hasPermission("crm.clients")}
+              onCreate={() => setEditing("new")}
+              onClear={clearFilters}
+              onOpen={setDetail}
+              onWhatsApp={openWhatsApp}
+              onEdit={setEditing}
+              onDelete={setDeleting}
+            />
+          )}
+          {mode === "pipeline" &&
+            (!data.clients.length ? (
+              <section className="admin-panel">
+                <EmptyState
+                  icon="pipeline"
+                  title="O pipeline começa com o primeiro lead"
+                  action={
+                    auth.hasPermission("crm.clients") && (
+                      <button
+                        type="button"
+                        className="admin-button"
+                        onClick={() => setEditing("new")}
+                      >
+                        <Icon name="plus" />
+                        Novo lead
+                      </button>
+                    )
+                  }
                 >
-                  <h2>{c.name}</h2>
-                  <p>
-                    {c.company || c.email || "Novo contato"} ·{" "}
-                    {data.people.find((p) => p.id === c.owner_id)?.name ||
-                      "Sem responsável"}
-                  </p>
-                  <small>{c.tags.join(" · ")}</small>
-                </button>
-                <span className="crm-stage">{stageLabel(c.stage)}</span>
-                <strong className="crm-money">{brl(c.estimated_cents)}</strong>
-                <div className="admin-row-actions">
-                  <button className="admin-icon-button" aria-label={`Conversar no WhatsApp com ${c.name}`} onClick={() => setWhatsApp(c)}><Icon name="message" /></button>
-                  <button
-                    className="admin-icon-button"
-                    aria-label={`Editar ${c.name}`}
-                    onClick={() => setEditing(c)}
-                  >
-                    <Icon name="edit" />
-                  </button>
-                  <button
-                    className="admin-icon-button"
-                    aria-label={`Excluir ${c.name}`}
-                    onClick={() => setDeleting(c)}
-                  >
-                    <Icon name="trash" />
-                  </button>
-                </div>
-              </article>
-            ))}
-            {!filtered.length && (
-              <div className="admin-empty">
-                <Icon name="users" size={32} />
-                <h2>Nenhum cliente encontrado</h2>
-                <p>Adicione seu primeiro lead ou ajuste os filtros.</p>
-              </div>
-            )}
-          </section>
-        )}
-        {mode === "pipeline" && (
-          <PipelineBoard
-            clients={filtered}
-            people={data.people}
-            stage={stage}
-            pendingId={moving}
-            onMove={move}
-            onOpen={setDetail}
-          />
-        )}
-        {mode === "activities" && (
-          <section className="admin-panel platform-list">
-            {data.activities
-              .filter(
-                (a) =>
-                  (!owner || a.user_id === owner) &&
-                  (!search ||
-                    data.clients
-                      .find((c) => c.id === a.client_id)
-                      ?.name.toLowerCase()
-                      .includes(search.toLowerCase())),
-              )
-              .map((a) => (
-                <article className="platform-row" key={a.id}>
-                  <Avatar
-                    profile={data.people.find((p) => p.id === a.user_id)}
-                  />
-                  <div className="platform-row__main">
-                    <h2>
-                      {data.clients.find((c) => c.id === a.client_id)?.name ||
-                        "Cliente"}
-                    </h2>
-                    <p>{a.notes}</p>
-                    <small>
-                      {channels.find((c) => c[0] === a.channel)?.[1]} ·{" "}
-                      {data.people.find((p) => p.id === a.user_id)?.name} ·{" "}
-                      {fmtTime(a.occurred_at)}
-                    </small>
-                    {a.result && <p>Resultado: {a.result}</p>}
-                    {a.next_step && <small>Próximo passo: {a.next_step}</small>}
-                  </div>
-                </article>
-              ))}
-            {!data.activities.length && (
-              <div className="admin-empty">
-                <p>Registre o primeiro contato da equipe.</p>
-              </div>
-            )}
-          </section>
-        )}
-        {mode === "followups" && (
-          <>
-            <div className="admin-filter-tabs crm-followup-tabs">
-              {[
-                ["pending", "Pendentes"],
-                ["overdue", "Atrasados"],
-                ["today", "Hoje"],
-                ["tomorrow", "Amanhã"],
-                ["upcoming", "Próximos"],
-                ["done", "Concluídos"],
-              ].map(([k, l]) => (
-                <button
-                  key={k}
-                  className={period === k ? "is-active" : ""}
-                  aria-pressed={period === k}
-                  onClick={() => setPeriod(k)}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-            <section className="admin-panel platform-list">
-              {followups.map((f) => (
-                <article className="platform-row" key={f.id}>
-                  <Avatar
-                    profile={data.people.find((p) => p.id === f.owner_id)}
-                  />
-                  <div className="platform-row__main">
-                    <h2>
-                      {data.clients.find((c) => c.id === f.client_id)?.name}
-                    </h2>
-                    <p>{f.notes || "Retomar contato"}</p>
-                    <small
-                      className={
-                        !f.completed_at && localDay(f.due_at) < today
-                          ? "crm-overdue"
-                          : ""
-                      }
-                    >
-                      {fmtTime(f.due_at)} ·{" "}
-                      {data.people.find((p) => p.id === f.owner_id)?.name}
-                    </small>
-                    {f.result && <p>{f.result}</p>}
-                  </div>
-                  {!f.completed_at && <button className="admin-icon-button" aria-label={`WhatsApp: ${data.clients.find(c => c.id === f.client_id)?.name}`} onClick={() => setWhatsApp(data.clients.find(c => c.id === f.client_id))}><Icon name="message" /></button>}
-                  {!f.completed_at && <button className="admin-icon-button" aria-label={`Reagendar follow-up de ${data.clients.find(c => c.id === f.client_id)?.name}`} onClick={() => setFollowup({ reschedule: f })}><Icon name="calendar" /></button>}
-                  {!f.completed_at && (
+                  Cadastre um cliente ou lead para acompanhar cada etapa da
+                  negociação aqui.
+                </EmptyState>
+              </section>
+            ) : filtered.length || !(search || stage || owner) ? (
+              <PipelineBoard
+                clients={filtered}
+                people={data.people}
+                stage={stage}
+                pendingId={moving}
+                onMove={move}
+                onOpen={setDetail}
+              />
+            ) : (
+              <section className="admin-panel">
+                <EmptyState
+                  icon="search"
+                  title="Nenhuma oportunidade encontrada"
+                  action={
                     <button
+                      type="button"
                       className="admin-button admin-button--secondary"
-                      onClick={() => setFollowup({ complete: f })}
+                      onClick={clearFilters}
                     >
-                      <Icon name="check" />
-                      Concluir
+                      Limpar filtros
                     </button>
-                  )}
-                </article>
-              ))}
-              {!followups.length && (
-                <div className="admin-empty">
-                  <p>Nenhum follow-up neste filtro.</p>
-                </div>
-              )}
-            </section>
-          </>
-        )}
-        {mode === "reports" && (
-          <>
-            <section className="admin-panel crm-report-filters">
-              <Field label="Responsável">
-                <select
-                  value={reportFilters.owner}
-                  onChange={(e) =>
-                    setReportFilters((f) => ({ ...f, owner: e.target.value }))
                   }
                 >
-                  <option value="">Toda a equipe</option>
-                  {data.people.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Origem">
-                <select
-                  value={reportFilters.source}
-                  onChange={(e) =>
-                    setReportFilters((f) => ({ ...f, source: e.target.value }))
-                  }
-                >
-                  <option value="">Todas</option>
-                  {[
-                    ...new Set(
-                      data.clients.map((c) => c.source).filter(Boolean),
-                    ),
-                  ].map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field
-                label="Contatos a partir de"
-                type="date"
-                value={reportFilters.from}
-                onChange={(v) => setReportFilters((f) => ({ ...f, from: v }))}
+                  Ajuste a busca ou os filtros para ver o pipeline completo.
+                </EmptyState>
+              </section>
+            ))}
+          {mode === "activities" && (
+            <ActivityList
+              activities={activities}
+              clients={data.clients}
+              people={data.people}
+              resetKey={[search, owner, channel].join("|")}
+              filtered={!!(search || owner || channel)}
+              canCreate={data.clients.length > 0}
+              onCreate={() => setActivity({})}
+              onClear={clearFilters}
+              onOpenClient={setDetail}
+            />
+          )}
+          {mode === "followups" && (
+            <>
+              <div
+                className="ds-segmented crm-periods"
+                role="group"
+                aria-label="Período dos follow-ups"
+              >
+                {periods.map(([k, l]) => {
+                  const count = followupBase.filter((f) => inPeriod(f, k)).length;
+                  return (
+                    <button
+                      type="button"
+                      key={k}
+                      className={period === k ? "is-active" : ""}
+                      aria-pressed={period === k}
+                      onClick={() => setPeriod(k)}
+                    >
+                      {l}
+                      <span className="crm-periods__count">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <FollowupList
+                followups={followups}
+                clients={data.clients}
+                people={data.people}
+                today={today}
+                period={period}
+                resetKey={[search, owner, period].join("|")}
+                filtered={!!(search || owner)}
+                onClear={clearFilters}
+                onOpenClient={setDetail}
+                onWhatsApp={openWhatsApp}
+                onReschedule={(f) => setFollowup({ reschedule: f })}
+                onComplete={(f) => setFollowup({ complete: f })}
               />
-              <Field
-                label="Até"
-                type="date"
-                min={reportFilters.from}
-                value={reportFilters.to}
-                onChange={(v) => setReportFilters((f) => ({ ...f, to: v }))}
-              />
-            </section>
-            <CommercialOverview data={data} report filters={reportFilters} />
-          </>
-        )}
-      </QueryState>
+            </>
+          )}
+        </>
+      )}
       {editing && (
         <ClientEditor
           record={editing === "new" ? null : editing}
@@ -1232,7 +2103,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
           onClose={() => setEditing(null)}
           onSaved={saved}
         />
-      )}{" "}
+      )}
       {detail && (
         <ClientDetail
           onEmail={auth.hasPermission("mail")}
@@ -1268,7 +2139,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
               : null
           }
         />
-      )}{" "}
+      )}
       {activity && (
         <ActivityEditor
           clients={data.clients}
@@ -1276,7 +2147,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
           onClose={() => setActivity(null)}
           onSaved={saved}
         />
-      )}{" "}
+      )}
       {whatsapp && <WhatsAppComposer client={whatsapp} onClose={() => setWhatsApp(null)} onRecord={auth.hasPermission('crm.activities') ? () => { setActivity({ clientId: whatsapp.id }); setWhatsApp(null); } : null} />}
       {followup && (
         <FollowupEditor
@@ -1286,7 +2157,7 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
           onClose={() => setFollowup(null)}
           onSaved={saved}
         />
-      )}{" "}
+      )}
       {deleting && (
         <ConfirmModal
           title="Excluir cliente?"
@@ -1299,6 +2170,6 @@ export default function CommercialPage({ mode = "dashboard", notify }) {
           }}
         />
       )}
-    </>
+    </div>
   );
 }

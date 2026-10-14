@@ -220,73 +220,88 @@ export default function PushDevice() {
     unsupported: "Este navegador não oferece notificações",
     error: "Não foi possível verificar a conexão",
   };
+  const icons = {
+    connected: "checkCircle",
+    disconnected: "warning",
+    disabled: "bell",
+    blocked: "shieldAlert",
+    install: "download",
+    unsupported: "xCircle",
+    error: "alertCircle",
+  };
+  const ready = supported && !needsInstall;
+  const counted = ready && device.state !== "checking" && device.state !== "error";
+  const switching = busy === "enable" || busy === "disable";
   return (
-    <section className="admin-panel platform-form platform-push-device">
-      <span className="office-shortcut-icon">
-        <Icon name="bell" size={24} />
-      </span>
-      <h2>No seu dispositivo</h2>
-      <p className="platform-muted">
-        Receba lembretes da agenda, contratos, follow-ups e e-mails mesmo com o
-        aplicativo fechado. Instalar o aplicativo e ativar as notificações são
-        passos separados.
-      </p>
+    <section
+      className="ds-card settings-device"
+      aria-labelledby="settings-device-title"
+    >
+      <header className="settings-card__head">
+        <span className="settings-card__icon" aria-hidden="true">
+          <Icon name="phone2" />
+        </span>
+        <div>
+          <h2 id="settings-device-title">No seu dispositivo</h2>
+          <p>
+            Receba lembretes da agenda, contratos, follow-ups e e-mails mesmo
+            com o aplicativo fechado. Instalar o aplicativo e ativar as
+            notificações são passos separados.
+          </p>
+        </div>
+      </header>
       <div
-        className={`platform-push-state${connected ? " is-connected" : ""}`}
+        className={`settings-device__state is-${device.state}`}
         role="status"
       >
-        <Icon name={connected ? "check" : "bell"} />
-        <span>{labels[device.state]}</span>
+        {device.state === "checking" ? (
+          <span className="ds-spinner" aria-hidden="true" />
+        ) : (
+          <Icon name={icons[device.state] || "bell"} />
+        )}
+        <div>
+          <strong>{labels[device.state]}</strong>
+          {device.state === "error" && device.error ? (
+            <span>{device.error}</span>
+          ) : (
+            counted && (
+              <span>
+                {device.devices}{" "}
+                {device.devices === 1
+                  ? "dispositivo registrado"
+                  : "dispositivos registrados"}{" "}
+                na sua conta. Este status vale somente para este aparelho.
+              </span>
+            )
+          )}
+        </div>
       </div>
-      {device.state === "error" && (
-        <p className="admin-error" role="alert">
-          {device.error}
-        </p>
-      )}
-      {needsInstall || !supported ? (
-        <p className="platform-muted">
-          No iPhone, use Safari → Compartilhar → Adicionar à Tela de Início.
-          Abra pelo ícone para ativar (iOS 16.4 ou mais recente).
+      {!ready ? (
+        <p className="settings-note">
+          <Icon name="info" size={16} />
+          <span>
+            No iPhone, use Safari → Compartilhar → Adicionar à Tela de Início.
+            Abra pelo ícone para ativar (iOS 16.4 ou mais recente).
+          </span>
         </p>
       ) : (
         <>
-          <p className="platform-muted">
-            {device.devices}{" "}
-            {device.devices === 1
-              ? "dispositivo registrado"
-              : "dispositivos registrados"}{" "}
-            na sua conta. A conexão acima se refere somente a este aparelho.
-          </p>
           {device.state === "blocked" && (
-            <p className="platform-muted">
-              No iPhone, abra Ajustes → Notificações → DUUK Admin → Permitir
-              Notificações. Confira também o modo Foco e o Resumo Agendado.
-            </p>
+            <div className="ds-alert ds-alert--warning">
+              <Icon name="warning" />
+              <span>
+                No iPhone, abra Ajustes → Notificações → DUUK Admin → Permitir
+                Notificações. Confira também o modo Foco e o Resumo Agendado.
+              </span>
+            </div>
           )}
-          <div className="platform-push-actions">
-            <button
-              className="admin-button"
-              disabled={
-                !!busy || !pwa.registration || device.state === "checking"
-              }
-              onClick={connected ? disable : enable}
-            >
-              <Icon
-                name={busy && busy !== "test" ? "refresh" : "bell"}
-                className={busy && busy !== "test" ? "is-spinning" : ""}
-              />
-              {busy === "enable" || busy === "disable"
-                ? "Aguarde…"
-                : connected
-                  ? "Desativar neste dispositivo"
-                  : device.state === "disconnected"
-                    ? "Reconectar este dispositivo"
-                    : "Ativar notificações"}
-            </button>
+          <div className="settings-device__actions">
             {connected && (
               <button
-                className="admin-button admin-button--secondary"
+                type="button"
+                className="admin-button"
                 disabled={!!busy}
+                aria-busy={busy === "test"}
                 onClick={test}
               >
                 <Icon
@@ -296,34 +311,68 @@ export default function PushDevice() {
                 {busy === "test" ? "Enviando teste…" : "Testar notificação"}
               </button>
             )}
+            <button
+              type="button"
+              className={`admin-button${connected ? " admin-button--secondary" : ""}`}
+              disabled={
+                !!busy || !pwa.registration || device.state === "checking"
+              }
+              aria-busy={switching}
+              onClick={connected ? disable : enable}
+            >
+              <Icon
+                name={busy && busy !== "test" ? "refresh" : "bell"}
+                className={busy && busy !== "test" ? "is-spinning" : ""}
+              />
+              {switching
+                ? "Aguarde…"
+                : connected
+                  ? "Desativar neste dispositivo"
+                  : device.state === "disconnected"
+                    ? "Reconectar este dispositivo"
+                    : "Ativar notificações"}
+            </button>
             <RefreshButton
-              label="Verificar conexão"
+              label={
+                device.state === "error" ? "Tentar novamente" : "Verificar conexão"
+              }
               onRefresh={inspect}
               disabled={!!busy}
+              inlineFeedback
             />
           </div>
         </>
       )}
       {pwa.canInstall && (
-        <button
-          className="admin-button admin-button--secondary"
-          onClick={pwa.install}
-        >
-          <Icon name="download" />
-          Instalar DUUK Admin
-        </button>
+        <div className="settings-device__actions">
+          <button
+            type="button"
+            className="admin-button admin-button--secondary"
+            onClick={pwa.install}
+          >
+            <Icon name="download" />
+            Instalar DUUK Admin
+          </button>
+        </div>
       )}
-      {feedback && (
-        <p
-          role={feedback.error ? "alert" : "status"}
-          className={feedback.error ? "admin-error" : "platform-muted"}
-        >
-          {feedback.text}
-        </p>
-      )}
-      <p className="platform-muted">
-        A agenda avisa um dia antes, às 9h, e uma hora antes do compromisso. Os
-        envios automáticos são verificados a cada cinco minutos.
+      {feedback &&
+        (feedback.error ? (
+          <div className="admin-error" role="alert">
+            <Icon name="alertCircle" />
+            <span>{feedback.text}</span>
+          </div>
+        ) : (
+          <div className="ds-alert ds-alert--success" role="status">
+            <Icon name="checkCircle" />
+            <span>{feedback.text}</span>
+          </div>
+        ))}
+      <p className="settings-card__foot">
+        <Icon name="clock" />
+        <span>
+          A agenda avisa um dia antes, às 9h, e uma hora antes do compromisso.
+          Os envios automáticos são verificados a cada cinco minutos.
+        </span>
       </p>
     </section>
   );
