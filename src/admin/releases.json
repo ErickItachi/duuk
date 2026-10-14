@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.10.1",
+    "date": "2026-10-14",
+    "title": "Extratos e uma troca de tema mais discreta",
+    "improved": [
+      "Tema claro com ícone e chave de ativação, sem botão com texto no cabeçalho e no menu."
+    ],
+    "new": [
+      "Importação gratuita de extratos OFX da conta PJ, com prévia e proteção contra movimentações duplicadas.",
+      "Revisão do extrato para vincular contas existentes, criar receitas/despesas ou ignorar transferências internas."
+    ]
+  },
+  {
     "version": "1.10.0",
     "date": "2026-10-14",
     "title": "Visual renovado e financeiro completo",

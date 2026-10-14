@@ -1,5 +1,12 @@
 # Fluxo de trabalho da DUUK
 
+## Extratos OFX — 1.10.1
+
+- Em 14/10/2026 o usuário escolheu conta Nubank PJ e importação OFX gratuita. Financeiro > Extratos é importação manual, sem conexão automática ou credenciais bancárias. Preserve limite de 2 MB/2.000 movimentos, prévia, revisão explícita e separação entre extrato e receitas/despesas.
+- Migração aplicada: `20261014050206_duuk_bank_ofx_import.sql`. `duuk_bank_imports`/`duuk_bank_transactions` têm RLS financeiro e leitura apenas para membros ativos autorizados. Gravações usam RPCs transacionais com permissão atual, idempotência, deduplicação por conta/FITID e revisão. Não substitua por múltiplas escritas no frontend nem exponha conta/FITID completos ou arquivo original.
+- Vincular baixa conta existente, criar exige revisão, ignorar não gera receita/despesa e remover vínculo conserva o registro financeiro. O saldo é o informado no arquivo, com data, nunca consulta ao banco. Alterações posteriores do lançamento mostram divergência do vínculo. A IA recebe somente manual estático, sem extratos. Valide com `tests/ofx.test.mjs`, `supabase/tests/bank-ofx.sql` com rollback e fixtures de navegador.
+- Troca de tema usa somente ícone e chave acessível, sem texto de botão. Preserve preferência por membro, marca transparente, teclado, movimento reduzido e cache/atualização explícita da PWA. Não contrate Open Finance ou serviços pagos sem nova instrução do usuário.
+
 ## Financeiro e interface — 1.10.0
 
 - `/admin/financeiro` usa `src/finance/FinancePage.jsx`, com Resumo, Lançamentos, Fluxo de caixa e Metas; `/admin/despesas` conserva a rota anterior. Não duplique nem migre as despesas existentes. Novas receitas usam `duuk_income`; metas usam `duuk_finance_goals` por mês. A migração `20261013213527_duuk_finance_income_goals.sql` já foi aplicada no projeto gratuito existente.

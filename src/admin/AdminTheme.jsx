@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
-import { Moon, Sun } from 'lucide-react'
+import { Sun } from 'lucide-react'
 import { useAuth } from '../content/AuthContext'
 import { adminThemeKey, readAdminTheme, writeAdminTheme } from './themeStorage.mjs'
 import { AdminThemeContext, useAdminTheme } from './themeContext.mjs'
@@ -40,9 +40,8 @@ export function ThemeToggle({ label = false }) {
   const { theme, change } = useAdminTheme()
   const light = theme === 'light'
   const title = light ? 'Ativar modo escuro' : 'Ativar modo claro'
-  const ThemeIcon = light ? Moon : Sun
-  return <button type="button" className={`admin-theme-toggle${label ? ' admin-theme-toggle--label' : ''}`} onClick={() => change(light ? 'dark' : 'light')} aria-label={title} title={title}>
-    <ThemeIcon size={18} strokeWidth={1.6} aria-hidden="true" />
-    {label && <span>{light ? 'Modo escuro' : 'Modo claro'}</span>}
+  return <button type="button" role="switch" aria-checked={light} className={`admin-theme-toggle${label ? ' admin-theme-toggle--label' : ''}`} onClick={() => change(light ? 'dark' : 'light')} aria-label="Modo claro" title={title}>
+    <Sun size={16} strokeWidth={1.6} aria-hidden="true" />
+    <span className="admin-theme-toggle__track" aria-hidden="true"><span/></span>
   </button>
 }

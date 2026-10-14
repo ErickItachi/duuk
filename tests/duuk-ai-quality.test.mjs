@@ -48,7 +48,7 @@ test('follow-ups and regeneration keep user intent while ignoring assistant and 
 })
 
 test('finance help covers receipts, monthly goals and cash without granting records or new tools', () => {
- for (const message of ['Como registro uma receita?', 'Como lanço uma receita?', 'Onde consulto os recebimentos?', 'Como configuro uma meta financeira?', 'Como configuro o orçamento de despesas?', 'Como vejo o fluxo de caixa?']) {
+ for (const message of ['Como registro uma receita?', 'Como lanço uma receita?', 'Onde consulto os recebimentos?', 'Como configuro uma meta financeira?', 'Como configuro o orçamento de despesas?', 'Como vejo o fluxo de caixa?', 'Como importo um extrato OFX do Nubank?']) {
   assert.equal(taskFor('free', message), 'help', message)
   const manual = knowledgeForRequest(['finance'], '/admin/agenda', { mode: 'free', message })
   assert.equal(manual.pages[0].route, '/admin/financeiro', message)
