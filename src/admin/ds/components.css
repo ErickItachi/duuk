@@ -237,7 +237,7 @@
 }
 .admin-error .admin-text-button { color: inherit; min-height: 0; }
 .admin-error > svg { flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; }
-.admin-error > span { flex: 1 1 12rem; min-width: 0; }
+.admin-error > span, .ds-alert > span { flex: 1 1 12rem; min-width: 0; }
 .ds-alert--info { border-color: color-mix(in srgb, var(--ds-info) 25%, transparent); background: var(--ds-info-soft); color: var(--ds-text); }
 .ds-alert--warning { border-color: color-mix(in srgb, var(--ds-warning) 28%, transparent); background: var(--ds-warning-soft); color: var(--ds-text); }
 .ds-alert--success { border-color: color-mix(in srgb, var(--ds-success) 25%, transparent); background: var(--ds-success-soft); color: var(--ds-text); }

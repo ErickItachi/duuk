@@ -1,5 +1,24 @@
 [
   {
+    "version": "2.0.0",
+    "date": "2026-10-14",
+    "title": "Um DUUK Admin novo, e o Instagram no mesmo lugar",
+    "new": [
+      "Social Media com a API oficial do Instagram: publique fotos, carrosséis, Reels e Stories ou agende para o servidor publicar mesmo com o painel fechado.",
+      "Calendário de publicações, biblioteca de mídia e métricas reais da conta e de cada publicação, com seguidores registrados todos os dias.",
+      "Visão geral como central do dia: agenda, follow-ups, pipeline, contratos, financeiro do mês, site e ações rápidas.",
+      "Busca rápida com Ctrl K (⌘K no Mac) para abrir páginas, clientes e ações.",
+      "Tema claro, escuro ou igual ao do aparelho, com troca animada de sol e lua."
+    ],
+    "improved": [
+      "Visual neutro em preto, branco e cinza, com a mesma linguagem em todos os módulos.",
+      "Menu agrupado e recolhível no computador, trilho de ícones no tablet e barra inferior no celular.",
+      "Listas com busca, filtros e paginação, e tabelas que viram cartões no celular.",
+      "Carregamento com a logo original, sem espera artificial.",
+      "Avisos em fila e confirmação antes de ações que não podem ser desfeitas."
+    ]
+  },
+  {
     "version": "1.12.0",
     "date": "2026-10-14",
     "title": "Um Financeiro novo, com a sua conta no centro",

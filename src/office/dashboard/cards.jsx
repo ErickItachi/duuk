@@ -5,7 +5,7 @@ import { eventCategories, eventStatuses, eventTime } from '../calendarModel'
 import { brl } from '../model'
 import { localDay, stageLabel } from '../../crm/model'
 import { FinancePrivacy, Money, PrivacyToggle } from '../../finance/privacy'
-import { channelLabel, compactMoney, dayLabel, dayNumber, monthName, monthShort, plural, shortDate, sinceLabel, timeOf, whenLabel } from './model'
+import { captionLine, channelLabel, compactMoney, dayLabel, dayNumber, monthName, monthShort, plural, shortDate, sinceLabel, socialFormats, timeOf, whenLabel } from './model'
 
 const lower = text => text.charAt(0).toLowerCase() + text.slice(1)
 
@@ -314,6 +314,39 @@ export function SiteCard({ insights, site, state, view, content, day }) {
       </div>
       : <EmptyState icon="trend" title="Ainda sem visitas registradas">Os acessos dos últimos 30 dias aparecem aqui assim que o site receber visitas.</EmptyState>}</Loaded>}
     {site && <Portfolio content={content} />}
+  </DashboardCard>
+}
+
+// ---------- Social Media ----------
+function PostRow({ post, day, failed }) {
+  const [format, icon] = socialFormats[post.format] || ['Publicação', 'instagram']
+  const when = failed ? '' : `${post.status === 'publishing' ? 'Em envio · ' : ''}${whenLabel(post.scheduled_at, day)}`
+  return <Link className="dashboard-row" to={`/admin/social/calendario?post=${post.id}`}>
+    <span className="dashboard-icon" aria-hidden="true"><Icon name={icon} /></span>
+    <span className="dashboard-row__main">
+      <span className="dashboard-row__title">{captionLine(post.caption) || `${format} sem legenda`}</span>
+      <span className="dashboard-row__meta">{[format, post.account && `@${post.account.username}`, when].filter(Boolean).join(' · ')}</span>
+      {failed && <span className="dashboard-row__reason">{post.last_error || 'Não foi possível publicar.'}</span>}
+    </span>
+  </Link>
+}
+
+export function SocialCard({ state, view, day }) {
+  return <DashboardCard id="social" title="Social Media" icon="instagram" to="/admin/social" state={state}>
+    <Loaded state={state} what="as publicações" rows={2}>{() => !view.connected
+      ? <EmptyState icon="instagram" title="Instagram não conectado" action={<Link className="admin-button admin-button--secondary admin-button--sm" to="/admin/social/conexao"><Icon name="plug" />Abrir conexão</Link>}>Conecte a conta da DUUK para publicar e agendar pelo painel.</EmptyState>
+      : <>
+        {view.attention.map(account => <p key={account.id} className="ds-alert ds-alert--warning dashboard-alert" role="status"><Icon name="warning" /><span>@{account.username} precisa ser reconectada. <Link to="/admin/social/conexao">Abrir conexão</Link></span></p>)}
+        {view.failed.length > 0 && <Group label="Com falha" count={view.failed.length}>
+          <ul className="dashboard-list" role="list">{view.failed.slice(0, 2).map(post => <li key={post.id}><PostRow post={post} day={day} failed /></li>)}</ul>
+        </Group>}
+        {view.upcoming.length
+          ? <Group label="Próximas publicações" count={view.upcoming.length}>
+            <ul className="dashboard-list" role="list">{view.upcoming.slice(0, 3).map(post => <li key={post.id}><PostRow post={post} day={day} /></li>)}</ul>
+            {view.upcoming.length > 3 && <Link className="dashboard-more" to="/admin/social/calendario">Mais {view.upcoming.length - 3}<Icon name="right" /></Link>}
+          </Group>
+          : <EmptyState icon="calendarClock" title="Nada agendado" action={<Link className="admin-button admin-button--secondary admin-button--sm" to="/admin/social/publicar"><Icon name="plus" />Nova publicação</Link>}>Agende uma publicação e o servidor publica no horário, mesmo com o painel fechado.</EmptyState>}
+      </>}</Loaded>
   </DashboardCard>
 }
 

@@ -8,8 +8,8 @@ import { useContent } from '../content/useContent'
 import { today } from './model'
 import StudioGreeting from './StudioGreeting'
 import { combine, useDashboardData, useMinute } from './dashboard/data'
-import { activityView, agendaView, contractView, dashboardColumns, digestItems, financeView, followupView, metricsView, nowTime, pipelineView, quickActions } from './dashboard/model'
-import { ActivityCard, AgendaCard, ContractsCard, FinanceCard, FollowupsCard, PipelineCard, QuickActionsCard, SiteCard } from './dashboard/cards'
+import { activityView, agendaView, contractView, dashboardColumns, digestItems, financeView, followupView, metricsView, nowTime, pipelineView, quickActions, socialView } from './dashboard/model'
+import { ActivityCard, AgendaCard, ContractsCard, FinanceCard, FollowupsCard, PipelineCard, QuickActionsCard, SiteCard, SocialCard } from './dashboard/cards'
 import './dashboard-experience.css'
 
 const firstName = name => String(name || '').trim().split(/\s+/)[0]
@@ -38,13 +38,14 @@ export default function DashboardPage() {
     finance: hasPermission('finance'),
     insights: hasPermission('insights'),
     site: hasPermission('site'),
+    social: hasPermission('social'),
   }), [hasPermission])
   const data = useDashboardData(can), clock = useMinute()
   const day = today(), month = day.slice(0, 7), now = nowTime(clock)
   const people = data.people.data
   const names = useMemo(() => new Map((people || []).map(person => [person.id, firstName(person.name)])), [people])
 
-  const { events, clients, followups, activities, contracts, finance, metrics } = data
+  const { events, clients, followups, activities, contracts, finance, metrics, social } = data
   const views = {
     agenda: events.data ? agendaView(events.data, day, now) : null,
     followups: followups.data && clients.data ? followupView(followups.data, clients.data, day) : null,
@@ -53,13 +54,14 @@ export default function DashboardPage() {
     contracts: contracts.data ? contractView(contracts.data) : null,
     finance: finance.data ? financeView(finance.data.records, month, day) : null,
     metrics: metrics.data ? metricsView(metrics.data, day) : null,
+    social: social.data ? socialView(social.data, day) : null,
   }
   const actions = quickActions.filter(action => hasPermission(action.permission))
   const clientLink = can.clients ? id => `/admin/comercial/clientes?cliente=${encodeURIComponent(id)}` : null
 
   // The digest only speaks for sources the member can open; it never claims "nothing pending" before they load.
-  const digestSources = [can.agenda && [events], can.followups && [followups, clients], can.contracts && [contracts], can.finance && [finance]].filter(Boolean).flat()
-  const digest = digestItems({ agenda: views.agenda, followups: views.followups, contracts: views.contracts, finance: views.finance }, day)
+  const digestSources = [can.agenda && [events], can.followups && [followups, clients], can.contracts && [contracts], can.finance && [finance], can.social && [social]].filter(Boolean).flat()
+  const digest = digestItems({ agenda: views.agenda, followups: views.followups, contracts: views.contracts, finance: views.finance, social: views.social }, day)
 
   const cards = {
     agenda: can.agenda && <AgendaCard state={combine(events)} view={views.agenda} day={day} names={names} />,
@@ -69,6 +71,7 @@ export default function DashboardPage() {
     actions: actions.length > 0 && <QuickActionsCard actions={actions} />,
     pipeline: can.pipeline && <PipelineCard state={combine(clients)} view={views.pipeline} day={day} clientLink={clientLink} canCreateLead={can.clients} />,
     activity: can.activity && <ActivityCard state={combine(activities, clients)} items={views.activity} day={day} names={names} userId={auth.user?.id} to={can.activities ? '/admin/comercial/contatos' : '/admin/comercial'} area={can.activities ? 'Contatos e atividades' : 'Comercial'} clientLink={clientLink} />,
+    social: can.social && <SocialCard state={combine(social)} view={views.social} day={day} />,
     site: (can.insights || can.site) && <SiteCard insights={can.insights} site={can.site} state={combine(metrics)} view={views.metrics} content={content} day={day} />,
   }
   const layout = dashboardColumns(Object.keys(cards).filter(key => cards[key]), wide ? 'wide' : medium ? 'even' : 'single')
@@ -89,6 +92,6 @@ export default function DashboardPage() {
       ? <div className={`dashboard-grid dashboard-grid--${layout.kind}`}>
         {layout.columns.map((keys, index) => <div className="dashboard-column" key={index}>{keys.map(key => <Fragment key={key}>{cards[key]}</Fragment>)}</div>)}
       </div>
-      : <div className="ds-card dashboard-card"><EmptyState icon="grid" title="Nenhum módulo liberado para você">Quando um administrador liberar o acesso a agenda, comercial, contratos, financeiro ou site, os resumos aparecem aqui.</EmptyState></div>}
+      : <div className="ds-card dashboard-card"><EmptyState icon="grid" title="Nenhum módulo liberado para você">Quando um administrador liberar o acesso a agenda, comercial, contratos, financeiro, Social Media ou site, os resumos aparecem aqui.</EmptyState></div>}
   </div>
 }

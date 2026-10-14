@@ -139,8 +139,26 @@ export function metricsView(records, day, days = 30) {
   return { totals: metricSummary(records), series, peak, max: peak.value }
 }
 
+// ---------- Social Media (only what the module stored; never Instagram figures) ----------
+export const socialFormats = { image: ['Foto', 'media'], carousel: ['Carrossel', 'layers'], reel: ['Reel', 'clapperboard'], story: ['Story', 'phone2'] }
+export const captionLine = (caption, length = 70) => { const text = String(caption || '').replace(/\s+/g, ' ').trim(); return text.length > length ? `${text.slice(0, length).trimEnd()}…` : text }
+export function socialView({ accounts, posts }, day) {
+  const live = accounts.filter(account => account.status !== 'disconnected')
+  const byId = new Map(live.map(account => [account.id, account]))
+  const withAccount = post => ({ ...post, account: byId.get(post.account_id) || null })
+  const upcoming = posts.filter(post => ['scheduled', 'publishing'].includes(post.status) && post.scheduled_at)
+    .sort((a, b) => time(a.scheduled_at) - time(b.scheduled_at)).map(withAccount)
+  return {
+    connected: live.length,
+    attention: live.filter(account => account.status !== 'active'),
+    failed: posts.filter(post => post.status === 'failed').sort((a, b) => time(b.updated_at) - time(a.updated_at)).map(withAccount),
+    upcoming,
+    today: upcoming.filter(post => localDay(post.scheduled_at) === day).length,
+  }
+}
+
 // ---------- What needs attention today ----------
-export function digestItems({ agenda, followups, contracts, finance }, day) {
+export function digestItems({ agenda, followups, contracts, finance, social }, day) {
   const items = []
   if (agenda?.today.length) items.push({ key: 'agenda', icon: 'calendar', text: plural(agenda.today.length, 'compromisso hoje', 'compromissos hoje'), to: `/admin/agenda?dia=${day}` })
   if (followups?.overdue.length) items.push({ key: 'followups-overdue', icon: 'alertCircle', tone: 'danger', text: plural(followups.overdue.length, 'follow-up atrasado', 'follow-ups atrasados'), to: '/admin/comercial/follow-ups?filtro=overdue' })
@@ -148,6 +166,9 @@ export function digestItems({ agenda, followups, contracts, finance }, day) {
   if (contracts?.awaiting) items.push({ key: 'contracts', icon: 'document', text: plural(contracts.awaiting, 'contrato aguardando assinatura', 'contratos aguardando assinatura'), to: '/admin/contratos' })
   if (finance?.overdue) items.push({ key: 'finance-overdue', icon: 'alertCircle', tone: 'danger', text: plural(finance.overdue, 'conta em atraso', 'contas em atraso'), to: '/admin/financeiro?aba=contas' })
   if (finance?.dueToday) items.push({ key: 'finance-today', icon: 'wallet', text: plural(finance.dueToday, 'conta vence hoje', 'contas vencem hoje'), to: '/admin/financeiro?aba=contas' })
+  if (social?.failed.length) items.push({ key: 'social-failed', icon: 'alertCircle', tone: 'danger', text: plural(social.failed.length, 'publicação com falha', 'publicações com falha'), to: '/admin/social' })
+  if (social?.attention.length) items.push({ key: 'social-account', icon: 'alertCircle', tone: 'danger', text: social.attention.length === 1 ? 'Instagram precisa ser reconectado' : `${social.attention.length} contas do Instagram precisam ser reconectadas`, to: '/admin/social/conexao' })
+  if (social?.today) items.push({ key: 'social-today', icon: 'instagram', text: plural(social.today, 'publicação agendada hoje', 'publicações agendadas hoje'), to: '/admin/social/calendario' })
   return items
 }
 
@@ -158,6 +179,7 @@ export const quickActions = [
   { id: 'contract', label: 'Novo contrato', icon: 'document', to: '/admin/contratos?novo=contrato', permission: 'contracts' },
   { id: 'income', label: 'Nova receita', icon: 'incoming', to: '/admin/financeiro?aba=contas&novo=receita', permission: 'finance' },
   { id: 'expense', label: 'Nova despesa', icon: 'outgoing', to: '/admin/financeiro?aba=contas&novo=despesa', permission: 'finance' },
+  { id: 'post', label: 'Nova publicação', icon: 'instagram', to: '/admin/social/publicar', permission: 'social' },
   { id: 'project', label: 'Novo projeto', icon: 'film', to: '/admin/portfolio?novo=projeto', permission: 'site' },
   { id: 'mail', label: 'Escrever e-mail', icon: 'compose', to: '/admin/comercial/emails?compor=1', permission: 'mail' },
   { id: 'ai', label: 'DUUK AI', icon: 'spark', to: '/admin/ai', permission: 'ai' },
@@ -166,11 +188,11 @@ export const quickActions = [
 // ---------- Layout ----------
 // Cards in reading priority: what needs attention today first. Columns keep the DOM order equal
 // to the visual order, so keyboard and screen reader users meet the cards as they are seen.
-export const cardOrder = ['agenda', 'followups', 'contracts', 'finance', 'actions', 'pipeline', 'activity', 'site']
+export const cardOrder = ['agenda', 'followups', 'contracts', 'finance', 'actions', 'pipeline', 'activity', 'social', 'site']
 const primaryCards = ['agenda', 'followups', 'pipeline', 'activity']
-const asideCards = ['actions', 'contracts', 'finance', 'site']
+const asideCards = ['actions', 'contracts', 'finance', 'social', 'site']
 // Typical card heights, in hundreds of pixels, so two columns end close to each other.
-const weights = { agenda: 4, followups: 3, contracts: 4, finance: 6, actions: 3, pipeline: 7, activity: 4, site: 4 }
+const weights = { agenda: 4, followups: 3, contracts: 4, finance: 6, actions: 3, pipeline: 7, activity: 4, social: 4, site: 4 }
 const weight = keys => keys.reduce((sum, key) => sum + weights[key], 0)
 export function dashboardColumns(keys, mode) {
   const present = cardOrder.filter(key => keys.includes(key))

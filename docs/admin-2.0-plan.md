@@ -6,7 +6,7 @@ Pedido de Gustavo em 14/10/2026: reformular todo o administrativo (identidade vi
 
 - Versão publicada antes da reformulação: Admin 1.12.0, commit `ba229ab` em `main` (PR #1). A Vercel mantém essa implantação e permite promovê-la de volta sem novo build.
 - A 2.0 é desenvolvida no branch `claude/financeiro-redesign-84edvk`, com pull request e prévia da Vercel. Nada chega a `main` antes dos testes.
-- Mudanças no banco são somente aditivas (tabelas, colunas, chave de permissão e jobs novos). Cada migração tem script de reversão em `supabase/rollback/`. Nenhum dado existente é apagado ou reescrito.
+- Mudanças no banco são somente aditivas (tabelas, colunas, chave de permissão e jobs novos). Cada migração tem script de reversão em `supabase/rollbacks/`. Nenhum dado existente é apagado ou reescrito.
 - Funções existentes (`duuk-ai`, `duuk-pluggy` e demais) não são reimplantadas por esta reformulação. O Social Media usa uma função nova, `duuk-social`.
 
 ## Diagnóstico (etapa 1)
@@ -50,7 +50,7 @@ Pedido de Gustavo em 14/10/2026: reformular todo o administrativo (identidade vi
 
 **Acesso.** Em modo de desenvolvimento, com Standard Access, funciona para contas com função no app (testador do Instagram) e contas que a DUUK administra. Contas de clientes exigem Advanced Access, App Review e verificação da empresa; a arquitetura já separa contas por proprietário para essa etapa.
 
-**Fluxo de conexão.** Superadministrador informa Instagram App ID e App Secret no próprio painel (Vault; nunca no chat, no navegador ou no repositório). A URI de redirecionamento é a própria função: `https://ilohuxhyfqikjlvoarts.supabase.co/functions/v1/duuk-social/oauth`, válida para produção e prévias. O código vira token de longa duração (60 dias), renovado automaticamente pelo servidor.
+**Fluxo de conexão.** Superadministrador informa Instagram App ID e App Secret no próprio painel (Vault; nunca no chat, no navegador ou no repositório). A URI de redirecionamento é `https://www.duukfilms.com/admin/social/conexao`, por isso o login só termina em produção; prévias e `localhost` mostram as telas sem concluir a conexão. O código vira token de longa duração (60 dias), renovado automaticamente pelo servidor. Instalação e operação: `docs/social-media-setup.md`.
 
 **Publicação e agendamento.** Foto (JPEG convertido no navegador), carrossel (2–10 itens), Reels e Stories. Contêiner → verificação de status → `media_publish`, executados pelo Cron no servidor, mesmo com o painel fechado. Proteções: bloqueio por publicação, conferência do status `PUBLISHED` antes de qualquer nova tentativa, limite diário consultado na API, tentativas com espera crescente e notificação de sucesso ou falha. Nenhuma publicação sai sem ação explícita (publicar agora ou agendar).
 
@@ -61,19 +61,20 @@ Pedido de Gustavo em 14/10/2026: reformular todo o administrativo (identidade vi
 ## Etapas
 
 - [x] 1. Diagnóstico
-- [ ] 2. Nova base visual
-- [ ] 3. Reformulação estrutural (menu, cabeçalho, celular, carregamento, login, tema)
-- [ ] 4. Reformulação dos módulos
-- [ ] 5. Responsividade
-- [ ] 6. Social Media
-- [ ] 7. Refinamento e animações
-- [ ] 8. Testes (Playwright, larguras 320–1440, dois temas)
-- [ ] 9. Validação final
+- [x] 2. Nova base visual
+- [x] 3. Reformulação estrutural (menu, cabeçalho, celular, carregamento, login, tema)
+- [x] 4. Reformulação dos módulos
+- [x] 5. Responsividade
+- [x] 6. Social Media: telas, função `duuk-social` v1 publicada, migrações `20261014151930` e `20261014203900` aplicadas, Cron ativo (14/10)
+- [x] 7. Refinamento e animações
+- [x] 8. Testes (Playwright, larguras 390/820/1440, dois temas)
+- [ ] 9. Validação final e publicação em produção (aguarda OK do Gustavo)
 
 ## Depende de Gustavo
 
-1. No app da Meta: produto Instagram → configuração da API com login do Instagram.
+1. No app da Meta: produto Instagram → API com login do Instagram.
 2. Adicionar a conta profissional da DUUK como testador do Instagram (Funções do app) e aceitar o convite no Instagram.
-3. Em configurações do login comercial, cadastrar a URI de redirecionamento acima.
-4. Depois que a 2.0 estiver na prévia: informar Instagram App ID e App Secret em Social Media → Conexão e autorizar a conta.
-5. Autorizar explicitamente qualquer publicação real de teste.
+3. Em configurações do login comercial, cadastrar a URI de redirecionamento e os endereços de cancelamento e exclusão (`docs/social-media-setup.md`).
+4. Autorizar a publicação da 2.0 em produção.
+5. Depois disso: informar Instagram App ID e App Secret em Social Media → Conexão e autorizar a conta.
+6. Autorizar explicitamente qualquer publicação real de teste.

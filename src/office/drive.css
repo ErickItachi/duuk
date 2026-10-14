@@ -249,9 +249,6 @@
   .drive-panel > .drive-panel__head { align-items: flex-start; }
   .drive-panel__tools { margin-left: auto; }
   .drive-upload .admin-button { justify-self: stretch; justify-content: center; width: 100%; }
-  .crm-client-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .crm-client-actions .admin-button { justify-content: center; min-width: 0; padding-inline: 10px; line-height: 1.4; overflow-wrap: normal; word-break: normal; white-space: normal; }
-  .crm-client-actions > .admin-button:last-child { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .drive-progress__bar > span { width: 100%; opacity: .5; animation: none; }

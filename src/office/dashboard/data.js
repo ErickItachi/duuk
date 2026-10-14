@@ -7,6 +7,7 @@ import { mergeEvents } from './model'
 import { directory, listActivities, listClients, listFollowups } from '../../crm/api'
 import { listFinanceMonth } from '../../finance/finance-api'
 import { pluggyRequest } from '../../finance/pluggy-api'
+import { rows } from '../../admin/api'
 
 // Each widget reads its own source, so one failure never blanks the rest of the page.
 // Sources the member cannot open resolve to null without touching the network.
@@ -26,6 +27,14 @@ async function loadBank() {
   return { configured: true, account: statement.account, updatedAt: statement.provider_updated_at || null, warning: statement.warning || null }
 }
 const loadMetrics = () => listMetrics(30)
+// Only the posts that need attention or are coming up; drafts and the published history stay in the module.
+async function loadSocial() {
+  const [accounts, posts] = await Promise.all([
+    rows('duuk_social_accounts', query => query.neq('status', 'disconnected')),
+    rows('duuk_social_posts', query => query.in('status', ['scheduled', 'publishing', 'failed'])),
+  ])
+  return { accounts, posts }
+}
 
 export function useDashboardData(can) {
   const events = useQuery(useCallback(() => can.agenda ? loadEvents() : skip(), [can.agenda]))
@@ -37,7 +46,8 @@ export function useDashboardData(can) {
   const finance = useQuery(useCallback(() => can.finance ? loadFinance() : skip(), [can.finance]))
   const bank = useQuery(useCallback(() => can.finance ? loadBank() : skip(), [can.finance]))
   const metrics = useQuery(useCallback(() => can.insights ? loadMetrics() : skip(), [can.insights]))
-  const required = [events, clients, followups, activities, contracts, finance, bank, metrics]
+  const social = useQuery(useCallback(() => can.social ? loadSocial() : skip(), [can.social]))
+  const required = [events, clients, followups, activities, contracts, finance, bank, metrics, social]
   // Reloads every widget and resolves with how many of them failed. Names of the team only
   // enrich rows, so a failure there never counts against the refresh.
   const refresh = async () => {
@@ -45,7 +55,7 @@ export function useDashboardData(can) {
     const results = await Promise.all(required.map(source => source.reload()))
     return results.filter(result => result?.failed).length
   }
-  return { events, clients, followups, activities, people, contracts, finance, bank, metrics, refresh }
+  return { events, clients, followups, activities, people, contracts, finance, bank, metrics, social, refresh }
 }
 
 // Combines the sources a widget needs into one loading/error state with a single retry.

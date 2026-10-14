@@ -68,6 +68,8 @@ a.dashboard-row:active { background: var(--ds-active); }
 .dashboard-row__soft { color: var(--ds-text-2); font-weight: var(--ds-weight-regular); }
 .dashboard-row__meta { overflow: hidden; color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
 .dashboard-row__meta.is-danger { color: var(--ds-danger); }
+/* A failure reason wraps to two lines: it is what tells the person what to fix. */
+.dashboard-row__reason { display: -webkit-box; overflow: hidden; color: var(--ds-danger); font-size: var(--ds-text-sm); line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .dashboard-row__text { display: -webkit-box; overflow: hidden; color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.5; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .dashboard-row__aside { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; color: var(--ds-text-3); font-size: var(--ds-text-sm); font-variant-numeric: tabular-nums; line-height: 1.4; white-space: nowrap; }
 .dashboard-row.is-top .dashboard-row__aside { padding-top: 1px; }
