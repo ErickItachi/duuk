@@ -47,6 +47,20 @@ test('follow-ups and regeneration keep user intent while ignoring assistant and 
  assert.equal(taskFor('free', 'Melhore.', bounded), 'free')
 })
 
+test('finance help covers receipts, monthly goals and cash without granting records or new tools', () => {
+ for (const message of ['Como registro uma receita?', 'Como lanço uma receita?', 'Onde consulto os recebimentos?', 'Como configuro uma meta financeira?', 'Como configuro o orçamento de despesas?', 'Como vejo o fluxo de caixa?']) {
+  assert.equal(taskFor('free', message), 'help', message)
+  const manual = knowledgeForRequest(['finance'], '/admin/agenda', { mode: 'free', message })
+  assert.equal(manual.pages[0].route, '/admin/financeiro', message)
+  assert.ok(manual.pages[0].actions.includes('Nova receita'))
+  assert.ok(manual.pages[0].guidance.join(' ').includes('não possui ferramentas'))
+  assert.equal(knowledgeForRequest(['agenda'], '/admin/agenda', { mode: 'free', message }).pages.length, 0)
+ }
+ for (const message of ['Como crio uma proposta comercial com orçamento?', 'Como escrevo um roteiro sobre uma receita de bolo?', 'Como crio uma receita de bolo?']) {
+  assert.notEqual(taskFor('free', message), 'help', message)
+ }
+})
+
 test('complete proposals use quality while short commercial copy stays light without paid fallback', () => {
  const message = 'Monte uma proposta em PDF com escopo, entregáveis e investimento a definir.'
  assert.equal(selectModel('free', message, freeModelAllowlist), 'gemini-3.5-flash')

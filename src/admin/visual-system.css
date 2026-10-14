@@ -1,0 +1,286 @@
+/* DUUK Admin only. The institutional site retains its own visual system. */
+[data-duuk-admin-theme] :is(.admin-shell, .admin-modal) {
+  --admin-paper: #0d0d0f;
+  --admin-surface: #171618;
+  --admin-raised: #211e20;
+  --admin-line: #322d2f;
+  --ui-shell: #111113;
+  --ui-soft: #ffffff05;
+  --ui-hover: #ffffff08;
+  --ui-edge: #ffffff0a;
+  --ui-edge-strong: #ffffff16;
+  --ui-accent-wash: #ef674519;
+  --ui-accent-edge: #ef674533;
+  --ui-shadow: #00000024;
+}
+
+[data-duuk-admin-theme="light"] :is(.admin-shell, .admin-modal) {
+  --admin-paper: #f6f4f1;
+  --admin-surface: #fffdfb;
+  --admin-raised: #f0ece7;
+  --admin-line: #e4dcd5;
+  --ui-shell: #fffdfb;
+  --ui-soft: #7b655905;
+  --ui-hover: #7b655909;
+  --ui-edge: #7b65590b;
+  --ui-edge-strong: #7b65591c;
+  --ui-accent-wash: #ec71480e;
+  --ui-accent-edge: #b75a3833;
+  --ui-shadow: #593a2510;
+}
+
+[data-duuk-admin-theme] .admin-shell {
+  background-image: radial-gradient(ellipse at 94% 3%, var(--ui-accent-wash), transparent 48%);
+}
+
+/* A quiet frame gives the tools a shared identity without competing with content. */
+[data-duuk-admin-theme] .admin-sidebar {
+  background: linear-gradient(155deg, var(--ui-soft), transparent 38%), var(--ui-shell);
+  border-right-color: var(--admin-line);
+  box-shadow: 8px 0 40px var(--ui-shadow);
+}
+[data-duuk-admin-theme] .admin-sidebar__head .admin-brand { gap: 14px; }
+[data-duuk-admin-theme] .admin-sidebar .admin-brand > span {
+  color: var(--admin-ink);
+  border-color: var(--ui-edge-strong);
+  letter-spacing: .18em;
+  font-size: 10px;
+}
+[data-duuk-admin-theme] .admin-sidebar .admin-brand small {
+  color: var(--admin-muted);
+  line-height: 1.7;
+  letter-spacing: 0;
+  font-size: 9px;
+}
+[data-duuk-admin-theme] .admin-sidebar__control {
+  min-height: 42px;
+  margin-top: 24px;
+  padding-bottom: 8px;
+  border-bottom-color: var(--ui-edge-strong);
+}
+[data-duuk-admin-theme] .admin-sidebar__control > span {
+  color: var(--admin-muted);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: .19em;
+}
+[data-duuk-admin-theme] .admin-sidebar__control .admin-collapse-toggle {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--ui-edge-strong);
+  border-radius: 9px;
+  color: var(--admin-muted);
+  background: var(--ui-soft);
+}
+[data-duuk-admin-theme] .admin-sidebar__menu {
+  padding-top: 14px;
+  scrollbar-color: var(--ui-edge-strong) transparent;
+}
+[data-duuk-admin-theme] .admin-sidebar nav { gap: 5px; }
+[data-duuk-admin-theme] .admin-sidebar :is(nav a, .admin-nav-group > button) {
+  min-height: 44px;
+  border-radius: 11px;
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 450;
+  line-height: 1.6;
+  transition: background 180ms, border-color 180ms, color 180ms, box-shadow 180ms;
+}
+[data-duuk-admin-theme] .admin-sidebar nav a.active {
+  color: var(--admin-ink);
+  border-color: var(--ui-accent-edge);
+  background: linear-gradient(110deg, var(--ui-accent-wash), var(--ui-soft));
+  box-shadow: inset 0 1px 0 var(--ui-edge);
+}
+[data-duuk-admin-theme] .admin-sidebar nav a.active::before {
+  inset-block: 13px;
+  width: 2px;
+}
+[data-duuk-admin-theme] .admin-sidebar .admin-nav-group > button.is-active {
+  color: var(--admin-ink);
+}
+[data-duuk-admin-theme] .admin-nav-group__items {
+  margin-left: 14px;
+  padding-left: 8px;
+  border-left-color: var(--ui-edge-strong);
+  gap: 3px;
+}
+[data-duuk-admin-theme] .admin-nav-group__items a { font-size: 11px !important; }
+[data-duuk-admin-theme] .admin-sidebar nav > a[href="/admin/drive"] { margin-top: 10px; }
+[data-duuk-admin-theme] .admin-sidebar__bottom {
+  padding-top: 20px;
+}
+[data-duuk-admin-theme] .admin-sidebar-profile {
+  padding: 12px 10px;
+  border: 1px solid var(--ui-edge-strong);
+  border-radius: 12px;
+  background: var(--ui-soft);
+  transition: border-color 180ms, background 180ms;
+}
+[data-duuk-admin-theme] .admin-sidebar-profile strong { color: var(--admin-ink); }
+[data-duuk-admin-theme] .admin-sidebar-profile small { font-size: 9px; }
+[data-duuk-admin-theme] .admin-reset {
+  width: 100%;
+  gap: 10px;
+  margin-top: 6px;
+  padding-inline: 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--admin-muted);
+  transition: color 180ms, background 180ms;
+}
+[data-duuk-admin-theme] .admin-sidebar__signature {
+  color: var(--admin-muted);
+  margin-top: 12px;
+  font-size: 8px;
+  letter-spacing: .12em;
+}
+
+[data-duuk-admin-theme] .admin-topbar {
+  position: relative;
+  background: linear-gradient(110deg, var(--ui-soft), transparent 68%), var(--admin-surface);
+  box-shadow: 0 4px 24px var(--ui-shadow);
+}
+[data-duuk-admin-theme] .admin-topbar::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 8%, var(--ui-accent-edge) 46%, transparent 84%);
+}
+[data-duuk-admin-theme] .admin-topbar-label { font-size: 9px; letter-spacing: .17em; }
+[data-duuk-admin-theme] .admin-topbar-note { font-size: 12px; }
+[data-duuk-admin-theme] .admin-topbar-divider { color: var(--admin-muted); opacity: .6; }
+[data-duuk-admin-theme] .admin-topbar__actions { gap: 12px; }
+[data-duuk-admin-theme] .admin-topbar__actions > a[aria-label="Meu perfil"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+}
+[data-duuk-admin-theme] .admin-topbar :is(.admin-theme-toggle, .admin-view-site) {
+  border: 1px solid var(--ui-edge-strong);
+  border-radius: 11px;
+  background: var(--ui-soft);
+  color: var(--admin-muted);
+  padding-inline: 12px;
+  min-height: 44px;
+  font-size: 11px;
+  transition: color 180ms, border-color 180ms, background 180ms;
+}
+[data-duuk-admin-theme] .admin-topbar .team-presence__trigger {
+  min-height: 44px;
+  border-color: var(--ui-edge-strong);
+  background: var(--ui-soft);
+  color: var(--admin-muted);
+}
+[data-duuk-admin-theme] .team-presence__popover {
+  border-color: var(--ui-edge-strong);
+  border-radius: 16px;
+  background: var(--admin-surface);
+  box-shadow: 0 20px 64px var(--ui-shadow), 0 8px 24px #00000018;
+}
+[data-duuk-admin-theme] .admin-footer {
+  color: var(--admin-muted);
+  background: var(--ui-soft);
+  font-size: 9px;
+  letter-spacing: .1em;
+}
+[data-duuk-admin-theme] .admin-footer > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--ui-edge-strong);
+  border-radius: 999px;
+  letter-spacing: .03em;
+  background: var(--ui-soft);
+  transition: color 180ms, border-color 180ms, background 180ms;
+}
+
+/* Action controls share the same shape, with a neutral focus indication. */
+[data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-button {
+  border-radius: 11px;
+  border-color: #ffffff18;
+  box-shadow: inset 0 1px 0 #ffffff24, 0 3px 10px #eb4b3f0d;
+  font-weight: 550;
+  transition: background 180ms, border-color 180ms, box-shadow 180ms, transform 180ms, filter 180ms;
+}
+[data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-button--secondary {
+  border-color: var(--admin-line);
+  background: linear-gradient(140deg, var(--ui-soft), transparent), var(--admin-surface);
+  box-shadow: inset 0 1px 0 var(--ui-edge);
+}
+[data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-icon-button {
+  border: 1px solid transparent;
+  border-radius: 11px;
+  transition: color 180ms, background 180ms, border-color 180ms;
+}
+[data-duuk-admin-theme] .admin-topbar .admin-notification-bell {
+  border-color: var(--ui-edge-strong);
+  background: var(--ui-soft);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-duuk-admin-theme] .admin-sidebar :is(nav a:hover, .admin-nav-group > button:hover) {
+    color: var(--admin-ink);
+    background: var(--ui-hover);
+  }
+  [data-duuk-admin-theme] .admin-sidebar nav a.active:hover {
+    background: linear-gradient(110deg, var(--ui-accent-wash), var(--ui-hover));
+  }
+  [data-duuk-admin-theme] :is(.admin-sidebar-profile:hover, .admin-topbar .admin-theme-toggle:hover, .admin-topbar .admin-view-site:hover, .admin-footer > a:hover) {
+    color: var(--admin-ink);
+    border-color: var(--ui-accent-edge);
+    background: var(--ui-hover);
+  }
+  [data-duuk-admin-theme] .admin-reset:hover { background: var(--ui-hover); color: var(--admin-ink); }
+  [data-duuk-admin-theme] .admin-topbar__actions > a[aria-label="Meu perfil"]:hover { background: var(--ui-hover); }
+  [data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-button:hover:not(:disabled) {
+    box-shadow: inset 0 1px 0 #ffffff24, 0 5px 16px #eb4b3f19;
+    transform: translateY(-1px);
+  }
+  [data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-button--secondary:hover:not(:disabled) {
+    border-color: var(--ui-edge-strong);
+    box-shadow: inset 0 1px 0 var(--ui-edge), 0 4px 12px var(--ui-shadow);
+  }
+}
+[data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 0 var(--ui-edge);
+}
+
+@media (min-width: 1024px) {
+  [data-duuk-admin-theme] .admin-shell.is-collapsed .admin-sidebar-profile { padding: 10px 4px; }
+  [data-duuk-admin-theme] .admin-shell.is-collapsed .admin-sidebar__menu { padding-top: 14px; }
+  [data-duuk-admin-theme] .admin-shell.is-collapsed .admin-nav-group__items { margin-left: 0; padding-left: 0; }
+}
+@media (max-width: 1023px) {
+  [data-duuk-admin-theme] .admin-topbar__actions { gap: 8px; }
+  [data-duuk-admin-theme] .admin-topbar .admin-theme-toggle { padding-inline: 8px; }
+  [data-duuk-admin-theme] .admin-sidebar {
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    box-shadow: 24px 0 64px #00000020;
+  }
+  [data-duuk-admin-theme] .admin-sidebar__drawer-head { margin-bottom: 14px; }
+  [data-duuk-admin-theme] .admin-sidebar__control { margin-top: 20px; }
+}
+@media (max-width: 767px) {
+  [data-duuk-admin-theme] .admin-topbar .team-presence__trigger { width: 44px; }
+  [data-duuk-admin-theme] .admin-topbar__identity { gap: 8px; }
+}
+@media (max-width: 430px) {
+  [data-duuk-admin-theme] .admin-topbar { gap: 10px; }
+  [data-duuk-admin-theme] .admin-topbar__actions { gap: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-duuk-admin-theme] :is(.admin-sidebar-profile, .admin-reset, .admin-footer > a, .admin-button, .admin-topbar .admin-theme-toggle, .admin-topbar .admin-view-site) {
+    transition: none;
+  }
+  [data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-button:hover:not(:disabled) { transform: none; }
+}

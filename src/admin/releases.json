@@ -1,5 +1,22 @@
 [
   {
+    "version": "1.10.0",
+    "date": "2026-10-14",
+    "title": "Visual renovado e financeiro completo",
+    "new": [
+      "Financeiro com receitas, despesas, contas a pagar e a receber, fluxo de caixa e exportação Excel/CSV.",
+      "Metas de recebimento e orçamento de despesas por mês, com indicadores calculados dos registros reais."
+    ],
+    "improved": [
+      "Painéis com resumo integrado, progresso circular e seções inspiradas na referência visual enviada.",
+      "Menu, formulários, agenda, e-mail, Drive e IA com acabamento consistente nas cores da DUUK.",
+      "Transições suaves e interações discretas, com modo claro e preferência por movimento reduzido."
+    ],
+    "fixed": [
+      "Layout revisado no celular, tablet e computador, preservando as despesas já cadastradas."
+    ]
+  },
+  {
     "version": "1.9.3",
     "date": "2026-10-11",
     "title": "Mais leveza, com a marca da DUUK",

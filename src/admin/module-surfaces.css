@@ -1,0 +1,158 @@
+/* Shared finish for the administrative tools. Public pages keep their styles. */
+[data-duuk-admin-theme], [data-duuk-admin-theme] :is(.admin-shell, .admin-modal) {
+  --tool-highlight: #ffffff06;
+  --tool-shadow: #00000024;
+  --tool-field: #ffffff03;
+  --tool-focus: #b4aaa126;
+  --tool-row-hover: #ffffff04;
+  --admin-radius: 16px;
+}
+[data-duuk-admin-theme="light"], [data-duuk-admin-theme="light"] :is(.admin-shell, .admin-modal) {
+  --tool-highlight: #ffffffb3;
+  --tool-shadow: #55382b0a;
+  --tool-field: #8d756704;
+  --tool-focus: #83746814;
+  --tool-row-hover: #b6917608;
+}
+
+[data-duuk-admin-theme] .admin-main :is(.admin-panel, .drive-library-account):not(.duuk-dashboard *) {
+  border-radius: 16px;
+  background: linear-gradient(150deg, var(--tool-highlight), transparent 46%), var(--admin-surface);
+  box-shadow: inset 0 1px 0 var(--tool-highlight), 0 6px 28px var(--tool-shadow);
+}
+[data-duuk-admin-theme] .admin-page-title:not(.office-dashboard-title) { align-items: center; gap: 20px; }
+[data-duuk-admin-theme] .admin-page-title:not(.office-dashboard-title) h1 { font-weight: 650; }
+[data-duuk-admin-theme] .admin-page-title:not(.office-dashboard-title) h1 + p { line-height: 1.75; max-width: 580px; }
+[data-duuk-admin-theme] :is(.office-panel h2, .calendar-integration__heading h2, .mail-list-heading h2) { font-weight: 550; }
+[data-duuk-admin-theme] :is(.admin-stats strong, .office-expense-row > strong, .crm-kanban-card > strong, .office-calendar-year, .office-day-number) { font-variant-numeric: tabular-nums; }
+[data-duuk-admin-theme] .admin-stats:not(.duuk-dashboard *) > div {
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--tool-highlight), transparent 65%), var(--admin-surface);
+  box-shadow: inset 0 1px 0 var(--tool-highlight), 0 4px 20px var(--tool-shadow);
+}
+[data-duuk-admin-theme] .admin-list-heading { background: var(--tool-field); min-height: 42px; }
+[data-duuk-admin-theme] :is(.admin-project-row, .office-expense-row, .office-contract-row, .platform-row, .drive-library-row, .mail-row) {
+  transition: background 180ms ease;
+}
+[data-duuk-admin-theme] :is(.admin-status, .office-badge, .drive-chip, .crm-stage) { border-radius: 7px; }
+[data-duuk-admin-theme] :is(.admin-empty, .office-empty) { line-height: 1.8; }
+[data-duuk-admin-theme] .admin-empty > svg {
+  border-radius: 18px;
+  background: linear-gradient(140deg, var(--ui-accent-wash), transparent), var(--admin-paper);
+}
+
+/* Quiet surfaces let the content and the selected action carry the emphasis. */
+[data-duuk-admin-theme] .admin-filter-tabs { padding: 4px; border: 1px solid var(--admin-line); border-radius: 12px; background: var(--admin-paper); gap: 4px; }
+[data-duuk-admin-theme] .admin-filter-tabs button { border-radius: 8px; }
+[data-duuk-admin-theme] .admin-filter-tabs button.is-active { background: var(--admin-surface); color: var(--admin-accent); box-shadow: 0 2px 8px var(--tool-shadow), inset 0 0 0 1px var(--admin-line); }
+[data-duuk-admin-theme] :is(.admin-search, .office-select, .office-date-input) { border-radius: 10px; }
+[data-duuk-admin-theme] .admin-search { background: var(--tool-field); }
+[data-duuk-admin-theme] .office-month-nav { padding: 3px; border: 1px solid var(--admin-line); border-radius: 12px; background: var(--admin-surface); }
+[data-duuk-admin-theme] .office-month-title { font-size: 17px; }
+
+/* The form geometry and neutral focus treatment are shared by every tool. */
+[data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-field :is(input, textarea, select) {
+  min-height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--tool-highlight), transparent), var(--admin-raised);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+[data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-field textarea { min-height: 96px; line-height: 1.75; }
+[data-duuk-admin-theme] :is(.admin-shell, .admin-modal) .admin-field :is(input, textarea, select):focus {
+  border-color: var(--admin-focus);
+  box-shadow: 0 0 0 3px var(--tool-focus);
+}
+[data-duuk-admin-theme] :is(.admin-input-prefix, .admin-password) {
+  border-radius: 10px;
+  background: var(--admin-raised);
+}
+[data-duuk-admin-theme] :is(.admin-shell, .admin-modal) :is(.admin-input-prefix, .admin-password) input {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+[data-duuk-admin-theme] :is(.admin-input-prefix, .admin-password):focus-within {
+  border-color: var(--admin-focus);
+  box-shadow: 0 0 0 3px var(--tool-focus);
+}
+[data-duuk-admin-theme] .admin-search:focus-within { border-color: var(--admin-focus); box-shadow: 0 0 0 3px var(--tool-focus); }
+[data-duuk-admin-theme] .admin-search input { background: transparent; }
+
+[data-duuk-admin-theme] .admin-modal:not(.duuk-ai-floating-dialog) {
+  border-radius: 20px;
+  border-color: var(--admin-line);
+  box-shadow: 0 36px 120px #00000045, inset 0 1px 0 var(--tool-highlight);
+}
+[data-duuk-admin-theme] .admin-modal:not(.duuk-ai-floating-dialog)[open] { animation: duuk-tool-enter 220ms cubic-bezier(.2, .8, .2, 1); }
+[data-duuk-admin-theme] .admin-modal__head {
+  background: linear-gradient(115deg, var(--ui-accent-wash), transparent 60%), var(--admin-surface);
+}
+[data-duuk-admin-theme] .admin-modal__head h2 { font-weight: 550; }
+[data-duuk-admin-theme] .admin-modal__foot { background: var(--admin-surface); box-shadow: 0 -8px 28px var(--tool-shadow); }
+[data-duuk-admin-theme] .admin-modal::backdrop { background: #08080be0; backdrop-filter: blur(7px); }
+[data-duuk-admin-theme="light"] .admin-modal::backdrop { background: #342e2766; }
+
+/* Calendar, commercial board, inbox and the library retain their own layouts. */
+[data-duuk-admin-theme] .office-days { border-radius: 13px; }
+[data-duuk-admin-theme] .office-days > button { background-color: var(--tool-field); }
+[data-duuk-admin-theme] .office-days > button.is-outside { color: var(--admin-muted); background: var(--admin-paper); }
+[data-duuk-admin-theme] .office-days > button.is-selected { background: var(--ui-accent-wash); box-shadow: inset 0 0 0 1px var(--admin-focus); }
+[data-duuk-admin-theme] .office-days > button.is-today .office-day-number { border-radius: 50%; background: var(--gradient); color: #080808; box-shadow: 0 3px 10px #eb4b3f16; }
+[data-duuk-admin-theme] .office-day-event { border-radius: 5px; }
+[data-duuk-admin-theme] .office-months button { border-radius: 9px; }
+[data-duuk-admin-theme] .crm-kanban-column { border-radius: 16px; background: linear-gradient(145deg, var(--tool-highlight), transparent 80%), var(--admin-paper); }
+[data-duuk-admin-theme] .crm-kanban-column > header { padding: 3px 2px 12px; border-bottom: 1px solid var(--admin-line); }
+[data-duuk-admin-theme] .crm-kanban-column header > span { border-radius: 7px; background: var(--admin-raised); font-variant-numeric: tabular-nums; }
+[data-duuk-admin-theme] .crm-kanban-card { border-radius: 12px; box-shadow: 0 3px 12px var(--tool-shadow); }
+[data-duuk-admin-theme] .crm-kanban-column.is-drop-target { background: var(--ui-accent-wash); border-color: var(--ui-accent-edge); }
+[data-duuk-admin-theme] .crm-kanban-card.is-saving { border-color: var(--admin-focus); box-shadow: 0 0 0 2px var(--tool-focus); }
+[data-duuk-admin-theme] .mail-folders nav button { border-radius: 10px; }
+[data-duuk-admin-theme] .mail-list-heading { background: var(--tool-field); }
+[data-duuk-admin-theme] .mail-editor { border-radius: 12px; background: var(--admin-surface); }
+[data-duuk-admin-theme] .mail-editor:focus-within { border-color: var(--admin-focus); box-shadow: 0 0 0 3px var(--tool-focus); }
+[data-duuk-admin-theme] .mail-editor__toolbar { border-radius: 12px 12px 0 0; background: var(--tool-field); }
+[data-duuk-admin-theme] .mail-attachments { border-radius: 12px; background: var(--tool-field); }
+[data-duuk-admin-theme] .drive-folder-card { border-radius: 14px; background: var(--admin-surface); box-shadow: 0 3px 14px var(--tool-shadow); }
+[data-duuk-admin-theme] .drive-folder-open > svg { padding: 8px; box-sizing: content-box; border-radius: 11px; background: var(--ui-accent-wash); }
+[data-duuk-admin-theme] .drive-library-file-icon { border-radius: 12px; background: var(--ui-accent-wash); border-color: var(--ui-accent-edge); }
+[data-duuk-admin-theme] .drive-library-tabs > button { border-radius: 10px; }
+[data-duuk-admin-theme] .calendar-integration__icon { border-radius: 14px; background: var(--admin-paper); border-color: var(--admin-line); }
+[data-duuk-admin-theme] .calendar-integration__details { background: var(--tool-field); border-radius: 12px; }
+
+/* The assistant stays calm: warmth in the surfaces, emphasis on the reply. */
+[data-duuk-admin-theme] .duuk-ai-composer { border-radius: 16px; background: var(--admin-raised); border-color: var(--admin-line); box-shadow: 0 6px 24px var(--tool-shadow), inset 0 1px 0 var(--tool-highlight); }
+[data-duuk-admin-theme] .duuk-ai-composer:focus-within { border-color: var(--admin-focus); box-shadow: 0 0 0 3px var(--tool-focus), 0 6px 24px var(--tool-shadow); }
+[data-duuk-admin-theme] .duuk-ai-suggestions button { border-radius: 11px; background: var(--tool-field); border-color: var(--admin-line); }
+[data-duuk-admin-theme] .duuk-ai-message--user { border-radius: 16px 16px 4px 16px; background: var(--admin-raised); }
+[data-duuk-admin-theme] .duuk-ai-header { background: var(--admin-surface); }
+[data-duuk-admin-theme] .duuk-ai-sidebar { background: var(--admin-paper); }
+[data-duuk-admin-theme] .duuk-ai-help { box-shadow: 0 8px 24px var(--tool-shadow), inset 0 1px 0 var(--tool-highlight); }
+
+[data-duuk-admin-theme] .admin-login__form h2 { font-weight: 600; }
+[data-duuk-admin-theme] .admin-login__tag { border-radius: 999px; padding: 5px 10px; background: var(--ui-accent-wash); border-color: var(--ui-accent-edge); }
+[data-duuk-admin-theme] .admin-login__visual::after { background: linear-gradient(120deg, #08080845, #080808c9), linear-gradient(0deg, #eb4b3f16, transparent 65%); }
+
+@keyframes duuk-tool-enter { from { opacity: 0; transform: translateY(9px) scale(.99); } to { opacity: 1; transform: none; } }
+@keyframes duuk-heading-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  [data-duuk-admin-theme] .admin-page-title:not(.office-dashboard-title) { animation: duuk-heading-enter 260ms ease-out both; }
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-duuk-admin-theme] :is(.admin-project-row, .office-expense-row, .office-contract-row, .platform-row, .drive-library-row, .mail-row):hover { background: var(--tool-row-hover); }
+  [data-duuk-admin-theme] .drive-folder-card:hover { border-color: var(--ui-accent-edge); background: var(--tool-field); }
+  [data-duuk-admin-theme] .crm-kanban-card:hover { border-color: var(--admin-focus); box-shadow: 0 7px 18px var(--tool-shadow); }
+  [data-duuk-admin-theme] .duuk-ai-suggestions button:hover { border-color: var(--admin-focus); background: var(--admin-raised); }
+}
+@media (max-width: 600px) {
+  [data-duuk-admin-theme] .admin-modal:not(.duuk-ai-floating-dialog) { border-radius: 16px; }
+  [data-duuk-admin-theme] .drive-folder-open > svg { padding: 6px; }
+  [data-duuk-admin-theme] .admin-login__visual::after { background: linear-gradient(90deg, #080808b8, #08080830 90%), linear-gradient(0deg, #08080875, transparent 65%); }
+}
+@media (max-width: 430px) {
+  [data-duuk-admin-theme] .mail-compose__foot .admin-button { padding-inline: 10px; gap: 6px; white-space: nowrap; overflow-wrap: normal; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-duuk-admin-theme] :is(.admin-page-title, .admin-modal[open]) { animation: none; }
+  [data-duuk-admin-theme] .admin-modal:not(.duuk-ai-floating-dialog)[open] { animation: none; }
+  [data-duuk-admin-theme] :is(.admin-project-row, .office-expense-row, .office-contract-row, .platform-row, .drive-library-row, .mail-row, .admin-field input, .admin-field textarea, .admin-field select) { transition: none; }
+}

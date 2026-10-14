@@ -28,6 +28,7 @@ import ProjectEditor from './ProjectEditor'
 import DashboardPage from '../office/DashboardPage'
 import ContractsPage, { ContractEditor } from '../office/ContractsPage'
 import ExpensesPage from '../office/ExpensesPage'
+import FinancePage from '../finance/FinancePage'
 import InsightsPage from '../office/InsightsPage'
 import AgendaPage from '../office/AgendaPage'
 import './admin.css'
@@ -36,6 +37,8 @@ import '../office/calendar.css'
 import './platform.css'
 import './ai-entry.css'
 import './theme.css'
+import './visual-system.css'
+import './module-surfaces.css'
 const AiPage = lazy(() => import('../ai/AiPage'))
 const aiLoading = <p className="platform-muted" role="status">Abrindo DUUK AI…</p>
 
@@ -248,7 +251,7 @@ function AdminWorkspace() {
      <Route path="ai" element={guarded('ai',<Suspense fallback={aiLoading}><AiPage notify={notify}/></Suspense>)}/>
      <Route path="drive" element={guarded('drive',<DrivePage notify={notify}/>)}/>
      <Route path="portfolio" element={guarded('site',<ProjectList notify={notify}/>)}/><Route path="inicio" element={guarded('site',<HomeEditor notify={notify}/>)}/><Route path="midias" element={guarded('site',<MediaLibrary notify={notify}/>)}/>
-     <Route path="contratos" element={guarded('contracts',<ContractsPage notify={notify}/>)}/><Route path="contratos/:id" element={guarded('contracts',<ContractEditor notify={notify}/>)}/><Route path="agenda" element={guarded('agenda',<AgendaPage notify={notify}/>)}/><Route path="financeiro" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="despesas" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="insights" element={guarded('insights',<InsightsPage/>)}/>
+     <Route path="contratos" element={guarded('contracts',<ContractsPage notify={notify}/>)}/><Route path="contratos/:id" element={guarded('contracts',<ContractEditor notify={notify}/>)}/><Route path="agenda" element={guarded('agenda',<AgendaPage notify={notify}/>)}/><Route path="financeiro" element={guarded('finance',<FinancePage notify={notify}/>)}/><Route path="despesas" element={guarded('finance',<ExpensesPage notify={notify}/>)}/><Route path="insights" element={guarded('insights',<InsightsPage/>)}/>
      {[[undefined,'dashboard'],['clientes','clients'],['pipeline','pipeline'],['contatos','activities'],['follow-ups','followups'],['relatorios','reports']].map(([path,mode])=><Route key={mode} path={path?`comercial/${path}`:'comercial'} element={guarded(({dashboard:'crm.dashboard',clients:'crm.clients',pipeline:'crm.pipeline',activities:'crm.activities',followups:'crm.followups',reports:'crm.reports'})[mode],<CommercialPage mode={mode} notify={notify}/>)}/>)}
      <Route path="comercial/emails" element={guarded('mail',<MailPage notify={notify}/>)}/>
      <Route path="comercial/modelos" element={guarded('crm.activities',<MessageTemplatesPage notify={notify}/>)}/>

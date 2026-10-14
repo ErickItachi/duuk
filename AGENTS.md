@@ -1,5 +1,13 @@
 # Fluxo de trabalho da DUUK
 
+## Financeiro e interface — 1.10.0
+
+- `/admin/financeiro` usa `src/finance/FinancePage.jsx`, com Resumo, Lançamentos, Fluxo de caixa e Metas; `/admin/despesas` conserva a rota anterior. Não duplique nem migre as despesas existentes. Novas receitas usam `duuk_income`; metas usam `duuk_finance_goals` por mês. A migração `20261013213527_duuk_finance_income_goals.sql` já foi aplicada no projeto gratuito existente.
+- Valores previstos/pendentes usam vencimento; realizados, fluxo e metas usam pagamento/recebimento efetivo, inclusive de contas vencidas em outro mês. Não apresente resultado acumulado como saldo bancário. Metas vazias/zero são indefinidas; nunca invente percentuais. Preserve revisão otimista, erros visíveis, rascunhos e RLS/autorizações `finance`, inclusive a auditoria financeira privada.
+- Excel exporta lista filtrada, resumo completo, fluxo diário e metas em quatro abas; CSV preserva filtros e evita fórmulas em textos. Não grave registros reais nem envie mensagens para validar interfaces: use interceptações isoladas e fixtures SQL com rollback.
+- `visual-system.css`, `module-surfaces.css` e `dashboard-experience.css` refinam apenas o Admin nas cores DUUK. Preserve a marca transparente, clara/preta conforme autorização, loader automático sem vídeo, movimento reduzido e atualização explícita da PWA com proteção de formulários. A ajuda financeira da IA é estática; não envie registros financeiros ao Gemini nem habilite novas ferramentas de pagamento/receitas/metas.
+- Continue em `../duuk-admin-live`, branch `feature/duuk-platform`; não publique o checkout original antigo. Operação e evidências: `docs/duuk-admin-operation.md` e `docs/admin-1.10-validation.md`. Valide commit, deploy, domínio e worker antes de afirmar publicação.
+
 ## DUUK AI — 1.8.0
 
 - `/admin/ai` e ajuda contextual exigem a permissão `ai`. As conversas são privadas; documentos só são compartilhados por autorização explícita e pelas permissões atuais do projeto. Não enviar automaticamente registros comerciais, contratos, agenda, financeiro, credenciais ou valores de formulários ao modelo.

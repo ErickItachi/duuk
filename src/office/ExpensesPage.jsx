@@ -9,8 +9,8 @@ import { useQuery } from './useQuery'
 import { useSearchParams } from 'react-router-dom'
 import { DateField, MonthNavigation } from './Calendar'
 
-function ExpenseEditor({record,onClose,onSaved}) {
-  const [form,setForm]=useState(()=>record ? {...record,amount:(Number(record.amount_cents)/100).toFixed(2)} : {title:'',description:'',amount:'',category:'production',due_date:today(),status:'pending',paid_date:today()})
+export function ExpenseEditor({record,initialDueDate= today(),onClose,onSaved}) {
+  const [form,setForm]=useState(()=>record ? {...record,amount:(Number(record.amount_cents)/100).toFixed(2)} : {title:'',description:'',amount:'',category:'production',due_date:initialDueDate,status:'pending',paid_date:today()})
   const [busy,setBusy]=useState(false),[error,setError]=useState('')
   useUnsavedChanges(true)
   const update=(key,value)=>setForm(old=>({...old,[key]:value}))
