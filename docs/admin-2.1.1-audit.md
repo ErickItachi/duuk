@@ -43,7 +43,7 @@ Banner editorial PT/EN na home, laranja discreto, CTA para portfólio, banner da
 - Logout offline testado com SDK real e backend isolado. Leitura de e-mail em iframe permanece compatível com a CSP.
 - Produção: oito tabelas privadas e oito Edge Functions recusaram chamadas anônimas. Também foram verificados método inválido, JSON malformado, origem não permitida, tamanho excessivo e token inválido, além das RPCs privadas.
 
-Artefatos locais de teste ficam fora do repositório. O fluxo de publicação envia para `origin/main`, aguarda sucesso da Vercel e compara `/admin-version.json`, build do worker e páginas do domínio com a versão 2.1.1 antes de anunciar disponibilidade.
+Artefatos locais de teste ficam fora do repositório. O fluxo de publicação envia para `origin/main`, aguarda sucesso da Vercel e compara `/admin-version.json`, build do worker e páginas do domínio com a versão 2.1.1 antes de anunciar disponibilidade. O hash normaliza `vercel.json` porque a Vercel compacta esse arquivo antes do build; alterações somente de formatação não criam diferenças entre o build local e o publicado.
 
 ## Limites da verificação
 

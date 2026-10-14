@@ -9,7 +9,10 @@ for (const name of readdirSync(new URL('./src/', import.meta.url), { recursive: 
   if (/\.(jsx?|mjs|json|css)$/.test(name)) digest.update(name).update(readFileSync(new URL(`./src/${name}`, import.meta.url)))
 }
 for (const name of ['scripts/admin-worker.template.js', 'scripts/build-admin-worker.mjs', 'scripts/admin-security.mjs', 'vercel.json']) {
-  digest.update(name).update(readFileSync(new URL(`./${name}`, import.meta.url)))
+  const content = readFileSync(new URL(`./${name}`, import.meta.url))
+  // Vercel compacts this configuration before building. Hash its canonical
+  // content so the same release has the same identifier locally and remotely.
+  digest.update(name).update(name === 'vercel.json' ? `${JSON.stringify(JSON.parse(content.toString('utf8')))}\n` : content)
 }
 const buildId = digest.digest('hex').slice(0, 20)
 
