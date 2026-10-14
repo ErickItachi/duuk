@@ -10,6 +10,7 @@ import {
   text,
   uuid,
 } from "../_shared/http.ts";
+import { teamAccountRestriction } from "../_shared/team-access.mjs";
 
 const emailOf = (v: unknown) => {
   const e = text(v, "o e-mail", 254).toLowerCase();
@@ -297,6 +298,24 @@ handler(async (req, headers) => {
         "Somente um super administrador pode alterar esta conta.",
         403,
       );
+    if (!own.is_super_admin) {
+      const assignedRoleId = body.action === "reset-password" ? null : uuid(body.role_id);
+      const roleIds = [...new Set([own.role_id, target?.role_id, assignedRoleId].filter(Boolean))];
+      const userIds = [...new Set([user.id, target?.id].filter(Boolean))];
+      const [roleRows, userRows] = await Promise.all([
+        db.from("duuk_role_permissions").select("role_id,permission,allowed").in("role_id", roleIds),
+        db.from("duuk_user_permissions").select("user_id,permission,allowed").in("user_id", userIds),
+      ]);
+      const restriction = teamAccountRestriction({
+        actor: own,
+        target,
+        assignedRoleId,
+        proposedSuperAdmin: body.is_super_admin === true,
+        rolePermissions: checked(roleRows) || [],
+        userPermissions: checked(userRows) || [],
+      });
+      if (restriction) throw new HttpError(restriction, 403);
+    }
     if (body.action === "reset-password") {
       const result = await db.auth.admin.updateUserById(target.id, {
         password: passwordOf(body.password),

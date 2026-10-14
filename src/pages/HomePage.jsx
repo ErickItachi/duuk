@@ -80,6 +80,18 @@ export default function HomePage() {
           </div>
         </section>
 
+        <section className="home-intro" aria-labelledby="home-intro-title">
+          <Reveal>
+            <p className="home-intro__eyebrow">{t.aboutEyebrow}</p>
+            <h1 id="home-intro-title">{t.homeBannerTitle}<br /><span>{t.homeBannerAccent}</span></h1>
+          </Reveal>
+          <Reveal className="home-intro__side">
+            <p>{t.homeBannerBody}</p>
+            <Link className="home-intro__link" to="/portfolio">{t.nav.portfolio}<Arrow /></Link>
+            <span className="home-intro__available"><i aria-hidden="true" />{t.available}</span>
+          </Reveal>
+        </section>
+
         <ProjectIndex projects={featuredProjects} label={t.nav.portfolio} eagerFirst />
 
         <section className="home-close">

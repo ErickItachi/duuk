@@ -620,6 +620,36 @@ ul {
   min-height: var(--hero-nav-height);
 }
 
+/* A warm editorial pause between the opening film and selected work. */
+.home-intro {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 40px clamp(32px, 6vw, 100px);
+  padding: clamp(56px, 8vw, 120px) var(--gutter);
+  border-top: 1px solid rgb(240 148 91 / 38%);
+  border-bottom: 1px solid rgb(240 148 91 / 18%);
+  background: radial-gradient(ellipse at 92% 100%, rgb(240 148 91 / 10%), transparent 58%), #0c0a09;
+}
+.home-intro__eyebrow { margin-bottom: 28px; color: var(--orange); font-size: 10px; font-weight: 600; letter-spacing: .16em; }
+.home-intro h1 { font-size: clamp(35px, 4.7vw, 80px); font-weight: 800; letter-spacing: -.045em; word-spacing: normal; line-height: .98; }
+.home-intro h1 span { color: var(--orange); }
+.home-intro__side { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
+.home-intro__side > p { max-width: 34ch; color: #c8c0ba; font-size: clamp(14px, 1.2vw, 17px); line-height: 1.7; }
+.home-intro__link { display: inline-flex; align-items: center; justify-content: space-between; gap: 36px; min-height: 48px; padding: 0 20px; border: 1px solid transparent; border-radius: 2px; background: var(--orange); color: #160d08; font-size: 11px; font-weight: 700; letter-spacing: .12em; transition: background-color 220ms var(--ease), border-color 220ms var(--ease); }
+.home-intro__link:hover { border-color: var(--orange); background: #ffab75; }
+.home-intro__available { display: flex; align-items: center; gap: 8px; color: #c8c0ba; font-size: 9px; font-weight: 500; letter-spacing: .1em; line-height: 1.5; }
+.home-intro__available i { flex-shrink: 0; width: 5px; height: 5px; border-radius: 50%; background: var(--orange); }
+@media (max-width: 800px) {
+  .home-intro { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .home-intro h1 { font-size: clamp(30px, 7.4vw, 58px); }
+  .home-intro__eyebrow { margin-bottom: 22px; }
+  .home-intro__side { gap: 20px; }
+  .home-intro__side > p { max-width: 44ch; }
+}
+
 .project-index {
   background: var(--black);
 }

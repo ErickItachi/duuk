@@ -1,5 +1,5 @@
-import { admin, checked, database, handler, HttpError, json, readBody, readJson, sha256, signedUrl, text, uuid } from '../_shared/http.ts'
-import { fieldsFor, PDFDocument, renderSigned } from '../_shared/pdf.ts'
+import { admin, checked, database, handler, HttpError, json, rateLimit, readBody, readJson, sha256, signedUrl, text, uuid } from '../_shared/http.ts'
+import { currentSignedPdf, fieldsFor, PDFDocument, renderSigned } from '../_shared/pdf.ts'
 import { normalizeSigningEmail } from '../_shared/sign-verification.mjs'
 
 handler(async(req,headers)=>{
@@ -8,6 +8,7 @@ handler(async(req,headers)=>{
   const audit=async(action:string,id:string)=>checked(await db.from('duuk_audit').insert({actor_id:user.id,actor_name:profile?.name||user.email,action,entity:'duuk_contracts',entity_id:id,summary:({fields:'Campos do contrato alterados',invite:'Link de assinatura gerado',trash:'Contrato movido para a lixeira',restore:'Contrato restaurado',delete:'Contrato excluído',cancel:'Links do contrato cancelados',render:'PDF assinado atualizado',upload:'PDF de contrato enviado'} as Record<string,string>)[action]||action}))
   const audited=async(action:string,id:string,operation:PromiseLike<{data:any,error:any}>):Promise<any>=>{const result=checked(await operation);await audit(action,id);return result}
   if(req.headers.get('content-type')?.includes('multipart/form-data')){
+    await rateLimit(db,user.id,'contract-upload',10)
     if(Number(req.headers.get('content-length'))>11000000)throw new HttpError('Envie um PDF de até 10 MB.')
     const form=await new Response(await readBody(req,11000000),{headers:{'Content-Type':req.headers.get('content-type')!}}).formData(),file=form.get('file')
     if(!(file instanceof File)||file.size>10485760||!file.size)throw new HttpError('Envie um PDF de até 10 MB.')
@@ -27,12 +28,14 @@ handler(async(req,headers)=>{
     return json(insert.data,headers)
   }
   const body=await readJson(req,50000),id=uuid(body.id)
+  await rateLimit(db,user.id,body.action==='details' ? 'contract-read' : 'contract-write',body.action==='details' ? 120 : 30)
   const contract=checked(await db.from('duuk_contracts').select('*').eq('id',id).maybeSingle())
   if(!contract)throw new HttpError('Contrato não encontrado.',404)
   if(body.action==='details'){
+    const current=await currentSignedPdf(db,contract)
     const signatures=checked(await db.from('duuk_contract_signatures').select('id,party,signer_name,signed_at,consent,ip_address,user_agent,field_values,verification_method,verified_email,email_verified_at,verification_challenge_id').eq('contract_id',id).order('signed_at'))
     const invites=checked(await db.from('duuk_contract_invites').select('party,expires_at,revoked_at,signed_at,verification_required,recipient_email').eq('contract_id',id).order('created_at',{ascending:false}))
-    return json({contract,signatures,invites,original_url:await signedUrl(db,contract.original_path),signed_url:await signedUrl(db,contract.signed_path)},headers)
+    return json({...current,signatures,invites,original_url:await signedUrl(db,current.contract.original_path),signed_url:!current.pdf_pending ? await signedUrl(db,current.contract.signed_path) : null},headers)
   }
   if(body.action==='fields')return json(await audited('fields',id,db.rpc('duuk_office_fields',{target:id,document:fieldsFor(body.fields,contract.pages),revision:body.version})),headers)
   if(body.action==='invite'){

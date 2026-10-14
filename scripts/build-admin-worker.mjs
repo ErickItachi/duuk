@@ -1,4 +1,5 @@
 import { readFile, writeFile, readdir } from "node:fs/promises";
+import { adminShellHeaders } from "./admin-security.mjs";
 const root = new URL("../dist/", import.meta.url),
   metadata = JSON.parse(
     await readFile(new URL("admin-build.json", root), "utf8"),
@@ -28,8 +29,9 @@ const source = await readFile(
   new URL("admin-worker.template.js", import.meta.url),
   "utf8",
 );
+const shellHeaders = adminShellHeaders(JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8')));
 const worker =
-  `const BUILD=${JSON.stringify(metadata.build_id)};\nconst SHELL=${JSON.stringify(html)};\nconst ASSETS=${JSON.stringify([...assets, ...fonts, ...icons, "/media/duuk-logo-white.png"])};\n` +
+  `const BUILD=${JSON.stringify(metadata.build_id)};\nconst SHELL=${JSON.stringify(html)};\nconst SHELL_HEADERS=${JSON.stringify(shellHeaders)};\nconst ASSETS=${JSON.stringify([...assets, ...fonts, ...icons, "/media/duuk-logo-white.png"])};\n` +
   source;
 await writeFile(new URL("admin-sw.js", root), worker);
 await writeFile(new URL("admin-version.json", root), JSON.stringify(metadata));

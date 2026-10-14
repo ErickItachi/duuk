@@ -1,5 +1,20 @@
 [
   {
+    "version": "2.1.1",
+    "date": "2026-10-14",
+    "title": "Contratos em dia e segurança reforçada",
+    "new": [
+      "Novo banner na página inicial do site, com os destaques em laranja da DUUK."
+    ],
+    "improved": [
+      "Contratos assinados abrem no visualizador, incluindo as páginas do registro de aceite, com acesso separado ao PDF original.",
+      "Download dos contratos com acesso privado renovado e abertura compatível com Safari e iPhone.",
+      "Aceite mais claro, datas no horário de Brasília e recuperação do PDF sem repetir uma assinatura registrada.",
+      "Proteções adicionais na gestão de usuários, nas solicitações de contratos e no aplicativo instalado.",
+      "Animações mais leves e respeito à preferência por movimento reduzido."
+    ]
+  },
+  {
     "version": "2.1.0",
     "date": "2026-10-14",
     "title": "Mais DUUK: laranja, movimento e uma abertura nova",

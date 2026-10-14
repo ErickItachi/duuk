@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, degrees, rgb } from 'npm:pdf-lib@1.17.1'
-import { checked, database, HttpError, sha256 } from './http.ts'
+import { checked, database, HttpError, rateLimit, sha256 } from './http.ts'
 
 export function fieldsFor(document: any, pages: any[]) {
   if (!Array.isArray(document) || document.length>30) throw new HttpError('Use até 30 campos por contrato.')
@@ -62,14 +62,14 @@ export async function renderSigned(db: ReturnType<typeof database>, initial: any
       }
     }
     // Append evidence without changing the uploaded pages.
-    const rows=['DUUK | Registro de assinatura eletronica',`Contrato: ${latin(contract.title)}`,`Identificador: ${contract.id}`,`SHA-256 do PDF original:`,contract.original_sha256,'']
+    const rows=['DUUK | Registro de assinatura eletrônica',`Contrato: ${latin(contract.title)}`,`Identificador: ${contract.id}`,`SHA-256 do PDF original:`,contract.original_sha256,'']
     for(const s of signatures){
-      rows.push(`${s.party==='client'?'Cliente':'DUUK'}: ${latin(s.signer_name)}`,`Data: ${new Date(s.signed_at).toISOString()}`,`Registro: ${s.id}`,`Aceite: Li o documento e concordo em assina-lo eletronicamente.`)
-      if(s.verification_method==='email_otp')rows.push(`Acesso confirmado por codigo enviado ao e-mail: ${latin(s.verified_email)}`,`Confirmacao do e-mail: ${new Date(s.email_verified_at).toISOString()}`,`Registro da confirmacao: ${s.verification_challenge_id}`,`A confirmacao comprova acesso ao e-mail, sem verificacao civil de identidade.`)
+      rows.push(`${s.party==='client'?'Cliente':'DUUK'}: ${latin(s.signer_name)}`,`Data: ${evidenceDate(s.signed_at)} (horário de Brasília)`,`Registro UTC: ${new Date(s.signed_at).toISOString()}`,`Registro: ${s.id}`,`Aceite: ${latin(s.consent || 'Li o documento e concordo em assiná-lo eletronicamente.')}`)
+      if(s.verification_method==='email_otp')rows.push(`Acesso confirmado por código enviado ao e-mail: ${latin(s.verified_email)}`,`Confirmação do e-mail: ${evidenceDate(s.email_verified_at)} (horário de Brasília)`,`Confirmação UTC: ${new Date(s.email_verified_at).toISOString()}`,`Registro da confirmação: ${s.verification_challenge_id}`,`A confirmação comprova acesso ao e-mail, sem verificação civil de identidade.`)
       else rows.push('Nome informado pelo participante; acesso autorizado por link privado.')
       rows.push('')
     }
-    rows.push('Assinatura eletronica por aceite e desenho. Sem certificado ICP-Brasil.','O registro completo fica restrito ao administrativo da DUUK.')
+    rows.push('Assinatura eletrônica por aceite e desenho. Sem certificado ICP-Brasil.','O registro completo fica restrito ao administrativo da DUUK.')
     drawAudit(pdf,font,rows)
     const bytes=await pdf.save(),path=`signed/${contract.id}/${crypto.randomUUID()}.pdf`,hash=await sha256(bytes)
     checked(await db.storage.from('duuk-documents').upload(path,bytes,{contentType:'application/pdf',upsert:false}))
@@ -81,5 +81,26 @@ export async function renderSigned(db: ReturnType<typeof database>, initial: any
     snapshot={contract:current,signatures:all}
   }
   throw new HttpError('As assinaturas foram registradas. Reabra o contrato para gerar o PDF atualizado.',409)
+}
+function evidenceDate(value: string) {
+  return new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'medium',timeZone:'America/Sao_Paulo'}).format(new Date(value))
+}
+
+// Reuse the accepted revision. If a render was interrupted after the signature
+// transaction committed, recover the PDF without asking anyone to sign again.
+// Callers must authenticate the administrator or validate the invitation first.
+export async function currentSignedPdf(db: ReturnType<typeof database>, contract: any, knownSignatures?: any[]) {
+  if(contract.signed_path && contract.rendered_version===contract.version)return {contract,pdf_pending:false,pdf_error:''}
+  const signatures=knownSignatures || checked(await db.from('duuk_contract_signatures').select('*').eq('contract_id',contract.id).order('signed_at')) || []
+  if(!signatures.length)return {contract,pdf_pending:false,pdf_error:''}
+  try {
+    await rateLimit(db,contract.id,'contract-pdf-recovery',3)
+    return {contract:await renderSigned(db,{contract,signatures}),pdf_pending:false,pdf_error:''}
+  } catch {
+    // Do not turn a committed signature into an apparent failure, nor expose a
+    // stale PDF as the latest version. Existing files and evidence stay intact.
+    console.error(JSON.stringify({source:'contract-pdf',status:'pending'}))
+    return {contract,pdf_pending:true,pdf_error:'As assinaturas estão registradas. Não foi possível preparar o PDF atualizado agora. Atualize a situação para tentar novamente.'}
+  }
 }
 export { PDFDocument }

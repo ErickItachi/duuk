@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+import test from 'node:test'
+import vm from 'node:vm'
+import { adminShellHeaders } from '../scripts/admin-security.mjs'
+
+const configuration = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'))
+const source = await readFile(new URL('../scripts/admin-worker.template.js', import.meta.url), 'utf8')
+
+test('cached PWA document retains deployed CSP and private document protections', async () => {
+  const listeners = new Map(), cached = new Map(), assets = []
+  const headers = adminShellHeaders(configuration)
+  const deployedCsp = configuration.headers.find(rule => rule.source === '/admin/:path*').headers.find(header => header.key === 'Content-Security-Policy').value
+  vm.runInNewContext(source, {
+    BUILD: 'isolated-security-fixture', SHELL: '<main>DUUK Admin</main>', SHELL_HEADERS: headers, ASSETS: ['/assets/fixture.js'],
+    self: { location: { origin: 'https://www.duukfilms.com' }, addEventListener: (event, listener) => listeners.set(event, listener) },
+    caches: { open: async () => ({ put: async (path, response) => cached.set(path, response), addAll: async items => assets.push(...items), match: async path => cached.get(path) }) },
+    URL, Response, Map, Set,
+  })
+  let installed
+  listeners.get('install')({ waitUntil: promise => { installed = promise } })
+  await installed
+  const shell = cached.get('/admin-shell.html')
+  assert.equal(shell.headers.get('Content-Security-Policy'), deployedCsp)
+  assert.equal(shell.headers.get('X-Frame-Options'), 'DENY')
+  assert.equal(shell.headers.get('X-Content-Type-Options'), 'nosniff')
+  assert.equal(shell.headers.get('Referrer-Policy'), 'no-referrer')
+  assert.equal(shell.headers.get('Cache-Control'), 'no-store')
+  assert.match(shell.headers.get('Permissions-Policy'), /camera=\(\)/)
+  assert.equal(shell.headers.get('X-Robots-Tag'), 'noindex, nofollow')
+  assert.deepEqual(assets, ['/assets/fixture.js'])
+  let navigated
+  listeners.get('fetch')({ request: { url: 'https://www.duukfilms.com/admin/configuracoes/integracoes?code=private-fixture', method: 'GET', mode: 'navigate' }, respondWith: promise => { navigated = promise } })
+  assert.equal((await navigated).headers.get('Content-Security-Policy'), deployedCsp)
+  assert.equal((await navigated).headers.get('Referrer-Policy'), 'no-referrer')
+  assert.equal(await (await navigated).text(), '<main>DUUK Admin</main>')
+  assert.deepEqual([...cached.keys()], ['/admin-shell.html'])
+})
+
+test('private routes restrict requests to DUUK services while public media retains compatibility', () => {
+  const publicCsp = configuration.headers.find(rule => rule.source === '/(.*)').headers.find(header => header.key === 'Content-Security-Policy').value
+  assert.match(publicCsp, /connect-src 'self' https:/)
+  for (const route of ['/admin/:path*', '/assinar/:path*']) {
+    const csp = configuration.headers.find(rule => rule.source === route).headers.find(header => header.key === 'Content-Security-Policy').value
+    const connections = csp.split(';').find(directive => directive.trim().startsWith('connect-src')).trim().split(/\s+/).slice(1)
+    assert.deepEqual(connections, ["'self'", 'https://ilohuxhyfqikjlvoarts.supabase.co', 'https://ilohuxhyfqikjlvoarts.storage.supabase.co', 'wss://ilohuxhyfqikjlvoarts.supabase.co'])
+  }
+  const transport = configuration.headers.find(rule => rule.headers.some(header => header.key === 'Strict-Transport-Security'))
+  assert.equal(transport.headers[0].value, 'max-age=31536000')
+  assert.equal(transport.has[0].type, 'host')
+  const hosts = new RegExp(`^(?:${transport.has[0].value})$`)
+  assert(hosts.test('www.duukfilms.com') && hosts.test('duukfilms.com'))
+  assert(!hosts.test('preview.vercel.app') && !hosts.test('other.duukfilms.com'))
+})
+
+test('private API and document responses remain outside the worker cache', () => {
+  const listeners = new Map()
+  vm.runInNewContext(source, { BUILD: 'fixture', ASSETS: ['/assets/fixture.js'], self: { location: { origin: 'https://www.duukfilms.com' }, addEventListener: (event, listener) => listeners.set(event, listener) }, URL, Map })
+  for (const url of ['https://ilohuxhyfqikjlvoarts.supabase.co/rest/v1/duuk_contracts', 'https://ilohuxhyfqikjlvoarts.supabase.co/storage/v1/object/sign/duuk-documents/private.pdf?token=fixture', 'https://www.duukfilms.com/admin-version.json']) {
+    let intercepted = false
+    listeners.get('fetch')({ request: { url, method: 'GET', mode: 'cors' }, respondWith: () => { intercepted = true } })
+    assert.equal(intercepted, false, url)
+  }
+})

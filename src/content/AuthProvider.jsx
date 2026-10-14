@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AuthContext } from './AuthContext'
 import { supabase } from './supabase'
 import { teamRequest, notificationRequest } from '../admin/api'
+import { adminAuthStorageKey, clearAdminAuthStorage, endAdminSession, removeDeviceSubscription } from './sessionExit.mjs'
 
 const empty = { ready: !supabase, stage: 'session', user: null, profile: null, permissions: {}, isAdmin: false, error: '' }
 export function AuthProvider({ children }) {
@@ -41,9 +42,18 @@ export function AuthProvider({ children }) {
       else if (event !== 'INITIAL_SESSION') window.setTimeout(() => { if (active.current) refreshAccess() }, 0)
     })
     const focus = () => { if (document.visibilityState === 'visible' && navigator.onLine) refreshAccess() }
+    const localExit = (event) => {
+      if (event.key !== adminAuthStorageKey || event.newValue !== null || navigator.onLine !== false) return
+      // A different offline tab removed the shared persistent session.
+      cancelPending()
+      setState({ ...empty, ready: true })
+      setPresence({ ready: false, ids: [] })
+      window.location.replace('/admin')
+    }
     window.addEventListener('focus', focus); window.addEventListener('online', focus)
+    window.addEventListener('storage', localExit)
     const interval = setInterval(focus, 60000)
-    return () => { window.clearTimeout(initial); cancelPending(); subscription.unsubscribe(); window.removeEventListener('focus', focus); window.removeEventListener('online', focus); clearInterval(interval) }
+    return () => { window.clearTimeout(initial); cancelPending(); subscription.unsubscribe(); window.removeEventListener('focus', focus); window.removeEventListener('online', focus); window.removeEventListener('storage', localExit); clearInterval(interval) }
   }, [refreshAccess, cancelPending])
   useEffect(() => {
     if (!supabase || !state.isAdmin || !state.user?.id) {
@@ -93,10 +103,24 @@ export function AuthProvider({ children }) {
     await refreshAccess()
   }
   const signOut = async () => {
-    // Remove only this device before ending this browser session.
-    try { if ('serviceWorker' in navigator) { const registration = await navigator.serviceWorker.getRegistration('/admin/'); const subscription = await registration?.pushManager?.getSubscription(); if (subscription) { await notificationRequest({ action: 'unsubscribe', endpoint: subscription.endpoint }); await subscription.unsubscribe() } } } catch {}
-    const { error } = await supabase.auth.signOut({ scope: 'local' })
-    if (error) throw new Error('Não foi possível encerrar a sessão. Tente novamente.')
+    await endAdminSession({
+      auth: supabase.auth,
+      unsubscribePush: async () => {
+        if (!('serviceWorker' in navigator)) return
+        const registration = await navigator.serviceWorker.getRegistration('/admin/')
+        const subscription = await registration?.pushManager?.getSubscription()
+        await removeDeviceSubscription(subscription, endpoint => notificationRequest({ action: 'unsubscribe', endpoint }))
+      },
+      offline: () => navigator.onLine === false,
+      clearStorage: () => clearAdminAuthStorage([() => window.localStorage, () => window.sessionStorage]),
+      disconnect: () => supabase.removeAllChannels(),
+      onOfflineExit: () => {
+        cancelPending()
+        setState({ ...empty, ready: true })
+        setPresence({ ready: false, ids: [] })
+        window.location.replace('/admin')
+      },
+    })
   }
   const hasPermission = useCallback((key) => state.isAdmin && (!key || state.profile?.is_super_admin || (state.permissions[key] === true && (!key.startsWith('crm.') || state.permissions.crm === true))), [state.isAdmin, state.profile?.is_super_admin, state.permissions])
   const isOnline = useCallback((id) => presence.ids.includes(id), [presence.ids])

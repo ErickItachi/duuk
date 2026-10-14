@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from '../../admin/components'
+import { useMediaQuery } from '../../admin/shell/hooks'
 import { Avatar, EmptyState, ErrorState } from '../../admin/forms'
 import { eventCategories, eventStatuses, eventTime } from '../calendarModel'
 import { brl } from '../model'
@@ -9,14 +10,13 @@ import { FinancePrivacy, Money, PrivacyToggle } from '../../finance/privacy'
 import { captionLine, channelLabel, compactMoney, dayLabel, dayNumber, monthName, monthShort, plural, shortDate, sinceLabel, socialFormats, timeOf, whenLabel } from './model'
 
 const lower = text => text.charAt(0).toLowerCase() + text.slice(1)
-const prefersReduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
 // Counts up to the real figure when it first appears or changes. Readers get the final value
 // right away; with reduced motion the number simply shows.
 function CountUp({ value, format = number => number.toLocaleString('pt-BR') }) {
   const [shown, setShown] = useState(0)
   const from = useRef(0)
-  const [reduced] = useState(prefersReduced)
+  const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
   useEffect(() => {
     if (reduced) return
     const start = performance.now(), origin = from.current, duration = 900

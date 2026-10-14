@@ -6,9 +6,11 @@ import { createHash } from 'node:crypto'
 const releases = JSON.parse(readFileSync(new URL('./src/admin/releases.json', import.meta.url), 'utf8'))
 const digest = createHash('sha256')
 for (const name of readdirSync(new URL('./src/', import.meta.url), { recursive: true }).sort()) {
-  if (/\.(jsx?|json|css)$/.test(name)) digest.update(name).update(readFileSync(new URL(`./src/${name}`, import.meta.url)))
+  if (/\.(jsx?|mjs|json|css)$/.test(name)) digest.update(name).update(readFileSync(new URL(`./src/${name}`, import.meta.url)))
 }
-digest.update(readFileSync(new URL('./scripts/admin-worker.template.js', import.meta.url)))
+for (const name of ['scripts/admin-worker.template.js', 'scripts/build-admin-worker.mjs', 'scripts/admin-security.mjs', 'vercel.json']) {
+  digest.update(name).update(readFileSync(new URL(`./${name}`, import.meta.url)))
+}
 const buildId = digest.digest('hex').slice(0, 20)
 
 const deployment = JSON.parse(readFileSync(new URL('./vercel.json', import.meta.url), 'utf8'))

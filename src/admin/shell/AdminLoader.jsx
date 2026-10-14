@@ -18,7 +18,7 @@ export default function AdminLoader({ step = 'boot', leaving = false }) {
   const [progress, label] = loaderSteps[step] || loaderSteps.boot
   const [continued] = useState(() => revealed)
   useEffect(() => { revealed = true }, [])
-  return <div className={`admin-loader${leaving ? ' is-leaving' : ''}${continued ? ' is-continued' : ''}`} role="status" aria-live="polite" aria-busy={!leaving} style={{ '--admin-loader-progress': progress }}>
+  return <div className={`admin-loader${leaving ? ' is-leaving' : ''}${continued ? ' is-continued' : ''}`} role="status" aria-live="polite" aria-atomic="true" style={{ '--admin-loader-progress': progress }}>
     <span className="admin-loader__light" aria-hidden="true" />
     <span className="admin-loader__reel is-top" aria-hidden="true" />
     <span className="admin-loader__reel is-bottom" aria-hidden="true" />

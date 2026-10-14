@@ -38,11 +38,12 @@
 .dashboard-hero::before { content: ''; position: absolute; z-index: 2; inset: 0 0 auto; height: 2px; background: var(--ds-brand-gradient, linear-gradient(100deg, #eb4b3f, #ed6f4d 45%, #f0945b)); }
 .dashboard-hero > :not(.dashboard-hero__art) { position: relative; z-index: 1; }
 .dashboard-hero__art { position: absolute; z-index: 0; inset: 0; pointer-events: none; }
-.dashboard-hero__art > i:not(.dashboard-hero__strip) { position: absolute; width: 520px; height: 520px; border-radius: 50%; filter: blur(70px); opacity: .55; will-change: transform; }
-.dashboard-hero__art > .is-coral { top: -300px; right: 4%; background: radial-gradient(circle, #eb4b3f 0%, transparent 65%); animation: dashboard-glow-a 16s ease-in-out infinite alternate; }
-.dashboard-hero__art > .is-orange { right: -180px; bottom: -340px; background: radial-gradient(circle, #f0945b 0%, transparent 62%); animation: dashboard-glow-b 19s ease-in-out infinite alternate; }
+.dashboard-hero__art > i:not(.dashboard-hero__strip) { position: absolute; width: 520px; height: 520px; border-radius: 50%; opacity: .55; }
+.dashboard-hero__art > .is-coral { top: -300px; right: 4%; background: radial-gradient(circle, rgb(235 75 63 / 65%) 0%, transparent 70%); animation: dashboard-glow-a 16s ease-in-out infinite alternate; }
+.dashboard-hero__art > .is-orange { right: -180px; bottom: -340px; background: radial-gradient(circle, rgb(240 148 91 / 65%) 0%, transparent 70%); animation: dashboard-glow-b 19s ease-in-out infinite alternate; }
 /* Film perforations along the bottom edge, drifting slowly like a reel. */
-.dashboard-hero__strip { position: absolute; right: 0; bottom: 10px; left: 0; height: 6px; opacity: .14; background: repeating-linear-gradient(90deg, #f4f1ee 0 10px, transparent 10px 26px); -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); animation: dashboard-reel 2.6s linear infinite; }
+.dashboard-hero__strip { position: absolute; right: 0; bottom: 10px; left: 0; height: 6px; overflow: hidden; opacity: .14; -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); }
+.dashboard-hero__strip::before { content: ''; position: absolute; inset: 0 -26px 0 0; background: repeating-linear-gradient(90deg, #f4f1ee 0 10px, transparent 10px 26px); animation: dashboard-reel 2.6s linear infinite; }
 .dashboard-hero .studio-greeting__title { font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.035em; }
 .dashboard-hero .studio-greeting__dot { color: #f0945b; }
 .dashboard-hero .studio-greeting__cursor { background: #f0945b; }
@@ -58,7 +59,7 @@
 @keyframes dashboard-chip-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes dashboard-glow-a { from { transform: translate(0, 0) scale(1); } to { transform: translate(-90px, 40px) scale(1.15); } }
 @keyframes dashboard-glow-b { from { transform: translate(0, 0) scale(1.05); } to { transform: translate(-120px, -30px) scale(.9); } }
-@keyframes dashboard-reel { to { background-position-x: 26px; } }
+@keyframes dashboard-reel { to { transform: translateX(-26px); } }
 
 /* ---------- Cards enter one after another ---------- */
 .dashboard-enter { min-width: 0; animation: dashboard-card-in 520ms calc(140ms + var(--i, 0) * 70ms) var(--ds-ease-out) backwards; }
@@ -243,7 +244,7 @@ a.dashboard-balance:hover { border-color: var(--ds-border-strong); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dashboard-hero, .dashboard-hero__logo, .dashboard-hero .dashboard-digest > li, .dashboard-enter, .dashboard-hero__art > i { animation: none; }
+  .dashboard-hero, .dashboard-hero__logo, .dashboard-hero .dashboard-digest > li, .dashboard-enter, .dashboard-hero__art > i, .dashboard-hero__strip::before { animation: none; }
   .dashboard-card, .dashboard-card:hover { transform: none; }
 }
 

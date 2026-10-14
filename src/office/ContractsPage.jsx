@@ -15,6 +15,8 @@ import { usePdf } from './usePdf'
 import SignatureInviteModal from './SignatureInviteModal'
 import { ListSkeleton, OfficeField } from './OfficeParts'
 import { emailPattern, formatBytes, isPdf, useValidation } from './officeHelpers'
+import { supabase } from '../content/supabase'
+import { prepareContractDownload, privateContractUrl, signingDateTime } from './contractDocuments'
 
 const statusTones = { draft: 'ds-badge--neutral', pending: 'ds-badge--warning', partial: 'ds-badge--warning', signed: 'ds-badge--success', cancelled: 'ds-badge--neutral' }
 const statusFilters = [['all', 'Todos'], ['draft', 'Preparar'], ['pending', 'Aguardando'], ['partial', 'Uma assinatura'], ['signed', 'Concluídos'], ['cancelled', 'Cancelados']]
@@ -241,11 +243,22 @@ const confirmCopy = {
 }
 
 export function ContractEditor({ notify }) {
-  const { id } = useParams(), navigate = useNavigate(), [details, setDetails] = useState(null), [fields, setFields] = useState([]), [page, setPage] = useState(0), [selected, setSelected] = useState(null), [type, setType] = useState('signature'), [party, setParty] = useState('client'), [busy, setBusy] = useState(false), [error, setError] = useState(''), [action, setAction] = useState(null), [share, setShare] = useState(null), [copied, setCopied] = useState(false), [copyFailed, setCopyFailed] = useState(false), [leaving, setLeaving] = useState(false)
-  const uid = useId(), errorBox = useRef(null)
-  const load = useCallback(async () => { try { const data = await officeRequest({ action: 'details', id }); setDetails(data); setFields(data.contract.fields); setError('') } catch (cause) { setError(cause.message) } }, [id])
+  const { id } = useParams()
+  return <ContractDocumentEditor key={id} id={id} notify={notify} />
+}
+
+function ContractDocumentEditor({ id, notify }) {
+  const navigate = useNavigate(), [details, setDetails] = useState(null), [fields, setFields] = useState([]), [page, setPage] = useState(0), [selected, setSelected] = useState(null), [type, setType] = useState('signature'), [party, setParty] = useState('client'), [busy, setBusy] = useState(false), [error, setError] = useState(''), [action, setAction] = useState(null), [share, setShare] = useState(null), [copied, setCopied] = useState(false), [copyFailed, setCopyFailed] = useState(false), [leaving, setLeaving] = useState(false)
+  const uid = useId(), errorBox = useRef(null), operation = useRef(false), loadSequence = useRef(0)
+  const [documentVersion, setDocumentVersion] = useState('signed')
+  const [downloadLink, setDownloadLink] = useState('')
+  useEffect(() => { if (!downloadLink) return; const timer = window.setTimeout(() => setDownloadLink(''), 60000); return () => window.clearTimeout(timer) }, [downloadLink])
+  const load = useCallback(async (preserveFields = false) => { const sequence = ++loadSequence.current; try { const data = await officeRequest({ action: 'details', id }); if (sequence !== loadSequence.current) return; setDetails(old => preserveFields && old?.contract?.id === id ? { ...old, original_url: data.original_url, signed_url: data.signed_url, pdf_pending: data.pdf_pending, pdf_error: data.pdf_error } : data); if (!preserveFields) setFields(data.contract.fields); setError('') } catch (cause) { if (sequence === loadSequence.current) setError(cause.message) } }, [id])
   useEffect(() => { const timer = window.setTimeout(load, 0); return () => window.clearTimeout(timer) }, [load])
-  const pdf = usePdf(details?.original_url), contract = details?.contract, dirty = contract && JSON.stringify(fields) !== JSON.stringify(contract.fields), current = fields.find(f => f.id === selected), editable = contract?.status === 'draft' && !contract?.deleted_at
+  const contract = details?.contract?.id === id ? details.contract : null, dirty = contract && JSON.stringify(fields) !== JSON.stringify(contract.fields), current = fields.find(f => f.id === selected), editable = contract?.status === 'draft' && !contract?.deleted_at
+  const hasSignatures = Boolean(contract && details?.signatures?.length), showingSigned = hasSignatures && documentVersion === 'signed'
+  const documentUrl = contract ? privateContractUrl(showingSigned ? details?.signed_url : details?.original_url, supabase.supabaseUrl) : ''
+  const pdf = usePdf(documentUrl)
   useEffect(() => { if (!dirty) return; const handler = event => { event.preventDefault(); event.returnValue = '' }; window.addEventListener('beforeunload', handler); return () => window.removeEventListener('beforeunload', handler) }, [dirty])
   useUnsavedChanges(dirty || busy)
   // Operation errors appear at the top of the editor; bring them into view on small screens.
@@ -254,8 +267,22 @@ export function ContractEditor({ notify }) {
   const add = (kind = type, side = party) => { if (fields.length >= 30) { setError('Use até 30 campos.'); return } const field = { id: crypto.randomUUID(), page, type: kind, party: side, x: side === 'client' ? .1 : .54, y: kind === 'signature' ? .72 : .87, width: .35, height: kind === 'signature' ? .1 : .035, label: '' }; setFields(old => [...old, field]); setSelected(field.id) }
   const save = async () => { setBusy(true); setError(''); try { const next = await officeRequest({ action: 'fields', id, fields, version: contract.version }); setDetails(old => ({ ...old, contract: next })); setFields(next.fields); notify('Campos salvos. Agora você pode gerar os links.') } catch (cause) { setError(cause.message) } finally { setBusy(false) } }
   const invite = async (side, email) => { setBusy(true); try { const result = await officeRequest({ action: 'invite', id, party: side, email, version: contract.version }); setDetails(old => ({ ...old, contract: result.contract })); setShare({ party: side, url: result.url, expires_at: result.expires_at, email }); setCopied(false); setCopyFailed(false); setError('') } catch (cause) { setError(cause.message); throw cause } finally { setBusy(false) } }
-  const download = async (signed = false) => { setBusy(true); setError(''); try { const fresh = await officeRequest({ action: 'details', id }); const url = signed ? fresh.signed_url : fresh.original_url; if (!url) throw new Error('O PDF assinado ainda está sendo preparado.'); const response = await fetch(url); if (!response.ok) throw new Error('Não foi possível baixar o arquivo.'); downloadFile(await response.blob(), `duuk-${signed ? 'assinado' : 'original'}-${id.slice(0, 8)}.pdf`) } catch (cause) { setError(cause.message) } finally { setBusy(false) } }
-  const render = async () => { setBusy(true); setError(''); try { const result = await officeRequest({ action: 'render', id }); setDetails(old => ({ ...old, contract: result.contract, signed_url: result.signed_url })); notify('PDF atualizado.') } catch (cause) { setError(cause.message) } finally { setBusy(false) } }
+  const download = async (signed = false) => {
+    if (operation.current) return
+    operation.current = true
+    const destination = prepareContractDownload()
+    setBusy(true); setError(''); setDownloadLink('')
+    try {
+      let fresh = await officeRequest({ action: 'details', id })
+      if (signed && (!fresh.signed_url || fresh.contract.rendered_version !== fresh.contract.version)) fresh = { ...fresh, ...await officeRequest({ action: 'render', id }) }
+      const url = signed ? fresh.signed_url : fresh.original_url
+      if (!url) throw new Error('O PDF assinado está sendo preparado. Atualize o documento e tente novamente.')
+      setDownloadLink(destination.complete(url, supabase.supabaseUrl, `duuk-${signed ? 'assinado' : 'original'}-${id.slice(0, 8)}.pdf`))
+      if (!dirty) { setDetails(fresh); setFields(fresh.contract.fields) }
+    } catch (cause) { destination.cancel(); setError(cause.message) }
+    finally { operation.current = false; setBusy(false) }
+  }
+  const render = async () => { setBusy(true); setError(''); try { const result = await officeRequest({ action: 'render', id }); setDetails(old => ({ ...old, contract: result.contract, signed_url: result.signed_url, pdf_pending: Boolean(result.pdf_pending), pdf_error: result.pdf_error || '' })); notify(result.pdf_pending ? 'Assinaturas preservadas. O PDF ainda está sendo preparado.' : 'PDF atualizado.') } catch (cause) { setError(cause.message) } finally { setBusy(false) } }
   const copyLink = async () => { try { await navigator.clipboard.writeText(share.url); setCopied(true); setCopyFailed(false) } catch { setCopied(false); setCopyFailed(true) } }
   const goToPage = next => { setPage(next); setSelected(null) }
   const back = <Link className="office-back-link" to="/admin/contratos" onClick={e => { if (e.defaultPrevented) return; if (dirty) { e.preventDefault(); setLeaving(true) } }}><Icon name="back" />Contratos</Link>
@@ -269,8 +296,8 @@ export function ContractEditor({ notify }) {
     </>
   )
 
-  const signedParties = new Set(details.signatures.map(s => s.party)), pageCount = contract.pages.length
-  const sheet = contract.pages[page] || {}, turned = [90, 270].includes(sheet.rotation), ratio = sheet.width && sheet.height ? (turned ? sheet.height / sheet.width : sheet.width / sheet.height) : 210 / 297
+  const signedParties = new Set(details.signatures.map(s => s.party)), pageCount = pdf.document?.numPages || contract.pages.length, displayedPage = Math.min(page, Math.max(0, pageCount - 1))
+  const sheet = contract.pages[displayedPage] || {}, turned = [90, 270].includes(sheet.rotation), ratio = sheet.width && sheet.height ? (turned ? sheet.height / sheet.width : sheet.width / sheet.height) : 210 / 297
   const blocked = busy || dirty || Boolean(contract.deleted_at) || contract.status === 'cancelled' || contract.status === 'signed'
   const evidence = () => downloadFile(new Blob([JSON.stringify({ contract: { id: contract.id, title: contract.title, status: contract.status, original_sha256: contract.original_sha256, signed_sha256: contract.signed_sha256 }, signatures: details.signatures }, null, 2)], { type: 'application/json' }), `duuk-evidencias-${id.slice(0, 8)}.json`)
   const confirm = action && action.kind !== 'invite' ? confirmCopy[action.kind] : null
@@ -292,19 +319,22 @@ export function ContractEditor({ notify }) {
       </div>
       <div className="office-editor">
         <div ref={errorBox}>{error && <ErrorState>{error}</ErrorState>}</div>
+        {downloadLink && <div className="admin-tip office-download-ready" role="status"><Icon name="download" /><p>Seu PDF está pronto. <a className="admin-text-button" href={downloadLink} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">Baixar PDF preparado</a><small>O link fica disponível por um minuto. Se expirar, toque em baixar novamente.</small></p></div>}
         <div className="office-contract-layout">
           <section className="office-document" aria-label="Documento PDF">
+            {hasSignatures && <div className="office-document-switch ds-segmented" role="group" aria-label="Versão do documento"><button type="button" aria-pressed={showingSigned} onClick={() => { setDocumentVersion('signed'); goToPage(0) }}>PDF assinado</button><button type="button" aria-pressed={!showingSigned} onClick={() => { setDocumentVersion('original'); goToPage(0) }}>PDF original</button></div>}
             <div className="office-pdf-toolbar">
               <div className="office-pdf-pager">
-                <label><span>Página</span><select aria-label="Página do PDF" value={page} onChange={e => goToPage(Number(e.target.value))}>{contract.pages.map((_, i) => <option key={i} value={i}>{i + 1} de {pageCount}</option>)}</select></label>
-                <button type="button" className="admin-icon-button" aria-label="Página anterior" disabled={page <= 0} onClick={() => goToPage(page - 1)}><Icon name="left" /></button>
-                <button type="button" className="admin-icon-button" aria-label="Próxima página" disabled={page >= pageCount - 1} onClick={() => goToPage(page + 1)}><Icon name="right" /></button>
+                <label><span>Página</span><select aria-label="Página do PDF" value={displayedPage} disabled={!pdf.document} onChange={e => goToPage(Number(e.target.value))}>{Array.from({ length: pageCount }, (_, i) => <option key={i} value={i}>{i + 1} de {pageCount}</option>)}</select></label>
+                <button type="button" className="admin-icon-button" aria-label="Página anterior" disabled={!pdf.document || displayedPage <= 0} onClick={() => goToPage(displayedPage - 1)}><Icon name="left" /></button>
+                <button type="button" className="admin-icon-button" aria-label="Próxima página" disabled={!pdf.document || displayedPage >= pageCount - 1} onClick={() => goToPage(displayedPage + 1)}><Icon name="right" /></button>
               </div>
-              <button type="button" className="admin-button admin-button--secondary admin-button--sm" disabled={busy} onClick={() => download()}><Icon name="download" />Baixar original</button>
+              <button type="button" className="admin-button admin-button--secondary admin-button--sm" disabled={busy} onClick={() => download(showingSigned)}><Icon name="download" />{showingSigned ? 'Baixar assinado' : 'Baixar original'}</button>
             </div>
-            {pdf.error ? <ErrorState>{pdf.error}</ErrorState> : !pdf.document ? (
+            {showingSigned && !documentUrl ? <ErrorState onRetry={render}>{details.pdf_error || 'O PDF assinado ainda precisa ser atualizado. Gere o documento para visualizar as assinaturas e o registro de aceite.'}</ErrorState> : pdf.error ? <ErrorState onRetry={() => load(dirty)}>{pdf.error}</ErrorState> : !pdf.document ? (
               <span className="ds-skeleton office-pdf-skeleton" role="status" style={{ aspectRatio: ratio }}><span className="ds-visually-hidden">Carregando PDF…</span></span>
-            ) : <PdfPage document={pdf.document} page={page} fields={fields} editable={editable && !busy} selected={selected} onSelect={setSelected} onMove={update} />}
+            ) : <PdfPage document={pdf.document} page={displayedPage} fields={showingSigned ? [] : fields} editable={editable && !busy} selected={selected} onSelect={setSelected} onMove={update} />}
+            {showingSigned && <p className="office-muted office-small">Documento com as assinaturas recebidas. As páginas finais incluem o registro de aceite.</p>}
           </section>
           <aside className="office-contract-sidebar" aria-label="Campos, assinaturas e armazenamento">
             <section className="admin-panel office-panel" aria-labelledby={`${uid}-fields`}>
@@ -331,7 +361,7 @@ export function ContractEditor({ notify }) {
                 <ul className="office-field-list" aria-label="Campos do contrato">
                   {fields.map(field => (
                     <li key={field.id}>
-                      <button type="button" aria-pressed={selected === field.id} onClick={() => { setSelected(field.id); setPage(field.page) }}>
+                      <button type="button" aria-pressed={selected === field.id} onClick={() => { setDocumentVersion('original'); setSelected(field.id); setPage(field.page) }}>
                         <span className={`office-field-swatch${field.party === 'duuk' ? ' is-duuk' : ''}`} aria-hidden="true" />
                         <span><strong>{field.label || fieldTypes[field.type]}</strong><small>{partyLabels[field.party]} · página {field.page + 1}</small></span>
                       </button>
@@ -371,7 +401,7 @@ export function ContractEditor({ notify }) {
                       <strong>{side === 'client' ? contract.client_name : contract.duuk_name}</strong>
                       <small>{partyLabels[side]}{side === 'client' && contract.client_email ? ` · ${contract.client_email}` : ''}</small>
                     </div>
-                    {signedParties.has(side) ? <span className="ds-badge ds-badge--success"><Icon name="check" size={13} />Assinado</span> : (
+                    {signedParties.has(side) ? <span className="ds-badge ds-badge--success" title={signingDateTime(details.signatures.find(signature => signature.party === side)?.signed_at)}><Icon name="check" size={13} />Assinado</span> : (
                       <button type="button" className="admin-button admin-button--secondary" disabled={blocked} onClick={() => setAction({ kind: 'invite', party: side })}><Icon name="link" />Gerar link · {partyLabels[side]}</button>
                     )}
                   </li>

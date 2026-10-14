@@ -1,5 +1,9 @@
 # Operação do DUUK Admin
 
+## Segurança e contratos — 2.1.1
+
+Auditoria, correções, limites e validação: [admin-2.1.1-audit.md](admin-2.1.1-audit.md). Novas contas são criadas pelo administrativo; signup público está desabilitado. O PDF assinado atual abre por padrão, com opção de original e recuperação da geração pendente. Downloads renovam o acesso privado; se a janela for bloqueada, use o link preparado na própria tela. No iPhone, o visualizador pode oferecer Compartilhar → Salvar em Arquivos.
+
 ## DUUK Admin 2.0 e Social Media — 2.0.0
 
 - Visual, navegação e temas: `docs/admin-2.0-design-system.md` e `docs/admin-2.0-plan.md`. O tema (claro, escuro ou sistema) é salvo por conta e aparelho; o atributo `data-duuk-admin-theme` só existe enquanto o Admin está aberto, então o site público não muda.

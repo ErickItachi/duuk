@@ -1,5 +1,5 @@
-import { checked, database, handler, HttpError, json, readJson, sha256, signedUrl, text, uuid } from '../_shared/http.ts'
-import { PDFDocument, renderSigned } from '../_shared/pdf.ts'
+import { checked, database, handler, HttpError, json, rateLimit, readJson, sha256, signedUrl, text, uuid } from '../_shared/http.ts'
+import { currentSignedPdf, PDFDocument } from '../_shared/pdf.ts'
 import { mailCredentials, smtpTransport } from '../_shared/mail.ts'
 import { newVerificationToken, normalizeSigningEmail, requestSigningCode, sendSigningCode, signingCodeHash, signingEmailHint } from '../_shared/sign-verification.mjs'
 
@@ -10,6 +10,7 @@ handler(async(req,headers)=>{
   const db=database(),digest=await sha256(body.token)
   const invite=checked(await db.from('duuk_contract_invites').select('*').eq('token_hash',digest).maybeSingle())
   if(!invite)throw new HttpError('Link inválido.',404)
+  await rateLimit(db,invite.id,body.action==='get' ? 'sign-link-read' : 'sign-link-write',body.action==='get' ? 60 : 20)
   const contract=checked(await db.from('duuk_contracts').select('*').eq('id',invite.contract_id).single())
   if(invite.revoked_at||Date.parse(invite.expires_at)<Date.now()||contract.status==='cancelled'||contract.deleted_at)throw new HttpError('Este link expirou ou foi cancelado.',410)
   const verificationRpc=async(operation:string,payload:any)=>{
@@ -22,7 +23,10 @@ handler(async(req,headers)=>{
   const minimalVerification={required,verified:false,email_hint:required?signingEmailHint(invite.recipient_email):null}
   const access=async()=>verificationRpc('access',{digest,proof_hash:proofHash})
   const publicRecord=(item:any,verification:any)=>({id:item.id,title:item.title,party:invite.party,name:invite.party==='client'?item.client_name:item.duuk_name,pages:item.pages,fields:item.fields.filter((f:any)=>f.party===invite.party),status:item.status,signed:Boolean(invite.signed_at),expires_at:invite.expires_at,verification})
-  const readableRecord=async(verification:any)=>({...publicRecord(contract,verification),original_url:await signedUrl(db,contract.original_path),signed_url:contract.rendered_version===contract.version ? await signedUrl(db,contract.signed_path) : null})
+  const readableRecord=async(verification:any)=>{
+    const current=invite.signed_at ? await currentSignedPdf(db,contract) : {contract,pdf_pending:false,pdf_error:''}
+    return {...publicRecord(current.contract,verification),pdf_pending:current.pdf_pending,pdf_error:current.pdf_error,original_url:await signedUrl(db,current.contract.original_path),signed_url:!current.pdf_pending && current.contract.rendered_version===current.contract.version ? await signedUrl(db,current.contract.signed_path) : null}
+  }
   if(body.action==='get'){
     if(required&&!proofHash)return json({title:'',name:'',pages:[],fields:[],party:invite.party,signed:Boolean(invite.signed_at),expires_at:invite.expires_at,verification:minimalVerification,original_url:null,signed_url:null},headers)
     return json(await readableRecord(await access()),headers)
@@ -61,6 +65,6 @@ handler(async(req,headers)=>{
   const consent='Li o documento e concordo em assiná-lo eletronicamente, registrando meu nome, assinatura, data, endereço IP e navegador como evidências de aceite.'+(required?' Confirmo o acesso ao e-mail do participante por código e autorizo o registro dessa confirmação como evidência.':'')
   const payload={name,png:body.png,values,consent,ip:(req.headers.get('x-forwarded-for')||'').split(',')[0].trim().slice(0,64)||null,user_agent:req.headers.get('user-agent')||'',verification_hash:proofHash}
   const snapshot=checked(await db.rpc('duuk_office_sign',{digest,payload}))
-  const rendered=await renderSigned(db,snapshot)
-  return json({...publicRecord(rendered,verification),signed:true,signed_url:await signedUrl(db,rendered.signed_path)},headers)
+  const current=await currentSignedPdf(db,snapshot.contract,snapshot.signatures)
+  return json({...publicRecord(current.contract,verification),signed:true,pdf_pending:current.pdf_pending,pdf_error:current.pdf_error,original_url:await signedUrl(db,current.contract.original_path),signed_url:!current.pdf_pending ? await signedUrl(db,current.contract.signed_path) : null},headers)
 })

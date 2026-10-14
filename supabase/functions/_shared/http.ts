@@ -19,6 +19,9 @@ export async function member(req: Request, db: ReturnType<typeof database>, perm
   return data.user
 }
 export const admin = (req: Request, db: ReturnType<typeof database>) => member(req,db,'contracts')
+export async function rateLimit(db: ReturnType<typeof database>, actor: string, action: string, maximum: number, seconds=60) {
+  if(!checked(await db.rpc('duuk_action_limit',{actor,action_name:action,maximum,window_seconds:seconds})))throw new HttpError('Muitas solicitações em sequência. Aguarde um minuto e tente novamente.',429)
+}
 export async function sha256(input: string | Uint8Array) {
   const bytes=typeof input==='string' ? new TextEncoder().encode(input) : new Uint8Array(input)
   const digest=await crypto.subtle.digest('SHA-256',bytes)

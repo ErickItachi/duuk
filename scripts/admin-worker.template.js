@@ -8,7 +8,7 @@ self.addEventListener("install", (event) =>
       await cache.put(
         "/admin-shell.html",
         new Response(SHELL, {
-          headers: { "Content-Type": "text/html; charset=utf-8" },
+          headers: SHELL_HEADERS,
         }),
       );
       await cache.addAll(ASSETS);

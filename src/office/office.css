@@ -154,6 +154,8 @@ button.office-record-title:hover strong { text-decoration: underline; text-decor
 /* The PDF sits on a quiet backdrop, like a sheet on a desk. */
 .office-document { min-width: 0; padding: var(--ds-space-4); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-lg); background: var(--ds-bg-subtle); }
 .office-document > .admin-error { margin-bottom: var(--ds-space-3); }
+.office-document-switch.ds-segmented { display: flex; flex-wrap: wrap; max-width: 100%; margin-bottom: var(--ds-space-3); }
+.office-document-switch.ds-segmented > button { flex: 1 1 auto; min-height: 36px; padding-inline: var(--ds-space-3); white-space: normal; }
 .office-pdf-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ds-space-2) var(--ds-space-3); min-width: 0; margin-bottom: var(--ds-space-3); color: var(--ds-text-2); font-size: var(--ds-text-md); }
 .office-pdf-toolbar > strong { color: var(--ds-text); font-weight: var(--ds-weight-medium); }
 .office-pdf-toolbar label { display: inline-flex; align-items: center; gap: var(--ds-space-2); min-width: 0; }
@@ -295,14 +297,25 @@ button.office-pdf-field.is-duuk:hover { --office-field-fill: rgb(23 23 23 / 11%)
 .office-signing-title h1 > span:last-child { color: var(--ds-accent); }
 .office-signing-title p:not(.admin-eyebrow) { display: flex; align-items: center; gap: 6px; margin-top: var(--ds-space-2); color: var(--ds-text-2); font-size: var(--ds-text-base); }
 .office-signing-title p svg { flex-shrink: 0; width: 15px; height: 15px; color: var(--ds-text-3); }
+.office-signing-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ds-space-3) var(--ds-space-6); margin: 0 0 var(--ds-space-6); padding: var(--ds-space-4) 0; border-top: 1px solid var(--ds-border); border-bottom: 1px solid var(--ds-border); counter-reset: signing-step; list-style: none; }
+.office-signing-steps > li { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-content: start; gap: 2px var(--ds-space-2); min-width: 0; color: var(--ds-text-2); font-size: var(--ds-text-md); counter-increment: signing-step; }
+.office-signing-steps > li::before { content: counter(signing-step, decimal-leading-zero); display: grid; grid-row: 1 / 3; place-items: center; width: 28px; height: 28px; border: 1px solid var(--ds-accent-line); border-radius: var(--ds-radius-full); background: var(--ds-accent-soft); color: var(--ds-accent-text); font-size: var(--ds-text-xs); font-weight: var(--ds-weight-semibold); font-variant-numeric: tabular-nums; }
+.office-signing-steps strong { color: var(--ds-text); font-weight: var(--ds-weight-medium); line-height: 1.4; }
+.office-signing-steps > li > span { grid-column: 2; font-size: var(--ds-text-sm); line-height: 1.5; }
 .office-signing-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; align-items: start; gap: var(--ds-space-6); }
 .office-signing-form { padding: var(--ds-space-6); }
 .office-signing-form h2 { margin-bottom: var(--ds-space-1); }
 .office-signing-form > p { margin-bottom: var(--ds-space-5); }
 .office-signing-form fieldset { display: grid; gap: var(--ds-space-5); min-width: 0; margin: 0; padding: 0; border: 0; }
 .office-signing-form .admin-button[type=submit] { width: 100%; min-height: var(--ds-control-lg); }
-.office-consent { align-items: flex-start; color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.6; }
-.office-consent input[type=checkbox] { margin-top: 3px; }
+.office-signing-consent-summary { padding: var(--ds-space-4); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-md); background: var(--ds-bg-subtle); }
+.office-signing-consent-summary h3 { margin: 0 0 var(--ds-space-2); color: var(--ds-text); font-size: var(--ds-text-md); font-weight: var(--ds-weight-semibold); }
+.office-signing-consent-summary p { color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.65; }
+.office-signing-consent-summary p + p { margin-top: var(--ds-space-2); }
+.office-consent { align-items: flex-start; padding: var(--ds-space-4); border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.6; cursor: pointer; }
+.office-consent:has(input:checked) { border-color: var(--ds-accent-line); background: var(--ds-accent-soft); }
+.office-consent:focus-within { outline: 2px solid var(--ds-focus); outline-offset: 3px; }
+.office-consent input[type=checkbox] { flex-shrink: 0; margin-top: 3px; }
 .office-signing-legal { display: flex; align-items: flex-start; gap: var(--ds-space-2); color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.55; }
 .office-signing-legal svg { flex-shrink: 0; width: 14px; height: 14px; margin-top: 2px; }
 .office-signing-status { display: grid; justify-items: start; gap: var(--ds-space-3); max-width: 520px; margin: var(--ds-space-6) auto 0; }
@@ -319,6 +332,7 @@ button.office-pdf-field.is-duuk:hover { --office-field-fill: rgb(23 23 23 / 11%)
 .office-signing-success > p { color: var(--ds-text-2); line-height: 1.6; }
 .office-signing-success__actions { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin-top: var(--ds-space-5); }
 .office-signing-success > .admin-error { margin-top: var(--ds-space-4); }
+.office-signing-signed-document { width: 100%; margin-top: var(--ds-space-6); }
 .office-signing-footer { padding: var(--ds-space-5) max(var(--ds-gutter), env(safe-area-inset-left)) max(var(--ds-space-5), env(safe-area-inset-bottom)); border-top: 1px solid var(--ds-border); color: var(--ds-text-3); font-size: var(--ds-text-sm); text-align: center; overflow-wrap: anywhere; }
 
 /* Signature pad: a white sheet so the dark ink reads in both themes. The baseline and the hint are
@@ -413,6 +427,7 @@ button.office-pdf-field.is-duuk:hover { --office-field-fill: rgb(23 23 23 / 11%)
   .office-signing-brand > span { padding-left: var(--ds-space-3); }
   .office-signing-main { padding: var(--ds-space-6) var(--ds-gutter) var(--ds-space-10); }
   .office-signing-form { padding: var(--ds-space-5) var(--ds-space-4); }
+  .office-signing-steps { grid-template-columns: minmax(0, 1fr); gap: var(--ds-space-3); }
   .office-signing-success__actions > .admin-button { flex: 1 1 100%; }
   .drive-panel > .admin-button { justify-self: stretch; }
   .drive-document { padding: var(--ds-space-3); }

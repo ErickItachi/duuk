@@ -1,5 +1,16 @@
 # Fluxo de trabalho da DUUK
 
+## Segurança e contratos — 2.1.1
+
+- Auditoria e evidências em `docs/admin-2.1.1-audit.md`. Preserve as 67 tabelas com RLS, os cinco buckets privados e as funções de backend exclusivas do servidor. As policies ausentes em tabelas privadas são intencionais. Não habilite custos para remover avisos de recursos Pro.
+- Cadastro público do Supabase Auth foi desabilitado em 14/10/2026. Contas existentes entram normalmente; novas contas continuam pelo gerenciamento administrativo oficial. Não reabilite signup público, login anônimo ou vinculação manual. Código de assinatura por e-mail continua no Titan, separado do Auth.
+- Equipe sem permissão de gerenciar acessos só administra contas e grupos cujas permissões estejam contidas nas suas, incluindo exceções individuais e contas inativas. Não permita promoção própria ou tomada de conta privilegiada por troca de e-mail/senha. Super administradores e o gerenciamento explícito de permissões conservam suas funções.
+- Contratos exibem o PDF assinado atual e todas as páginas de evidências; original é uma opção separada. Falha de geração não desfaz assinatura registrada. `currentSignedPdf` recupera a revisão pendente após autorização, preserva os arquivos anteriores e limita repetições. Nunca entregue revisão antiga como atual.
+- Downloads usam URL temporária validada do bucket privado, renovada após autorização, com attachment nativo do Storage. Janela reservada no toque e link explícito quando bloqueada preservam rascunhos. Não volte ao Blob assíncrono como único método no iPhone. A evidência de aceite preserva o texto registrado e apresenta Brasília e UTC.
+- `duuk-team` v7, `duuk-office` v10 e `duuk-sign` v7 instaladas. Preserve os valores anteriores de `verify_jwt`; Office/Sign validam acesso no próprio código. Mudanças de backend exigem deploy separado do Git/Vercel e inclusão de todas as dependências relativas.
+- A PWA deve servir os mesmos cabeçalhos de segurança do Admin, inclusive CSP restrita e no-referrer. O identificador do build considera scripts, cabeçalhos e helpers. Logout offline remove credenciais locais sem alegar revogação remota. Mantenha a atualização explícita e a proteção de formulários.
+- A home pública ganhou banner PT/EN com laranja discreto. Vídeos, logo original, navegação e convite “O QUE VEM A SEGUIR?” foram preservados. Movimento reduzido desliga também os efeitos decorativos do loader.
+
 ## Laranja, banner e movimento — 2.1.0
 
 - Em 14/10/2026, depois da 2.0, o usuário pediu mais laranja, banner na Visão geral, mais animações e um carregamento melhor, com publicação. `--ds-accent` passou a ser o laranja DUUK (`#f5824a` escuro, `#c2410c` claro) e marca botões principais, item ativo do menu, abas, chaves e títulos de cartões; o gradiente coral → laranja do site (`--ds-brand-gradient`) aparece só no banner, no carregamento e nas barras do pipeline. O dia selecionado na agenda continua neutro para não se confundir com hoje (laranja).
