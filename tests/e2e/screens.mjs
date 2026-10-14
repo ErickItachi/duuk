@@ -15,7 +15,8 @@ function option(name, fallback) {
 }
 
 export async function startServer() {
-  const server = await createServer({ root: new URL('../../', import.meta.url).pathname, logLevel: 'error', server: { port: 0, host: '127.0.0.1' } })
+  // DUUK_VITE_CACHE gives parallel runs their own dependency cache.
+  const server = await createServer({ root: new URL('../../', import.meta.url).pathname, logLevel: 'error', cacheDir: process.env.DUUK_VITE_CACHE || undefined, server: { port: 0, host: '127.0.0.1' } })
   await server.listen()
   const address = server.httpServer.address()
   return { server, origin: `http://127.0.0.1:${address.port}` }

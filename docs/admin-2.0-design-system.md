@@ -55,6 +55,13 @@ CSS order: design system first, module styles next, shell last. A module rule wi
 - Menus and tooltips: `.ds-menu`, `.ds-menu__item`, `.ds-menu__separator`, `.ds-menu__label`; `data-ds-tooltip="Texto"` on a positioned element for a hover/focus tooltip.
 - Keyboard hints: `kbd.ds-kbd`.
 
+### Shared React helpers
+
+Use these instead of writing new ones:
+
+- `src/admin/ds/list.js`: `usePagination(items, { pageSize: 25, resetKey })` returns `{ items, page, pageCount, total, from, to, setPage }`; pass the search text and filters as `resetKey` so the list returns to page 1 when they change. `matchesQuery(query, ...fields)` is accent- and case-insensitive. `normalizeText(value)`.
+- `src/admin/forms.jsx`: `Pagination({ pager, noun })` (pair with `usePagination`; renders nothing for a single page), `SearchField({ value, onChange, label, placeholder })`, `EmptyState({ icon, title, children, action })`, `ErrorState({ children, onRetry })`, `FieldError({ id, children })`, `QueryState`, `LoadingPanel`, `PageTitle`, `Field`, `Avatar`.
+
 ## Responsive rules
 
 - No horizontal page scroll at any width (320–1920). Wide content (kanban, wide tables, tab strips) scrolls inside its own container.
