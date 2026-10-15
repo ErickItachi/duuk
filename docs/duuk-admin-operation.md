@@ -1,5 +1,9 @@
 # Operação do DUUK Admin
 
+## Refinamentos, notificações e e-mail — 2.3.0
+
+Painel fixo da IA, cores financeiras, carregamento clean, som no app, avisos transacionais por módulo, foto da caixa comercial e HTML dos códigos de contrato: [admin-2.3-validation.md](admin-2.3-validation.md). `duuk-sign` v8 e migração `20261015062459_duuk_notifications_resources` publicados separadamente do frontend. O som com o app fechado continua sob controle do sistema; nenhum push ou e-mail real é necessário para validar o visual.
+
 ## Visão geral e IA — 2.2.0
 
 Foto de bastidores no banner, métricas reais por permissão e janela da IA adaptada ao teclado mobile: [admin-2.2-validation.md](admin-2.2-validation.md). O botão flutuante desaparece enquanto qualquer diálogo estiver aberto. Foco por teclado usa preenchimento/sublinhado, sem molduras adicionais; botões secundários e seleções seguem a mesma preferência do usuário.

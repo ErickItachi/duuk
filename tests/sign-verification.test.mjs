@@ -26,12 +26,18 @@ test('hash do código exige segredo backend e vincula código ao desafio', async
  await assert.rejects(() => signingCodeHash('short', id, '123456'))
  await assert.rejects(() => signingCodeHash(pepper, id, '1234'))
 })
-test('SMTP envia somente código e validade, sem dados do contrato, URLs ou anexos', async () => {
+test('SMTP envia código e validade com a marca DUUK, sem dados ou links do contrato', async () => {
  const message = signingCodeMessage(email, '123456')
  assert.equal(message.to, email)
  assert(message.text.includes('123456'))
  assert(message.text.includes('10 minutos'))
- assert(!/https?:|contrato:|anexo/i.test(message.html))
+ assert(!/<a\b|contrato:|anexo|<script|<iframe/i.test(message.html))
+ const images = [...message.html.matchAll(/<img[^>]+src="([^"]+)"/g)]
+ assert.deepEqual(images.map(match => match[1]), ['https://www.duukfilms.com/media/duuk-logo-white.png'])
+ assert.match(message.html, /lang="pt-BR"/)
+ assert.match(message.html, /123456/)
+ assert.match(message.html, /10 minutos/)
+ assert(!message.html.includes(email))
  const calls = []; let closed = false
  await sendSigningCode({ user: 'mailbox@test.invalid', password: 'fixture' }, async () => ({ sendMail: async data => { calls.push(data); return { accepted: [email] } }, close: () => { closed = true } }), email, '123456')
  assert.equal(calls.length, 1)

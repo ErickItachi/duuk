@@ -87,6 +87,7 @@ export default function DashboardPage() {
     {/* Banner: always the dark film look, so the original white logo is shown as it is in both themes. */}
     <header className="dashboard-head dashboard-hero">
       <span className="dashboard-hero__art" aria-hidden="true"><img className="dashboard-hero__photo" src="/media/images/sobre-set-682.b3883b9ee0e6.webp" alt="" width="682" height="1024" fetchPriority="high" /><i className="is-coral" /><i className="is-orange" /><i className="dashboard-hero__strip" /></span>
+      <span className="dashboard-hero__eyebrow">DUUK FILMS / NOSSO ESTÚDIO</span>
       <StudioGreeting name={auth.profile?.name || ''} />
       <div className="dashboard-hero__side">
         <img className="dashboard-hero__logo" src="/media/duuk-logo-white.png" alt="" width="718" height="886" />

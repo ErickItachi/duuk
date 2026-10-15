@@ -1,5 +1,13 @@
 # Fluxo de trabalho da DUUK
 
+## Refinamentos e notificações — 2.3.0
+
+- Em 15/10/2026 o usuário pediu despesas/saídas vermelhas, banner refinado, novo botão da IA, chat desktop fixo à direita e loader clean. A janela desktop não pode ser arrastada nem usar posições antigas; só o launcher continua movível. Loader contém apenas logo original, círculo laranja pequeno (14 px) e situação real. A logo do menu fica sem fundo também no foco/hover. Preserve teclado mobile e formulários.
+- O som local tem duas notas discretas, exige gesto permitido pelo navegador, usa preferência por conta/aparelho e deduplicação de abas e histórico. Não prometa som personalizado no push com o app fechado. Configurações > Notificações oferece controle e prévia.
+- Migração `20261015062459_duuk_notifications_resources.sql` aplicada: avisos transacionais de receitas/despesas, metas, Social Media e conexão Pluggy. A nova categoria `social` usa permissão e opt-out próprios; preserve as chaves compartilhadas com o worker para evitar duplicação. Não faça backfill ou envie notificações de teste a pessoas reais.
+- O usuário pediu imagem da conta/remetente comercial. A marca aparece no app; a foto DUUK foi salva no perfil Titan de `contato@duukfilms.com` e conferida após reload. Não prometa avatar em todos os provedores. Não altere nome de exibição, crie conta Google ou contrate BIMI para isso sem um novo pedido.
+- E-mails dos códigos de contrato têm HTML com a identidade DUUK e logo original estática, sem rastreamento ou dados/documentos privados. `duuk-sign` v8 ACTIVE mantém autenticação própria, validade de dez minutos, limites, TLS e idempotência. Não envie códigos reais para testar layout. Evidências e reversão: `docs/admin-2.3-validation.md`.
+
 ## Visão geral e IA — 2.2.0
 
 - Em 15/10/2026 o usuário pediu foto no banner da Visão geral, gráficos/métricas animados, uma janela da IA mais tecnológica e a remoção das molduras de traçado de botões/seleções. A foto reutiliza o bastidor original; `StudioPulse` reutiliza as consultas autorizadas, sem inventar números. Preserve estados indisponíveis, filtros de acesso e movimento reduzido.

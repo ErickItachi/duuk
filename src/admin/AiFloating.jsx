@@ -1,5 +1,4 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { GripHorizontal } from 'lucide-react'
 import { Icon } from './components'
 
 const clamp = (value, minimum, maximum) => Math.min(Math.max(value, minimum), Math.max(minimum, maximum))
@@ -138,15 +137,14 @@ export function AiFloatingLauncher({ userId, onOpen }) {
   const floating = useFloatingPosition(button, { userId, kind: 'launcher' })
   return <>
     <button ref={button} type="button" className={`duuk-ai-help${floating.dragging ? ' is-dragging' : ''}`} style={floating.style} {...floating.handlers} aria-label="Abrir DUUK AI" aria-describedby={hintId} title="DUUK AI · arraste para mover" onClick={event => { if (!floating.consumeDrag(event)) onOpen() }}>
-      <span className="duuk-ai-help__spark" aria-hidden="true"><Icon name="spark" size={20} /></span><span className="duuk-ai-help__label">DUUK AI</span>
+      <span className="duuk-ai-help__spark" aria-hidden="true"><Icon name="message" size={24} /><Icon className="duuk-ai-help__glint" name="spark" size={12} /></span><span className="duuk-ai-help__label">DUUK AI</span>
     </button>
     <span id={hintId} className="duuk-ai-floating-hint">Arraste para mudar a posição, ou use as setas do teclado. Pressione Enter para abrir.</span>
   </>
 }
 
-export function AiFloatingDialog({ userId, onClose, children }) {
-  const dialog = useRef(null), hintId = useId()
-  const [desktop, setDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches)
+export function AiFloatingDialog({ onClose, children }) {
+  const dialog = useRef(null)
   useEffect(() => {
     const element = dialog.current, opener = document.activeElement
     element.showModal()
@@ -157,15 +155,7 @@ export function AiFloatingDialog({ userId, onClose, children }) {
       requestAnimationFrame(() => { if (opener?.isConnected && !document.querySelector('dialog[open]')) opener.focus() })
     }
   }, [])
-  const floating = useFloatingPosition(dialog, { userId, kind: 'dialog', enabled: desktop })
-  useEffect(() => {
-    const query = window.matchMedia('(min-width: 768px)')
-    const resize = () => setDesktop(query.matches)
-    query.addEventListener('change', resize)
-    return () => query.removeEventListener('change', resize)
-  }, [])
-  return <dialog ref={dialog} className={`admin-modal admin-modal--wide duuk-ai-floating-dialog${floating.dragging ? ' is-dragging' : ''}`} style={floating.style} aria-label="DUUK AI" onCancel={event => { event.preventDefault(); event.stopPropagation(); onClose() }}>
-    {desktop && <div className="duuk-ai-dragbar"><button type="button" className="duuk-ai-drag-handle" {...floating.handlers} aria-label="Mover janela do DUUK AI" aria-describedby={hintId} title="Arraste para mover"><GripHorizontal size={18} strokeWidth={1.5} aria-hidden="true" /><span>Arraste para mover</span></button><span id={hintId} className="duuk-ai-floating-hint">Use as setas do teclado para mover a janela. Segure Shift para mover mais rápido.</span></div>}
+  return <dialog ref={dialog} className="admin-modal admin-modal--wide duuk-ai-floating-dialog" aria-label="DUUK AI" onCancel={event => { event.preventDefault(); event.stopPropagation(); onClose() }}>
     {children}
   </dialog>
 }

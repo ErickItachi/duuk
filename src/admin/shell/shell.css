@@ -61,7 +61,7 @@
 
 /* ---------- Brand ---------- */
 .ds-brand { display: inline-flex; align-items: center; gap: 10px; min-width: 0; height: 36px; padding: 0 6px; margin-left: -6px; border-radius: var(--ds-radius-md); color: var(--ds-text); text-decoration: none; transition: background-color var(--ds-duration-1); }
-.ds-brand:hover { background: var(--ds-hover); }
+.ds-brand, .ds-brand:hover, .ds-brand:focus-visible, .ds-topbar__brand:focus-visible { background: transparent !important; box-shadow: none; }
 /* The original PNG keeps its proportions and transparency; only the light admin turns it black. */
 .ds-brand img { display: block; flex-shrink: 0; width: auto; height: 24px; filter: var(--ds-logo-filter); }
 .ds-brand span { padding-left: 10px; border-left: 1px solid var(--ds-border-strong); color: var(--ds-text-2); font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); letter-spacing: 0; line-height: 16px; white-space: nowrap; }

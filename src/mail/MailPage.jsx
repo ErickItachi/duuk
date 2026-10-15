@@ -16,14 +16,13 @@ import { focusFirstError, formErrors, hasErrors } from "../crm/formErrors";
 import MailConnection from "./MailConnection";
 import MailComposer from "./MailComposer";
 import MailBody from "./MailBody";
+import MailAvatar from "./MailAvatar";
 import { addressLabel, fileSize } from "./model";
 import "./mail.css";
 
 const WEBMAIL = "https://email.godaddy.com";
 const templates = () => rows("duuk_mail_templates", (q) => q.order("title"));
 const mailKey = (message) => `${message.folder || "inbox"}:${message.uid}`;
-const initialOf = (people) =>
-  (people?.[0]?.name || people?.[0]?.address || "E").slice(0, 1).toUpperCase();
 const zone = { timeZone: "America/Sao_Paulo" };
 // Compact list dates: time today, day and month this year, full date before that.
 function shortDate(value) {
@@ -318,9 +317,7 @@ function MessageView({
                 <ErrorState onRetry={query.reload}>{query.error}</ErrorState>
               )}
               <div className="mail-sender">
-                <span className="mail-avatar" aria-hidden="true">
-                  {initialOf(data.from)}
-                </span>
+                <MailAvatar people={data.from} />
                 <div>
                   <strong>{sender?.name || sender?.address || "Remetente"}</strong>
                   {sender?.name && <span>{sender.address}</span>}
@@ -716,9 +713,7 @@ export default function MailPage({ notify }) {
                         onClick={() => setOpened({ ...m, folder })}
                       >
                         {unread && <span className="mail-unread-dot" aria-hidden="true" />}
-                        <span className="mail-avatar" aria-hidden="true">
-                          {initialOf(people)}
-                        </span>
+                        <MailAvatar people={people} />
                         <span className="mail-row__main">
                           {unread && <span className="ds-visually-hidden">Não lida. </span>}
                           <span className="mail-row__top">
@@ -833,7 +828,7 @@ export default function MailPage({ notify }) {
       <div className={`mail-workspace${reading ? " is-reading" : ""}`}>
         <aside className="mail-folders" aria-label="Caixa de e-mail">
           <div className="mail-folders__account">
-            <span className="mail-avatar" aria-hidden="true">D</span>
+            <MailAvatar company />
             <div>
               <strong>DUUK Films</strong>
               <span title="contato@duukfilms.com">contato@duukfilms.com</span>

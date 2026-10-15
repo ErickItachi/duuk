@@ -3,6 +3,7 @@ import { useUnsavedChanges } from "../admin/unsavedChanges";
 import { ConfirmModal, Icon, Modal } from "../admin/components";
 import { ErrorState, FieldError } from "../admin/forms";
 import { mailRequest } from "../admin/api";
+import MailAvatar from "./MailAvatar";
 import {
   addressLabel,
   fileSize,
@@ -333,6 +334,7 @@ export default function MailComposer({
               <div className="mail-compose__row mail-compose__from">
                 <span className="mail-compose__label">De</span>
                 <span className="mail-compose__sender">
+                  <MailAvatar company />
                   <strong>DUUK Films</strong>
                   <span>{mailbox}</span>
                 </span>

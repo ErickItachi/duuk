@@ -1,5 +1,20 @@
 [
   {
+    "version": "2.3.0",
+    "date": "2026-10-15",
+    "title": "Mais clareza no dia a dia",
+    "new": [
+      "Som discreto para novas notificações com o app aberto, com controle por aparelho.",
+      "Avisos de receitas, despesas, metas financeiras, agendamentos do Instagram e troca da conta bancária."
+    ],
+    "improved": [
+      "Financeiro com saídas e despesas em vermelho e entradas em verde.",
+      "DUUK AI em um painel fixo à direita no computador e um novo botão de acesso.",
+      "Banner refinado, logo do menu sem fundo cinza e carregamento simplificado.",
+      "Identidade da conta comercial e e-mails de código de assinatura com a marca DUUK."
+    ]
+  },
+  {
     "version": "2.2.0",
     "date": "2026-10-15",
     "title": "O estúdio em movimento",

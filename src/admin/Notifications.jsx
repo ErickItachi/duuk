@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -26,6 +27,7 @@ import { matchesQuery, usePagination } from "./ds/list";
 import PushDevice from "./PushDevice";
 import { fmtTime } from "../crm/model";
 import { useUnsavedChanges } from "./unsavedChanges";
+import { useNotificationSound } from "./useNotificationSound";
 
 const NotificationContext = createContext(null);
 const categories = [
@@ -34,6 +36,7 @@ const categories = [
   ["contracts", "Contratos", "document"],
   ["finance", "Financeiro", "wallet"],
   ["commercial", "Comercial", "users"],
+  ["social", "Social Media", "instagram"],
   ["system", "Sistema", "settings"],
 ];
 const defaults = {
@@ -42,6 +45,7 @@ const defaults = {
   contracts: true,
   finance: true,
   commercial: true,
+  social: true,
   system: true,
 };
 export function NotificationProvider({ children }) {
@@ -86,9 +90,11 @@ export function NotificationProvider({ children }) {
       window.removeEventListener("online", tick);
     };
   }, [reload]);
-  const notifications = (query.data?.items || []).filter((n) =>
-    auth.hasPermission(n.required_permission),
-  );
+  const hasPermission = auth.hasPermission;
+  const notifications = useMemo(() => (query.data?.items || []).filter((n) =>
+    hasPermission(n.required_permission),
+  ), [query.data?.items, hasPermission]);
+  const sound = useNotificationSound(userId, notifications, !!query.data);
   const mark = async (id) => {
     checked(
       await supabase
@@ -117,6 +123,7 @@ export function NotificationProvider({ children }) {
         unread: query.data?.unread || 0,
         mark,
         markAll,
+        sound,
       }}
     >
       {children}
@@ -437,6 +444,7 @@ function NoticeEditor({onClose,onSaved}) {
  </Modal>;
 }
 export function NotificationSettingsPage({ notify }) {
+  const { sound } = useContext(NotificationContext);
   const auth = useAuth(),
     query = useQuery(
       useCallback(
@@ -536,6 +544,12 @@ export function NotificationSettingsPage({ notify }) {
             )}
           </section>
           <PushDevice />
+          <section className="ds-card" aria-label="Som das notificações">
+            <div className="settings-card__head"><span className="settings-card__icon" aria-hidden="true"><Icon name="bell" /></span><div><h2>Som da DUUK</h2><p>Um toque discreto para novas notificações com o app aberto.</p></div></div>
+            <div className="settings-switch-row"><label className="settings-switch-row__label" htmlFor={`${switchId}-sound`}>Som neste aparelho</label><button id={`${switchId}-sound`} type="button" className="settings-switch" role="switch" aria-label="Som de notificações neste aparelho" aria-checked={sound.enabled} disabled={!sound.supported} onClick={sound.toggle}><span aria-hidden="true" /></button></div>
+            <p className="ds-muted" style={{ fontSize: 12, margin: '12px 0' }}>Depois do primeiro toque ou clique, o navegador libera o áudio. Com o app fechado, o som do push segue as configurações do sistema.</p>
+            <button type="button" className="admin-button admin-button--secondary admin-button--sm" disabled={!sound.supported} onClick={async () => { if (!await sound.preview()) notify('O navegador não liberou o áudio. Confira o volume e tente novamente.', true) }}><Icon name="play" />Ouvir som</button>
+          </section>
         </div>
       </div>
     </>

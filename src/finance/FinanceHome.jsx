@@ -61,7 +61,7 @@ export function MovementRow({ row }) {
 function BillRow({ record, onEdit }) {
  const overdue = isOverdue(record), income = record.type === 'income'
  return <button type="button" className="finance-move finance-move--button" onClick={() => onEdit(record)}>
-  <span className={`finance-move__icon${overdue ? ' is-overdue' : ''}`}><Icon name={overdue ? 'alertCircle' : 'clock'} size={16} /></span>
+  <span className={`finance-move__icon ${income ? 'is-in' : 'is-out'}${overdue ? ' is-overdue' : ''}`}><Icon name={overdue ? 'alertCircle' : 'clock'} size={16} /></span>
   <span className="finance-move__copy"><strong title={record.title}>{record.title}</strong><small><span className={overdue ? 'finance-text-danger' : ''}>{overdue ? 'Em atraso' : statusLabel(record)}</span> · vence {dateLabel(record.due_date)}</small></span>
   <Money cents={income ? Number(record.amount_cents) : -Number(record.amount_cents)} signed tone />
  </button>

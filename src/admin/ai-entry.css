@@ -1,71 +1,46 @@
-/* DUUK AI launcher and floating help window. The launcher and the window
-   move by mouse, touch or arrow keys and remember their place per member and device. */
+/* A compact AI launcher and a fixed right-side workspace. The launcher alone can be moved. */
 .duuk-ai-help {
   position: fixed; z-index: 50; right: 24px; bottom: 24px;
-  display: inline-flex; align-items: center; justify-content: center; gap: var(--ds-space-2);
-  min-height: 40px; padding: 0 var(--ds-space-4) 0 6px;
-  border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-full);
-  background: var(--ds-surface); color: var(--ds-text);
-  box-shadow: var(--ds-shadow-md);
-  font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); line-height: 1;
+  display: grid; place-items: center; width: 56px; height: 56px; padding: 0;
+  border: 0; border-radius: 50%;
+  background: radial-gradient(circle at 30% 15%, #453127, #211a16 48%, #141211 90%); color: #ffb084;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 22%), inset 0 1px 0 rgb(255 220 193 / 22%), 0 0 0 1px rgb(245 130 74 / 18%);
   cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
-  transition: background-color var(--ds-duration-1), border-color var(--ds-duration-1), box-shadow var(--ds-duration-2) var(--ds-ease-out), transform var(--ds-duration-1) var(--ds-ease-out);
-  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow .2s, transform .2s; -webkit-tap-highlight-color: transparent;
 }
-.duuk-ai-help:hover { border-color: var(--ds-text-3); background: var(--ds-surface-2); }
-.duuk-ai-help:active { transform: scale(.97); }
-.duuk-ai-help:focus-visible { background: var(--ds-selected); color: var(--ds-text); }
-.duuk-ai-help.is-dragging { box-shadow: var(--ds-shadow-lg); transform: none; cursor: grabbing; }
-.duuk-ai-help__spark { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50%; background: var(--ds-accent); color: var(--ds-on-accent); }
-.duuk-ai-help__spark svg { width: 16px; height: 16px; }
-.duuk-ai-help__label { letter-spacing: -0.005em; white-space: nowrap; }
-/* Native dialogs make the rest of the page inert. Hide the floating control too,
-   including underneath transparent backdrops and during discard confirmations. */
+.duuk-ai-help:hover { box-shadow: 0 10px 32px rgb(0 0 0 / 28%), inset 0 1px 0 rgb(255 220 193 / 30%), 0 0 0 1px rgb(245 130 74 / 38%); }
+.duuk-ai-help:active { transform: scale(.96); }
+.duuk-ai-help.is-dragging { transform: none; cursor: grabbing; }
+.duuk-ai-help__spark { position: relative; display: grid; place-items: center; width: 30px; height: 30px; }
+.duuk-ai-help__spark > svg:first-child { width: 25px; height: 25px; }
+.duuk-ai-help__spark > .duuk-ai-help__glint { position: absolute; top: -3px; right: -5px; width: 12px; height: 12px; padding: 1px; background: #251b16; color: #ffb084; }
+.duuk-ai-help__label { position: absolute; right: calc(100% + 10px); padding: 8px 12px; border-radius: 10px; background: var(--ds-surface); color: var(--ds-text); box-shadow: var(--ds-shadow-md); font-size: 11px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.duuk-ai-help:is(:hover, :focus-visible) .duuk-ai-help__label { opacity: 1; }
 body:has(dialog[open]) .duuk-ai-help { visibility: hidden; pointer-events: none; }
 .duuk-ai-floating-hint { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-
 .admin-modal.duuk-ai-floating-dialog {
-  inset: auto 24px 80px auto; margin: 0;
-  width: min(560px, calc(100vw - 48px)); max-width: calc(100vw - 48px);
-  height: min(760px, calc(100dvh - 112px)); max-height: calc(100dvh - 48px);
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--ds-accent) 24%, var(--ds-border)); border-radius: 24px;
-  background: var(--ds-surface); box-shadow: 0 32px 100px -28px rgb(0 0 0 / 65%), 0 0 60px -34px var(--ds-accent);
-  overflow: hidden;
-  animation: duuk-ai-dialog-in var(--ds-duration-3) var(--ds-ease-out) both;
+  position: fixed; inset: 0 0 0 auto; margin: 0;
+  width: min(480px, 100vw); max-width: 100vw;
+  height: 100dvh; max-height: 100dvh; padding: 0;
+  border: 0; border-left: 1px solid var(--ds-border); border-radius: 0;
+  background: var(--ds-surface); box-shadow: -24px 0 80px -40px rgb(0 0 0 / 45%);
+  overflow: hidden; animation: duuk-ai-panel-in .24s var(--ds-ease-out) backwards;
 }
 .admin-modal.duuk-ai-floating-dialog[open] { display: flex; flex-direction: column; }
-.admin-modal.duuk-ai-floating-dialog::backdrop { background: rgb(3 5 8 / 54%); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+.admin-modal.duuk-ai-floating-dialog::backdrop { background: rgb(3 5 8 / 32%); }
 .admin-modal.duuk-ai-floating-dialog > .duuk-ai--embedded { flex: 1; min-height: 0; overflow: hidden; }
-.admin-modal.duuk-ai-floating-dialog.is-dragging { animation: none; user-select: none; -webkit-user-select: none; }
-.duuk-ai-dragbar { display: flex; flex-shrink: 0; justify-content: center; border-bottom: 1px solid var(--ds-border-subtle); }
-.duuk-ai-drag-handle { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 20px; padding: 2px var(--ds-space-3); border: 0; background: none; color: var(--ds-text-3); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; transition: background-color var(--ds-duration-1), color var(--ds-duration-1); }
-.duuk-ai-drag-handle:hover { background: var(--ds-hover); color: var(--ds-text-2); }
-.duuk-ai-drag-handle:focus-visible { background: var(--ds-selected); color: var(--ds-text); }
-.duuk-ai-drag-handle svg { width: 16px; height: 16px; }
-/* The handle keeps its spoken name; the grip is the visible cue and the title shows on hover. */
-.duuk-ai-drag-handle > span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.duuk-ai-floating-dialog.is-dragging .duuk-ai-drag-handle { cursor: grabbing; }
-
-@keyframes duuk-ai-dialog-in { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
-@keyframes duuk-ai-dialog-mobile-in { from { opacity: 0; } to { opacity: 1; } }
-
-/* Phones: a sheet inside the visible viewport, with room for the keyboard and safe areas. */
+@keyframes duuk-ai-panel-in { from { opacity: .5; transform: translateX(24px); } }
 @media (max-width: 767px) {
-  .duuk-ai-help { right: 16px; width: 48px; height: 48px; min-height: 48px; padding: 0; border-color: transparent; background: var(--ds-accent); color: var(--ds-on-accent); }
-  .duuk-ai-help:hover { border-color: transparent; background: var(--ds-primary-hover); }
-  .duuk-ai-help__spark { flex-basis: auto; width: auto; height: auto; background: none; color: inherit; }
-  .duuk-ai-help__spark svg { width: 20px; height: 20px; }
+  .duuk-ai-help { right: 16px; width: 48px; height: 48px; }
+  .duuk-ai-help__spark > svg:first-child { width: 23px; height: 23px; }
   .duuk-ai-help__label { display: none; }
   .admin-modal.duuk-ai-floating-dialog {
     inset: calc(var(--duuk-ai-viewport-top, 0px) + max(8px, env(safe-area-inset-top))) 6px auto;
     width: calc(100% - 12px); max-width: calc(100% - 12px);
     height: calc(var(--duuk-ai-viewport-height, 100dvh) - max(8px, env(safe-area-inset-top)) - 8px);
     max-height: calc(var(--duuk-ai-viewport-height, 100dvh) - max(8px, env(safe-area-inset-top)) - 8px);
-    border-radius: 22px;
-    animation-name: duuk-ai-dialog-mobile-in;
+    border: 0; border-radius: 22px; animation-name: duuk-ai-mobile-in;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .duuk-ai-help, .admin-modal.duuk-ai-floating-dialog { transition: none; animation: none; }
-}
+@keyframes duuk-ai-mobile-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .duuk-ai-help, .admin-modal.duuk-ai-floating-dialog { transition: none; animation: none; } }

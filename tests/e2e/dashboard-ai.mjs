@@ -35,6 +35,12 @@ try {
     const dialog = page.locator('.duuk-ai-floating-dialog')
     const rect = await dialog.boundingBox(), viewport = page.viewportSize()
     assert.ok(rect.x >= 0 && rect.y >= 0 && rect.x + rect.width <= width + 1 && rect.y + rect.height <= viewport.height + 1, `${label}: dialog inside viewport`)
+    if (width >= 768) {
+      assert.equal(rect.y, 0, `${label}: fixed to the top`)
+      assert.equal(rect.x + rect.width, width, `${label}: fixed to the right`)
+      assert.equal(Math.round(rect.height), viewport.height, `${label}: full-height workspace`)
+      assert.equal(await dialog.locator('.duuk-ai-drag-handle').count(), 0)
+    }
     const overflow = await dialog.evaluate(el => el.scrollWidth > el.clientWidth + 1)
     assert.equal(overflow, false, `${label}: no dialog overflow`)
     assert.equal(await page.locator('.duuk-ai-help').isVisible(), false)
