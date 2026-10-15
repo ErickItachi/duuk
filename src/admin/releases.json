@@ -1,5 +1,18 @@
 [
   {
+    "version": "2.2.0",
+    "date": "2026-10-15",
+    "title": "O estúdio em movimento",
+    "new": [
+      "Visão geral com foto de bastidores da DUUK e gráficos animados de agenda, oportunidades e audiência, conforme seu acesso."
+    ],
+    "improved": [
+      "DUUK AI com uma nova janela, atalhos de criação e melhor ajuste ao teclado do celular.",
+      "O botão flutuante da IA sai de cena enquanto há um pop-up aberto.",
+      "Botões e seleções sem molduras de traçado, com foco por fundo e texto para o teclado."
+    ]
+  },
+  {
     "version": "2.1.1",
     "date": "2026-10-14",
     "title": "Contratos em dia e segurança reforçada",

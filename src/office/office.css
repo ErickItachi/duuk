@@ -113,9 +113,9 @@ button.office-record-title:hover strong { text-decoration: underline; text-decor
 .office-toolbar__exports > .admin-error { justify-self: stretch; }
 
 /* ---------- New contract upload ---------- */
-.office-dropzone { position: relative; display: flex; align-items: center; gap: var(--ds-space-3); min-width: 0; min-height: 72px; padding: var(--ds-space-3) var(--ds-space-4); border: 1px dashed var(--ds-border-strong); border-radius: var(--ds-radius-md); background: var(--ds-bg-subtle); color: var(--ds-text-2); font-size: var(--ds-text-md); cursor: pointer; transition: border-color var(--ds-duration-1), background-color var(--ds-duration-1); }
+.office-dropzone { position: relative; display: flex; align-items: center; gap: var(--ds-space-3); min-width: 0; min-height: 72px; padding: var(--ds-space-3) var(--ds-space-4); border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-md); background: var(--ds-bg-subtle); color: var(--ds-text-2); font-size: var(--ds-text-md); cursor: pointer; transition: border-color var(--ds-duration-1), background-color var(--ds-duration-1); }
 .office-dropzone:hover, .office-dropzone.is-dragging { border-color: var(--ds-text-3); background: var(--ds-hover); }
-.office-dropzone:has(input:focus-visible) { outline: 2px solid var(--ds-focus); outline-offset: 2px; }
+.office-dropzone:has(input:focus-visible) { background: var(--ds-selected); }
 .office-dropzone.is-invalid { border-color: var(--ds-danger); }
 .office-dropzone.is-filled { border-style: solid; background: var(--ds-surface); }
 .office-dropzone input[type=file] { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); border: 0; opacity: 0; }
@@ -186,15 +186,15 @@ button.office-record-title:hover strong { text-decoration: underline; text-decor
 .office-pdf-field {
   --office-field-line: #cf3a2c; --office-field-fill: rgb(207 58 44 / 8%); --office-field-ink: #a3291e;
   position: absolute; display: flex; align-items: center; justify-content: center; padding: 1px 4px;
-  border: 1px dashed var(--office-field-line); border-radius: 3px; background: var(--office-field-fill); color: var(--office-field-ink);
+  border: 1px solid var(--office-field-line); border-radius: 3px; background: var(--office-field-fill); color: var(--office-field-ink);
   font-family: var(--ds-font); font-size: clamp(8px, 1.7cqi, 12px); font-weight: var(--ds-weight-medium); line-height: 1.15; text-align: center; overflow: hidden;
 }
 .office-pdf-field.is-duuk { --office-field-line: #525252; --office-field-fill: rgb(23 23 23 / 6%); --office-field-ink: #262626; }
 button.office-pdf-field { touch-action: none; cursor: move; transition: background-color var(--ds-duration-1); }
 button.office-pdf-field:hover { --office-field-fill: rgb(207 58 44 / 14%); }
 button.office-pdf-field.is-duuk:hover { --office-field-fill: rgb(23 23 23 / 11%); }
-.office-pdf-field.is-selected { border-style: solid; outline: 2px solid var(--office-paper-ink); outline-offset: 1px; }
-.office-pdf-page .office-pdf-field:focus-visible { outline: 2px solid var(--office-paper-focus); outline-offset: 2px; }
+.office-pdf-field.is-selected { border-style: solid; background: var(--office-field-fill); box-shadow: inset 0 -3px var(--office-paper-ink); }
+.office-pdf-page .office-pdf-field:focus-visible { background: var(--office-field-fill); box-shadow: inset 0 -3px var(--office-paper-focus); }
 .office-pdf-field img { width: 100%; height: 100%; object-fit: contain; }
 
 /* Field list, controls and participants in the sidebar */
@@ -210,7 +210,7 @@ button.office-pdf-field.is-duuk:hover { --office-field-fill: rgb(23 23 23 / 11%)
 .office-field-list strong { font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); overflow-wrap: anywhere; }
 .office-field-list small { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
 /* The swatch repeats the overlay style on the PDF; the text names the participant. */
-.office-field-swatch { flex-shrink: 0; width: 12px; height: 12px; border: 1.5px dashed var(--ds-accent); border-radius: 3px; background: var(--ds-accent-soft); }
+.office-field-swatch { flex-shrink: 0; width: 12px; height: 12px; border: 1.5px solid var(--ds-accent); border-radius: 3px; background: var(--ds-accent-soft); }
 .office-field-swatch.is-duuk { border-color: var(--ds-text-2); background: var(--ds-surface-2); }
 .office-field-controls { display: grid; gap: var(--ds-space-3); margin-top: var(--ds-space-4); padding-top: var(--ds-space-4); border-top: 1px solid var(--ds-border); }
 .office-field-controls > .admin-text-button { justify-self: start; }
@@ -314,7 +314,7 @@ button.office-pdf-field.is-duuk:hover { --office-field-fill: rgb(23 23 23 / 11%)
 .office-signing-consent-summary p + p { margin-top: var(--ds-space-2); }
 .office-consent { align-items: flex-start; padding: var(--ds-space-4); border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 1.6; cursor: pointer; }
 .office-consent:has(input:checked) { border-color: var(--ds-accent-line); background: var(--ds-accent-soft); }
-.office-consent:focus-within { outline: 2px solid var(--ds-focus); outline-offset: 3px; }
+.office-consent:focus-within { background: var(--ds-selected); }
 .office-consent input[type=checkbox] { flex-shrink: 0; margin-top: 3px; }
 .office-signing-legal { display: flex; align-items: flex-start; gap: var(--ds-space-2); color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.55; }
 .office-signing-legal svg { flex-shrink: 0; width: 14px; height: 14px; margin-top: 2px; }

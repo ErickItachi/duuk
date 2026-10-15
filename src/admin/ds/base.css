@@ -25,8 +25,11 @@
 :where(.admin-shell, .admin-modal, .admin-login, .admin-popover) :where(a) { color: inherit; }
 :where(.admin-shell, .admin-modal, .admin-login, .admin-popover) ::selection { color: var(--ds-text); background: var(--ds-selected); }
 :where(.admin-shell, .admin-modal, .admin-login, .admin-popover) :where(:focus:not(:focus-visible)) { outline: none; }
-/* Focus stays neutral: a clear ring in the text color family, never the accent red. */
-:is(.admin-shell, .admin-modal, .admin-login, .admin-popover) :focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 2px; }
+/* The member requested no traced frames. Keyboard focus uses a filled surface,
+   underlined labels and existing field borders instead of an extra outline. */
+:is(.admin-shell, .admin-modal, .admin-login, .admin-popover, .admin-connection) :focus-visible { outline: none !important; }
+:is(.admin-shell, .admin-modal, .admin-login, .admin-popover, .admin-connection) :is(button, a, summary, [role=button], [role=tab]):focus-visible { background-color: var(--ds-selected); color: var(--ds-text); text-decoration: underline; text-underline-offset: 4px; box-shadow: none; }
+:is(.admin-shell, .admin-modal, .admin-login, .admin-popover) :is(input, textarea, select):focus { box-shadow: none !important; }
 :where(.admin-shell, .admin-modal, .admin-login, .admin-popover) :where(strong, b) { font-weight: var(--ds-weight-semibold); }
 :where(.admin-shell, .admin-modal, .admin-login, .admin-popover) :where(small) { font-size: var(--ds-text-sm); }
 :where(.admin-shell, .admin-modal, .admin-popover) * { scrollbar-width: thin; scrollbar-color: var(--ds-border-strong) transparent; }

@@ -1,5 +1,12 @@
 # Fluxo de trabalho da DUUK
 
+## Visão geral e IA — 2.2.0
+
+- Em 15/10/2026 o usuário pediu foto no banner da Visão geral, gráficos/métricas animados, uma janela da IA mais tecnológica e a remoção das molduras de traçado de botões/seleções. A foto reutiliza o bastidor original; `StudioPulse` reutiliza as consultas autorizadas, sem inventar números. Preserve estados indisponíveis, filtros de acesso e movimento reduzido.
+- O launcher da IA deve ficar invisível sempre que houver `dialog[open]`, incluindo formulários, confirmações, menu e a própria IA. No celular a janela respeita `visualViewport`, teclado e safe areas. Preserve rascunhos e consentimento.
+- Foco por teclado usa fundo/sublinhado, sem contorno adicional. Botões secundários são preenchidos; não restaure os tracejados decorativos ou molduras nas seleções. Documentação e testes: `docs/admin-2.2-validation.md` e `tests/e2e/dashboard-ai.mjs`.
+- A conexão bancária foi refeita pelo fluxo oficial em 15/10/2026 para o Nubank Empresas já autorizado no Meu Pluggy, conta final `00-4` (configuração DUUK revisão 3). A conta pessoal de teste anterior não é mais a selecionada. Credenciais existentes reaproveitadas no Vault; somente conector gratuito 200 e leitura, sem cobrança, atualização instantânea ou lançamento automático.
+
 ## Segurança e contratos — 2.1.1
 
 - Auditoria e evidências em `docs/admin-2.1.1-audit.md`. Preserve as 67 tabelas com RLS, os cinco buckets privados e as funções de backend exclusivas do servidor. As policies ausentes em tabelas privadas são intencionais. Não habilite custos para remover avisos de recursos Pro.

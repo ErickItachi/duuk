@@ -81,7 +81,7 @@
 .finance-select__value { min-width: 0; overflow: hidden; font-weight: var(--ds-weight-medium); text-overflow: ellipsis; white-space: nowrap; }
 .finance-select > svg { flex-shrink: 0; margin-left: auto; color: var(--ds-text-3); }
 .finance-select > select { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.finance-select:has(select:focus-visible) { outline: 2px solid var(--ds-focus); outline-offset: 2px; }
+.finance-select:has(select:focus-visible) { background: var(--ds-selected); }
 /* When the toolbar cannot hold one row, search leads on its own row and the filters follow. */
 @container finance-ledger (max-width: 1000px) {
   .finance-ledger .finance-filters__search.admin-search { order: -1; flex-basis: 100%; max-width: none; margin-left: 0; }

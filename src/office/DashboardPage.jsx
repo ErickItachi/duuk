@@ -7,6 +7,7 @@ import { useAuth } from '../content/AuthContext'
 import { useContent } from '../content/useContent'
 import { today } from './model'
 import StudioGreeting from './StudioGreeting'
+import StudioPulse from './dashboard/StudioPulse'
 import { combine, useDashboardData, useMinute } from './dashboard/data'
 import { activityView, agendaView, contractView, dashboardColumns, digestItems, financeView, followupView, metricsView, nowTime, pipelineView, quickActions, socialView } from './dashboard/model'
 import { ActivityCard, AgendaCard, ContractsCard, FinanceCard, FollowupsCard, PipelineCard, QuickActionsCard, SiteCard, SocialCard } from './dashboard/cards'
@@ -85,14 +86,15 @@ export default function DashboardPage() {
   return <div className="duuk-dashboard">
     {/* Banner: always the dark film look, so the original white logo is shown as it is in both themes. */}
     <header className="dashboard-head dashboard-hero">
-      <span className="dashboard-hero__art" aria-hidden="true"><i className="is-coral" /><i className="is-orange" /><i className="dashboard-hero__strip" /></span>
+      <span className="dashboard-hero__art" aria-hidden="true"><img className="dashboard-hero__photo" src="/media/images/sobre-set-682.b3883b9ee0e6.webp" alt="" width="682" height="1024" fetchPriority="high" /><i className="is-coral" /><i className="is-orange" /><i className="dashboard-hero__strip" /></span>
       <StudioGreeting name={auth.profile?.name || ''} />
       <div className="dashboard-hero__side">
         <img className="dashboard-hero__logo" src="/media/duuk-logo-white.png" alt="" width="718" height="886" />
-        <RefreshButton onRefresh={refresh} />
+        <RefreshButton onRefresh={refresh} compact={!medium} />
       </div>
       {digestSources.length > 0 && <Digest items={digest} loading={digestSources.some(source => source.data == null && !source.error)} settled={digestSources.every(source => source.data != null)} />}
     </header>
+    <StudioPulse can={can} data={data} views={views} day={day} />
     {layout.columns[0].length
       ? <div className={`dashboard-grid dashboard-grid--${layout.kind}`}>
         {layout.columns.map((keys, index) => <div className="dashboard-column" key={index}>{keys.map((key, order) => <div className="dashboard-enter" key={key} style={{ '--i': order * 2 + index }}>{cards[key]}</div>)}</div>)}

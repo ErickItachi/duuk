@@ -1,5 +1,9 @@
 # Operação do DUUK Admin
 
+## Visão geral e IA — 2.2.0
+
+Foto de bastidores no banner, métricas reais por permissão e janela da IA adaptada ao teclado mobile: [admin-2.2-validation.md](admin-2.2-validation.md). O botão flutuante desaparece enquanto qualquer diálogo estiver aberto. Foco por teclado usa preenchimento/sublinhado, sem molduras adicionais; botões secundários e seleções seguem a mesma preferência do usuário.
+
 ## Segurança e contratos — 2.1.1
 
 Auditoria, correções, limites e validação: [admin-2.1.1-audit.md](admin-2.1.1-audit.md). Novas contas são criadas pelo administrativo; signup público está desabilitado. O PDF assinado atual abre por padrão, com opção de original e recuperação da geração pendente. Downloads renovam o acesso privado; se a janela for bloqueada, use o link preparado na própria tela. No iPhone, o visualizador pode oferecer Compartilhar → Salvar em Arquivos.

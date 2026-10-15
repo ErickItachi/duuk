@@ -18,8 +18,8 @@
 .admin-button:active:not(:disabled) { transform: scale(.98); }
 .admin-button:disabled { opacity: .45; }
 .admin-button[aria-busy="true"] { cursor: progress; }
-.admin-button--secondary { background: var(--ds-surface); border-color: var(--ds-border-strong); color: var(--ds-text); }
-.admin-button--secondary:hover:not(:disabled) { background: var(--ds-surface-2); border-color: var(--ds-border-strong); }
+.admin-button--secondary { background: var(--ds-surface-2); border-color: transparent; color: var(--ds-text); }
+.admin-button--secondary:hover:not(:disabled) { background: var(--ds-active); border-color: transparent; }
 .admin-button--ghost { background: transparent; color: var(--ds-text-2); }
 .admin-button--ghost:hover:not(:disabled) { background: var(--ds-hover); color: var(--ds-text); }
 .admin-button--danger { background: var(--ds-danger-solid); color: #fff; }
@@ -42,7 +42,7 @@
 .admin-icon-button:active:not(:disabled) { transform: scale(.94); background: var(--ds-active); }
 .admin-icon-button:disabled { opacity: .4; }
 .admin-icon-button--danger:hover:not(:disabled) { color: var(--ds-danger); background: var(--ds-danger-soft); }
-.admin-icon-button--bordered { border-color: var(--ds-border); background: var(--ds-surface); }
+.admin-icon-button--bordered { border-color: transparent; background: var(--ds-surface-2); }
 
 .admin-text-button {
   display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 32px; padding: 0;

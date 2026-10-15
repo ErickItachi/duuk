@@ -27,6 +27,8 @@
 .duuk-ai-header__actions { display: flex; flex-shrink: 0; align-items: center; gap: var(--ds-space-1); }
 .duuk-ai-history-toggle[aria-expanded="true"] { color: var(--ds-text); }
 .duuk-ai-title { flex-shrink: 0; margin: 0; font-size: var(--ds-text-lg); font-weight: var(--ds-weight-semibold); letter-spacing: -0.015em; line-height: 1.3; white-space: nowrap; }
+.duuk-ai-identity-copy { display: flex; flex-shrink: 0; flex-direction: column; gap: 2px; }
+.duuk-ai-identity-copy > span { color: var(--ds-text-3); font-size: 10px; line-height: 1.3; }
 .duuk-ai-conversation-name { min-width: 0; margin-left: var(--ds-space-1); padding-left: var(--ds-space-3); border-left: 1px solid var(--ds-border); color: var(--ds-text-2); font-size: var(--ds-text-md); line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .duuk-ai-menu { position: relative; flex-shrink: 0; }
 .duuk-ai-menu > summary { list-style: none; cursor: pointer; }
@@ -88,7 +90,9 @@
 .duuk-ai-messages.is-empty > .duuk-ai-skeleton { align-self: start; }
 
 .duuk-ai-welcome { width: min(100%, 560px); margin: auto; padding-block: var(--ds-space-6); text-align: center; }
-.duuk-ai-welcome__mark { display: inline-grid; place-items: center; width: 44px; height: 44px; margin-bottom: var(--ds-space-4); border: 1px solid var(--ds-border); border-radius: var(--ds-radius-lg); background: var(--ds-surface-2); color: var(--ds-text); box-shadow: var(--ds-shadow-sm); }
+.duuk-ai-welcome__mark { position: relative; isolation: isolate; display: inline-grid; place-items: center; width: 84px; height: 84px; margin-bottom: 24px; border: 1px solid color-mix(in srgb, var(--ds-accent) 32%, transparent); border-radius: 28px; background: radial-gradient(circle at 30% 20%, var(--ds-accent-soft), transparent 75%), var(--ds-surface); color: var(--ds-accent-text); box-shadow: 0 10px 50px -12px color-mix(in srgb, var(--ds-accent) 35%, transparent), inset 0 1px rgb(255 255 255 / 10%); }
+.duuk-ai-welcome__mark > i { position: absolute; z-index: -1; inset: -9px; border: 1px solid color-mix(in srgb, var(--ds-accent) 14%, transparent); border-radius: 34px; animation: duuk-ai-orbit 6s ease-in-out infinite; }
+.duuk-ai-welcome__eyebrow { display: block; margin: 0 0 12px; color: var(--ds-accent-text); font-size: 9px; font-weight: 600; letter-spacing: .2em; }
 .duuk-ai-welcome h2 { font-size: var(--ds-text-2xl); letter-spacing: -0.025em; }
 .duuk-ai-welcome > p { max-width: 440px; margin: var(--ds-space-2) auto 0; color: var(--ds-text-2); font-size: var(--ds-text-base); line-height: 1.6; }
 .duuk-ai-suggestions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: var(--ds-space-2); margin-top: var(--ds-space-6); text-align: left; }
@@ -212,7 +216,7 @@
   transition: border-color var(--ds-duration-1) var(--ds-ease-out), box-shadow var(--ds-duration-1) var(--ds-ease-out);
 }
 /* The composer shows focus as one neutral ring around the whole field. */
-.duuk-ai-composer:focus-within { border-color: var(--ds-text-3); box-shadow: 0 0 0 3px var(--ds-selected); }
+.duuk-ai-composer:focus-within { border-color: var(--ds-text-3); background: var(--ds-bg-subtle); }
 .duuk-ai-composer textarea { display: block; width: 100%; min-width: 0; min-height: 52px; max-height: 144px; padding: 14px 16px 4px; border: 0; border-radius: var(--ds-radius-xl) var(--ds-radius-xl) 0 0; outline: 0; background: transparent; color: var(--ds-text); font-size: var(--ds-text-base); line-height: 1.55; resize: none; overflow-y: auto; }
 .duuk-ai-composer textarea:focus-visible { outline: none; }
 .duuk-ai-composer textarea::placeholder { color: var(--ds-text-3); }
@@ -273,11 +277,26 @@
 
 /* ---------- Floating help (embedded) ---------- */
 .duuk-ai--embedded { flex: 1; height: 100%; min-height: 0; max-height: none; border: 0; border-radius: 0; box-shadow: none; }
-.duuk-ai--embedded .duuk-ai-header { min-height: 52px; padding: var(--ds-space-2) var(--ds-space-2) var(--ds-space-2) var(--ds-space-3); }
+.duuk-ai--embedded .duuk-ai-header { min-height: 66px; padding: 10px 12px; background: color-mix(in srgb, var(--ds-surface) 90%, transparent); }
 .duuk-ai--embedded .duuk-ai-conversation-name, .duuk-ai--embedded .duuk-ai-keyboard-hint { display: none; }
 .duuk-ai--embedded .duuk-ai-messages { padding: var(--ds-space-6) var(--ds-space-4) var(--ds-space-3); }
 .duuk-ai--embedded .duuk-ai-compose-area { padding: 0 var(--ds-space-3) var(--ds-space-3); }
-.duuk-ai--embedded .duuk-ai-welcome h2 { font-size: var(--ds-text-xl); }
+.duuk-ai--embedded .duuk-ai-chat { background: radial-gradient(ellipse at 50% 25%, var(--ds-accent-soft), transparent 65%), var(--ds-surface); }
+.duuk-ai--embedded .duuk-ai-chat::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(var(--ds-border) .7px, transparent .7px); background-size: 22px 22px; opacity: .5; mask-image: linear-gradient(#000, transparent 75%); }
+.duuk-ai--embedded .duuk-ai-messages, .duuk-ai--embedded .duuk-ai-compose-area { position: relative; }
+.duuk-ai--embedded .duuk-ai-welcome { padding-block: 18px; }
+.duuk-ai--embedded .duuk-ai-welcome h2 { font-size: clamp(26px, 4vw, 32px); font-weight: 500; line-height: 1.16; letter-spacing: -.04em; white-space: pre-line; }
+.duuk-ai--embedded .duuk-ai-welcome > p { max-width: 285px; font-size: 13px; }
+.duuk-ai--embedded .duuk-ai-suggestions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 24px; }
+.duuk-ai--embedded .duuk-ai-suggestions button { position: relative; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 10px; min-height: 90px; padding: 12px; border-color: transparent; border-radius: 16px; background: color-mix(in srgb, var(--ds-surface-2) 90%, transparent); font-size: 12px; line-height: 1.45; }
+.duuk-ai--embedded .duuk-ai-suggestions button:hover { background: var(--ds-active); }
+.duuk-ai--embedded .duuk-ai-suggestions__icon { width: 26px; height: 26px; background: var(--ds-accent-soft); color: var(--ds-accent-text); }
+.duuk-ai--embedded .duuk-ai-suggestions button > svg:last-child { position: absolute; top: 14px; right: 12px; width: 12px; }
+.duuk-ai--embedded .duuk-ai-composer { border-color: var(--ds-border); border-radius: 18px; background: var(--ds-surface); box-shadow: 0 5px 24px -14px rgb(0 0 0 / 30%); }
+.duuk-ai--embedded .duuk-ai-composer textarea { border-radius: 18px 18px 0 0; }
+.duuk-ai--embedded .duuk-ai-new { width: 36px; min-height: 36px; padding: 0; border: 0; background: transparent; }
+.duuk-ai--embedded .duuk-ai-new > span { display: none; }
+.duuk-ai--embedded .duuk-ai-send { border-radius: 12px; }
 .duuk-ai--embedded .duuk-ai-message--user .duuk-ai-message__body { max-width: 90%; }
 
 /* ---------- Touch ---------- */
@@ -324,7 +343,7 @@
   .duuk-ai-footnote { padding-top: var(--ds-space-1); }
   .duuk-ai-document__selects { grid-template-columns: minmax(0, 1fr); }
   .duuk-ai-document textarea { min-height: 200px; }
-  .duuk-ai--embedded .duuk-ai-header { padding-top: calc(var(--ds-space-2) + env(safe-area-inset-top)); }
+  .duuk-ai--embedded .duuk-ai-header { padding-top: 10px; }
   .duuk-ai--embedded .duuk-ai-messages { padding-inline: var(--ds-space-4); }
   .duuk-ai--embedded .duuk-ai-compose-area { padding: 0 var(--ds-space-3) calc(var(--ds-space-2) + env(safe-area-inset-bottom)); }
 }
@@ -346,6 +365,7 @@
 .duuk-ai[data-keyboard-open] .duuk-ai-footnote { display: none; }
 
 @keyframes duuk-ai-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@keyframes duuk-ai-orbit { 0%, 100% { transform: rotate(-8deg) scale(.97); opacity: .5; } 50% { transform: rotate(8deg) scale(1.04); opacity: 1; } }
 @keyframes duuk-ai-appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes duuk-ai-drawer-in { from { opacity: .6; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {

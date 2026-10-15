@@ -250,7 +250,7 @@
 .mail-editor__link > .ds-field-error { grid-column: 1 / -1; }
 
 /* Attachments */
-.mail-attachments { display: grid; gap: 10px; padding: var(--ds-space-3) 14px; border: 1px dashed var(--ds-border-strong); border-radius: var(--ds-radius-md); transition: border-color var(--ds-duration-1), background-color var(--ds-duration-1); }
+.mail-attachments { display: grid; gap: 10px; padding: var(--ds-space-3) 14px; border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-md); transition: border-color var(--ds-duration-1), background-color var(--ds-duration-1); }
 .mail-attachments.is-dragging { border-color: var(--ds-text-2); background: var(--ds-hover); }
 .mail-attachments__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2) var(--ds-space-3); }
 .mail-attachments__head > small { color: var(--ds-text-3); font-size: var(--ds-text-sm); }

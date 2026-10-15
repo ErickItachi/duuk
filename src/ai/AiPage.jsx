@@ -360,6 +360,7 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
   const selectTab = next => { setTab(next); setListQuery('') }
   const configured = status?.configured === true, lastAssistant = messages.findLastIndex(item => item.role === 'assistant')
   const suggestions = embedded ? [
+    modes[0], modes[1],
     { ...modes[3], label: 'Usar esta tela', prompt: 'Explique como usar esta tela do DUUK Admin e as principais ações disponíveis.' },
     { id: 'free', icon: 'edit', label: 'Melhorar um texto', prompt: 'Melhore este texto mantendo uma linguagem simples e humana: ' },
   ] : [{ id: 'free', icon: 'calendar', label: 'Agendar compromisso', prompt: 'Quero agendar um compromisso: ' }, modes[0], modes[1]]
@@ -374,7 +375,7 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
     <header className="duuk-ai-header">
       <div className="duuk-ai-header__identity">
         <button ref={toggleButton} type="button" className="admin-icon-button duuk-ai-history-toggle" aria-label="Histórico e documentos" title={showList ? 'Recolher histórico' : 'Histórico e documentos'} aria-expanded={showList} onClick={toggleList}><Icon name={showList ? 'sidebar' : 'sidebarOpen'} /></button>
-        <Heading className="duuk-ai-title">DUUK AI</Heading>
+        <div className="duuk-ai-identity-copy"><Heading className="duuk-ai-title">DUUK AI</Heading>{embedded && <span>Seu espaço de criação</span>}</div>
         {conversation?.id && <span className="duuk-ai-conversation-name" title={conversation.title}>{conversation.title || 'Nova conversa'}</span>}
       </div>
       <div className="duuk-ai-header__actions">
@@ -407,8 +408,9 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
       <div className="duuk-ai-chat" inert={overlay && sidebar ? true : undefined}>
         <div className={`duuk-ai-messages${!messages.length ? ' is-empty' : ''}`} ref={scroll} role="log" aria-label="Mensagens da conversa" aria-busy={busy || loading} onScroll={() => { const el = scroll.current; nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100 }}>
           {loading ? <div className="duuk-ai-skeleton" role="status"><span className="ds-visually-hidden">Abrindo sua conversa.</span><span className="ds-skeleton duuk-ai-skeleton__user" aria-hidden="true" /><span className="ds-skeleton ds-skeleton--circle" aria-hidden="true" /><span className="ds-skeleton ds-skeleton--text" aria-hidden="true" /><span className="ds-skeleton ds-skeleton--text" aria-hidden="true" /><span className="ds-skeleton ds-skeleton--text" aria-hidden="true" /></div> : !messages.length ? <div className="duuk-ai-welcome">
-            <span className="duuk-ai-welcome__mark" aria-hidden="true"><Icon name="spark" size={20} /></span>
-            <h2>{embedded ? 'Como posso ajudar?' : 'O que vamos fazer?'}</h2>
+            <span className="duuk-ai-welcome__mark" aria-hidden="true"><i /><Icon name="spark" size={28} /></span>
+            <span className="duuk-ai-welcome__eyebrow">IDEIA. DIREÇÃO. AÇÃO.</span>
+            <h2>{embedded ? 'Sua próxima ideia\ncomeça aqui.' : 'O que vamos fazer?'}</h2>
             <p>{embedded ? 'Apoio para esta tela e para sua próxima ideia.' : 'Crie ideias e organize a rotina da DUUK. Ações para salvar aparecem aqui para você confirmar.'}</p>
             <div className="duuk-ai-suggestions">{suggestions.map(item => <button key={item.id} type="button" onClick={() => selectMode(item)}><span className="duuk-ai-suggestions__icon" aria-hidden="true"><Icon name={item.icon} size={16} /></span><span>{item.label}</span><Icon name="right" size={14} /></button>)}</div>
           </div> : messages.map((item, index) => <article key={item.id || index} className={`duuk-ai-message duuk-ai-message--${item.role}`}>

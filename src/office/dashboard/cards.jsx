@@ -13,7 +13,7 @@ const lower = text => text.charAt(0).toLowerCase() + text.slice(1)
 
 // Counts up to the real figure when it first appears or changes. Readers get the final value
 // right away; with reduced motion the number simply shows.
-function CountUp({ value, format = number => number.toLocaleString('pt-BR') }) {
+export function CountUp({ value, format = number => number.toLocaleString('pt-BR') }) {
   const [shown, setShown] = useState(0)
   const from = useRef(0)
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')

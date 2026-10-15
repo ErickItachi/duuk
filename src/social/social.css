@@ -98,7 +98,7 @@
 .social-chosen__body small { color: var(--ds-text-3); font-size: var(--ds-text-sm); }
 .social-chosen__actions { display: flex; gap: 2px; }
 .social-alt { margin-top: var(--ds-space-1); }
-.social-dropzone { display: grid; justify-items: center; gap: var(--ds-space-2); width: 100%; padding: var(--ds-space-8) var(--ds-space-4); border: 1px dashed var(--ds-border-strong); border-radius: var(--ds-radius-md); background: var(--ds-bg-subtle); color: var(--ds-text-2); font: inherit; text-align: center; }
+.social-dropzone { display: grid; justify-items: center; gap: var(--ds-space-2); width: 100%; padding: var(--ds-space-8) var(--ds-space-4); border: 1px solid var(--ds-border-strong); border-radius: var(--ds-radius-md); background: var(--ds-bg-subtle); color: var(--ds-text-2); font: inherit; text-align: center; }
 .social-dropzone p { margin: 0; }
 .social-dropzone--button { cursor: pointer; transition: border-color var(--ds-duration-1), color var(--ds-duration-1); }
 .social-dropzone--button:hover { border-color: var(--ds-text-2); color: var(--ds-text); }
