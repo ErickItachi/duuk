@@ -1,10 +1,10 @@
 {
   "images": {
     "/media/douglas-felix.jpg": {
-      "src": "/media/images/douglas-felix-1080.3b8ef9f213aa.webp",
-      "srcSet": "/media/images/douglas-felix-640.9a313acd01d9.webp 640w, /media/images/douglas-felix-1080.3b8ef9f213aa.webp 1080w",
-      "width": 1080,
-      "height": 1920
+      "src": "/media/images/douglas-felix-1086.a750aa0e308d.webp",
+      "srcSet": "/media/images/douglas-felix-640.c0b3f0e76199.webp 640w, /media/images/douglas-felix-1086.a750aa0e308d.webp 1086w",
+      "width": 1086,
+      "height": 1448
     },
     "/media/erick-borborema.jpg": {
       "src": "/media/images/erick-borborema-576.0239871c4b00.webp",

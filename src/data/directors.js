@@ -19,7 +19,7 @@ export const directors = [
     slug: 'douglas-felix',
     name: 'DOUGLAS FELIX',
     display: 'Douglas Felix',
-    photo: '/media/douglas-felix.jpg?v=2',
+    photo: '/media/douglas-felix.jpg?v=3',
     bio: {
       pt: 'Minha trajetória começou no design, onde desenvolvi uma visão apurada sobre composição, estética, identidade e comunicação. Com o tempo, essa experiência evoluiu naturalmente para o audiovisual, ampliando minha atuação na construção de narrativas e na comunicação visual de marcas.\n\nHoje, minha especialidade é a direção audiovisual, conduzindo projetos a partir do conceito, da linguagem e da narrativa, com foco em transformar posicionamentos e ideias em imagens que tenham identidade, intenção e força de comunicação.\n\nMeu trabalho está na interseção entre direção, estética e estratégia, buscando construir uma linguagem própria para cada projeto e fazer com que a imagem não apenas acompanhe a mensagem, mas seja parte essencial dela.',
       en: 'My path started in design, where I developed a sharp sense of composition, aesthetics, identity and communication. Over time, that experience naturally moved into audiovisual work, widening what I do in building narratives and in the visual communication of brands.\n\nToday, my specialty is audiovisual direction. I lead projects from the concept, the language and the narrative, focused on turning positions and ideas into images with identity, intention and communicative force.\n\nMy work sits at the intersection of direction, aesthetics and strategy. I look to build a language of its own for each project, so the image does not only follow the message, but becomes an essential part of it.',
