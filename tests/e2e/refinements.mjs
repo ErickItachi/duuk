@@ -50,6 +50,19 @@ try {
  assert.equal(await boot.locator('.admin-loader__spinner').evaluate(e=>getComputedStyle(e).width),'14px')
  await boot.screenshot({path:`${out}/loader.png`});release();await boot.waitForSelector('.admin-shell');await bootContext.close()
 
+ // A fresh version must not introduce a changelog dialog or obstruct the update controls.
+ for(const width of [320,1440]) {
+  const about=await openAdmin(browser,origin,{route:'/admin/configuracoes/sobre',width})
+  await about.page.evaluate(()=>{for(const key of Object.keys(localStorage)) if(key.startsWith('duuk-release-seen:'))localStorage.removeItem(key)})
+  await about.page.reload();await settle(about.page);await about.page.waitForTimeout(2300)
+  assert.equal(await about.page.locator('dialog[open]').count(),0)
+  assert.equal(await about.page.getByText('Novidades da DUUK',{exact:true}).count(),0)
+  assert.equal(await about.page.getByText('Nesta versão',{exact:true}).count(),0)
+  assert.equal(await about.page.getByRole('button',{name:'Verificar atualizações',exact:true}).count(),1)
+  assert.deepEqual(await layoutIssues(about.page),[]);assert.deepEqual(about.errors,[])
+  await about.page.screenshot({path:`${out}/about-${width}.png`});await about.context.close()
+ }
+
  const email=signingCodeMessage('fictional@test.invalid','000000')
  await writeFile(`${out}/code-email.html`,email.html)
  for(const width of [320,640]) {
@@ -90,5 +103,5 @@ try {
  await sound.page.waitForFunction(before=>window.__notes===before+2,beforePreview)
  await sound.page.screenshot({path:`${out}/notification-settings.png`})
  await sound.context.close()
- console.log('Finance colors, mailbox identity, clean loader, branded code email, fresh sound, no replay and sound controls passed')
+ console.log('Finance colors, mailbox identity, clean loader, no version popups, branded code email, fresh sound, no replay and sound controls passed')
 } finally {await browser.close();await server.close()}

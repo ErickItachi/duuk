@@ -4,6 +4,8 @@ O Financeiro usa vermelho para despesas/saídas e verde para entradas, incluindo
 
 A IA abre no desktop como painel fixo à direita, da borda superior à inferior, sem alça ou coordenadas de arraste. Posições antigas da janela são ignoradas; somente o botão de acesso continua movível. Celular mantém teclado, safe areas e proteção de rascunhos. O botão tem nova superfície escura, ícone de conversa e detalhe laranja. Continua oculto sob qualquer diálogo. O carregamento contém somente o PNG original da logo, círculo laranja de 14 px e o texto da etapa real; não há atraso artificial, brilho, moldura ou faixa. A marca do menu fica sem fundo também no hover e foco.
 
+A conferência do primeiro deploy detectou a janela automática de novidades reintroduzida no código anterior. O provider da PWA deixou de montá-la e Sobre não exibe notas/histórico. O aviso simples e a atualização explícita continuam, com proteção de formulários; a instalação usa o mesmo loader mínimo do painel.
+
 ## Notificações
 
 Migração aplicada: `20261015062459_duuk_notifications_resources.sql`. Cinco triggers acrescentam avisos futuros sobre:

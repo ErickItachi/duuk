@@ -3,13 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageTitle } from "./forms";
 import { Icon } from "./components";
-import BrandLoader from "../components/BrandLoader";
-import { ReleaseNotes, ReleaseUpdates } from './ReleaseNotes';
-import { useAuth } from '../content/AuthContext';
+import AdminLoader from './shell/AdminLoader';
+import './updates.css';
 
 import { PwaContext, usePwa, currentRelease, installedBuild } from "./pwaState";
 export function PwaProvider({ children }) {
-  const auth = useAuth();
   const [available, setAvailable] = useState(null),
     [checking, setChecking] = useState(false),
     [message, setMessage] = useState(""),
@@ -19,8 +17,7 @@ export function PwaProvider({ children }) {
     [registration, setRegistration] = useState(null),
     [installPrompt, setInstallPrompt] = useState(null);
   const [checkStatus, setCheckStatus] = useState('idle'),
-    [actionMessage, setActionMessage] = useState(''),
-    [notes, setNotes] = useState(null);
+    [actionMessage, setActionMessage] = useState('');
   const checkInFlight = useRef(false);
   const requested = useRef(false),
     timeout = useRef(null),
@@ -250,7 +247,6 @@ export function PwaProvider({ children }) {
         message: actionMessage || message,
         hasActionMessage: !!actionMessage,
         checkStatus,
-        openNotes: release => setNotes({ userId: auth.user?.id, release }),
         updating,
         offline,
         check,
@@ -261,7 +257,6 @@ export function PwaProvider({ children }) {
       }}
     >
       {children}
-      <ReleaseUpdates open={notes} onOpen={setNotes} onClose={() => setNotes(null)} />
       {offline && (
         <div className="admin-connection" role="status">
           <Icon name="wifi" />
@@ -291,7 +286,7 @@ export function PwaProvider({ children }) {
         </div>
       )}
       {updating && (
-        <BrandLoader label={updating} detail="Atualizando DUUK Admin" />
+        <AdminLoader label={updating} />
       )}
     </PwaContext.Provider>
   );
@@ -307,12 +302,6 @@ export function UpdateNotice() {
         <p>{pwa.message || "Atualize o aplicativo quando estiver pronto."}</p>
       </div>
       <div className="admin-update-notice__actions"><button
-        type="button"
-        className="admin-button admin-button--secondary"
-        onClick={() => pwa.openNotes(pwa.available)}
-      >
-        Ver novidades
-      </button><button
         type="button"
         className="admin-button admin-button--secondary"
         onClick={pwa.update}
@@ -429,28 +418,6 @@ export function AboutAdminPage() {
               </button>
             )}
           </div>
-        </section>
-        <section
-          className="ds-card settings-release"
-          aria-labelledby="settings-release-title"
-        >
-          <header className="settings-release__head">
-            <h2 id="settings-release-title">Nesta versão</h2>
-            <span className="ds-badge ds-badge--neutral">
-              {currentRelease.version}
-            </span>
-          </header>
-          <ReleaseNotes release={currentRelease} />
-          {pwa.available && (
-            <button
-              className="admin-text-button settings-release__more"
-              type="button"
-              onClick={() => pwa.openNotes(pwa.available)}
-            >
-              Ver novidades da versão {pwa.available.version}
-              <Icon name="arrow" size={16} />
-            </button>
-          )}
         </section>
       </div>
     </>

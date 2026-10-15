@@ -2,6 +2,7 @@
 
 ## Refinamentos e notificações — 2.3.0
 
+- Não mostre janela de novidades nem histórico de versões. Sobre mantém somente identificação, versão/data reais, consulta e atualização explícita. A instalação também usa o loader mínimo, com a situação real; preserve formulários pendentes.
 - Em 15/10/2026 o usuário pediu despesas/saídas vermelhas, banner refinado, novo botão da IA, chat desktop fixo à direita e loader clean. A janela desktop não pode ser arrastada nem usar posições antigas; só o launcher continua movível. Loader contém apenas logo original, círculo laranja pequeno (14 px) e situação real. A logo do menu fica sem fundo também no foco/hover. Preserve teclado mobile e formulários.
 - O som local tem duas notas discretas, exige gesto permitido pelo navegador, usa preferência por conta/aparelho e deduplicação de abas e histórico. Não prometa som personalizado no push com o app fechado. Configurações > Notificações oferece controle e prévia.
 - Migração `20261015062459_duuk_notifications_resources.sql` aplicada: avisos transacionais de receitas/despesas, metas, Social Media e conexão Pluggy. A nova categoria `social` usa permissão e opt-out próprios; preserve as chaves compartilhadas com o worker para evitar duplicação. Não faça backfill ou envie notificações de teste a pessoas reais.
