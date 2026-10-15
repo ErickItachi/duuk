@@ -6,7 +6,10 @@ import { useParams } from 'react-router-dom'
 import { Icon } from '../admin/components'
 import { ErrorState } from '../admin/forms'
 import { signRequest } from './api'
-import { dateLabel, downloadFile, fieldTypes } from './model'
+import { supabase } from '../content/supabase'
+import { safeDocumentUrl } from './driveModel'
+import { openPdf, pdfName, savedOnTab } from './fileAccess'
+import { dateLabel, fieldTypes } from './model'
 import PdfPage from './PdfPage'
 import { usePdf } from './usePdf'
 import SignaturePad from './SignaturePad'
@@ -32,7 +35,7 @@ function signingErrors({ name, values, textFields }) {
 function SigningDocument({ token }) {
   const [record, setRecord] = useState(null), [error, setError] = useState(''), [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false), [name, setName] = useState(''), [png, setPng] = useState('')
-  const [values, setValues] = useState({}), [accepted, setAccepted] = useState(false), [page, setPage] = useState(0)
+  const [values, setValues] = useState({}), [accepted, setAccepted] = useState(false), [page, setPage] = useState(0), [notice, setNotice] = useState('')
   const proof = useRef(''), alive = useRef(true), operation = useRef(false), loadSequence = useRef(0)
   useEffect(() => { alive.current = true; return () => { alive.current = false; proof.current = '' } }, [])
   const load = useCallback(async () => {
@@ -87,18 +90,18 @@ function SigningDocument({ token }) {
     } catch (cause) { if (alive.current) fail(cause) }
     finally { if (alive.current) { operation.current = false; setBusy(false) } }
   }
+  // Opens the signed PDF from a fresh private URL; iPhone gets a new tab with Compartilhar › Salvar em Arquivos.
   const download = async () => {
     if (operation.current) return
-    operation.current = true; setBusy(true); setError('')
+    operation.current = true; setBusy(true); setError(''); setNotice('')
     try {
-      const current = await signRequest({ action: 'get', token, verification_token: proof.current || undefined })
-      if (!alive.current) return
-      if (current.verification?.required && !current.verification.verified) { proof.current = ''; setRecord(current); throw new Error('Confirme novamente seu e-mail para baixar o documento.') }
-      if (!current.signed_url) throw new Error('O PDF está sendo preparado. Tente novamente em alguns instantes.')
-      const response = await fetch(current.signed_url)
-      if (!response.ok) throw new Error('Reabra o link para baixar o PDF.')
-      const blob = await response.blob()
-      if (alive.current) downloadFile(blob, `duuk-contrato-${current.id.slice(0, 8)}.pdf`)
+      const result = await openPdf(async () => {
+        const current = await signRequest({ action: 'get', token, verification_token: proof.current || undefined })
+        if (current.verification?.required && !current.verification.verified) { proof.current = ''; if (alive.current) setRecord(current); throw new Error('Confirme novamente seu e-mail para baixar o documento.') }
+        if (!current.signed_url) throw new Error('O PDF está sendo preparado. Tente novamente em alguns instantes.')
+        return safeDocumentUrl(current.signed_url, supabase.supabaseUrl)
+      }, { download: true, filename: pdfName(record.title, 'assinado') })
+      if (result === 'tab' && alive.current) setNotice(savedOnTab)
     } catch (cause) { if (alive.current) fail(cause) }
     finally { if (alive.current) { operation.current = false; setBusy(false) } }
   }
@@ -144,6 +147,7 @@ function SigningDocument({ token }) {
                   <button type="button" className="admin-button" disabled={busy || !record.signed_url} aria-busy={busy} onClick={download}><Icon name="download" />{busy ? 'Preparando…' : 'Baixar PDF assinado'}</button>
                   <button type="button" className="admin-button admin-button--secondary" disabled={busy} onClick={load}><Icon name="refresh" />Atualizar situação</button>
                 </div>
+                {notice && <p className="office-signing-notice" role="status"><Icon name="info" />{notice}</p>}
                 {error && <ErrorState>{error}</ErrorState>}
               </section>
             ) : (

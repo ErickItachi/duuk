@@ -30,7 +30,7 @@ handler(async(req,headers)=>{
   const contract=checked(await db.from('duuk_contracts').select('*').eq('id',id).maybeSingle())
   if(!contract)throw new HttpError('Contrato não encontrado.',404)
   if(body.action==='details'){
-    const signatures=checked(await db.from('duuk_contract_signatures').select('id,party,signer_name,signed_at,consent,ip_address,user_agent,field_values,verification_method,verified_email,email_verified_at,verification_challenge_id').eq('contract_id',id).order('signed_at'))
+    const signatures=checked(await db.from('duuk_contract_signatures').select('id,party,signer_name,signed_at,consent,ip_address,user_agent,field_values,verification_method,verified_email,email_verified_at,verification_challenge_id,png').eq('contract_id',id).order('signed_at'))
     const invites=checked(await db.from('duuk_contract_invites').select('party,expires_at,revoked_at,signed_at,verification_required,recipient_email').eq('contract_id',id).order('created_at',{ascending:false}))
     return json({contract,signatures,invites,original_url:await signedUrl(db,contract.original_path),signed_url:await signedUrl(db,contract.signed_path)},headers)
   }

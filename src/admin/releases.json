@@ -9,7 +9,10 @@
     "improved": [
       "O laranja da DUUK agora marca botões principais, o item aberto no menu, abas, chaves e destaques.",
       "Animações em todo o painel: páginas e listas entram em sequência, números contam até o valor e gráficos crescem ao abrir.",
-      "Tela de carregamento nova, com a logo original, luz da marca e barra de progresso real, sem espera artificial."
+      "Tela de carregamento nova, com a logo original, luz da marca e barra de progresso real, sem espera artificial.",
+      "Contratos assinados abrem direto no PDF assinado, com troca rápida para o original e botão para abrir em nova aba.",
+      "Baixar PDF agora funciona no iPhone e no app instalado: o arquivo abre em nova aba para salvar em Arquivos.",
+      "Registro de aceite legível no contrato e em PDF, com horário de Brasília, assinatura desenhada e o texto aceito."
     ]
   },
   {

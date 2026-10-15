@@ -29,7 +29,7 @@ export async function openAdmin(browser, origin, { route = '/admin', width = 144
   page.on('pageerror', error => errors.push(`pageerror: ${error.message}`))
   page.on('console', message => { if (message.type() === 'error' && !/Failed to load resource|ERR_|WebSocket/.test(message.text())) errors.push(`console: ${message.text()}`) })
   await page.clock.setFixedTime(new Date(`${fixtures.TODAY}T10:00:00-03:00`))
-  const mock = await installSupabaseMock(page, { user: fixtures.user, profile, permissions, tables, rpc, functions, theme: theme === 'system' ? undefined : theme, signedIn, localStorage: { [`duuk-release-seen:${fixtures.user.id}:${releases[0].version}`]: '1', ...(theme === 'system' ? { [`duuk-admin-theme:${fixtures.user.id}`]: 'system' } : {}), ...localStorage }, log: entry => unknown.push(entry) })
+  const mock = await installSupabaseMock(page, { user: fixtures.user, profile, permissions, tables, rpc, functions, files: fixtures.storageFiles, theme: theme === 'system' ? undefined : theme, signedIn, localStorage: { [`duuk-release-seen:${fixtures.user.id}:${releases[0].version}`]: '1', ...(theme === 'system' ? { [`duuk-admin-theme:${fixtures.user.id}`]: 'system' } : {}), ...localStorage }, log: entry => unknown.push(entry) })
   await page.goto(origin + route, { waitUntil: 'domcontentloaded' })
   await page.waitForSelector('.admin-shell, .admin-login', { timeout: 20000 }).catch(() => errors.push('timeout: shell not rendered'))
   await page.waitForSelector('.duuk-loader, .admin-loader', { state: 'detached', timeout: 15000 }).catch(() => errors.push('timeout: loader still visible'))

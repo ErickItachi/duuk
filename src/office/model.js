@@ -27,4 +27,4 @@ export function csv(records) {
   const cell=(value)=>{let str=String(value??'');if(/^[=+\-@\t\r]/.test(str))str="'"+str;return '"'+str.replace(/"/g,'""')+'"'}
   return '\ufeff'+[['Despesa','Categoria','Valor (R$)','Vencimento','Status','Pagamento','Descrição'],...records.map(r=>[r.title,expenseCategories[r.category],(Number(r.amount_cents)/100).toFixed(2).replace('.',','),r.due_date,r.status==='paid'?'Pago':'A pagar',r.paid_date||'',r.description])].map(row=>row.map(cell).join(';')).join('\r\n')
 }
-export function downloadFile(blob,filename) { const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;link.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000) }
+export function downloadFile(blob,filename) { const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),30000) }

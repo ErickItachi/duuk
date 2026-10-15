@@ -1,6 +1,9 @@
 // Fictional dataset for isolated browser tests. Names, values and messages are
 // invented; nothing here mirrors a real client, member or bank account.
+import { crc32, deflateSync } from 'node:zlib'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import { initialContent } from '../../src/content/model.js'
+import { acceptanceRecord, drawAcceptanceRecord } from '../../supabase/functions/_shared/acceptance-record.mjs'
 
 export const TODAY = '2026-10-14'
 const iso = (day, time = '12:00:00') => `${day}T${time}-03:00`
@@ -29,13 +32,61 @@ const events = [
   { title: 'Pré-produção — Norte Bikes', category: 'preproduction', start: 9, time: ['09:00:00', '18:00:00'], client: 'Norte Bikes' },
   { title: 'Revisão com cliente', category: 'meeting', start: -2, time: ['16:00:00', '17:00:00'], client: 'Clínica Vértice' },
 ].map((event, index) => ({ id: `event-${index + 1}`, title: event.title, description: '', location: 'São Paulo', client_name: event.client, start_date: shift(event.start), end_date: shift(event.start), all_day: !event.time, start_time: event.time?.[0] || null, end_time: event.time?.[1] || null, category: event.category, status: event.start < 0 ? 'done' : 'confirmed', created_by: user.id, version: 1, created_at: shift(-10), updated_at: shift(-10), responsible_id: people[index % 3].id }))
+const contractFields = [
+  { id: '11111111-1111-4111-8111-111111111111', type: 'signature', party: 'client', page: 1, x: 0.1, y: 0.72, width: 0.35, height: 0.1, label: '' },
+  { id: '22222222-2222-4222-8222-222222222222', type: 'signature', party: 'duuk', page: 1, x: 0.54, y: 0.72, width: 0.35, height: 0.1, label: '' },
+]
 const contracts = [
   { title: 'Contrato de produção — Atelier Aurora', client: 'Atelier Aurora', status: 'pending' },
   { title: 'Aditivo de cronograma — Café Horizonte', client: 'Café Horizonte', status: 'partial' },
   { title: 'Contrato de licenciamento — Estúdio Prisma', client: 'Estúdio Prisma', status: 'signed' },
   { title: 'Proposta comercial — Hotel Maré Alta', client: 'Hotel Maré Alta', status: 'draft' },
-].map((contract, index) => ({ id: `contract-${index + 1}`, title: contract.title, client_name: contract.client, client_email: `contrato${index + 1}@exemplo.test`, duuk_name: 'Marina Teste', status: contract.status, version: 1, created_at: shift(-12 + index, '10:00:00'), updated_at: shift(-index, '10:00:00'), signed_path: contract.status === 'signed' ? 'signed.pdf' : null, rendered_version: contract.status === 'signed' ? 1 : null, deleted_at: null, original_path: 'original.pdf', pages: [], fields: [] }))
+].map((contract, index) => ({ id: `contract-${index + 1}`, title: contract.title, client_name: contract.client, client_email: `contrato${index + 1}@exemplo.test`, duuk_name: 'Marina Teste', status: contract.status, version: 1, created_at: shift(-12 + index, '10:00:00'), updated_at: shift(-index, '10:00:00'), signed_path: contract.status === 'signed' ? 'signed.pdf' : null, rendered_version: contract.status === 'signed' ? 1 : null, deleted_at: null, original_path: 'original.pdf', original_sha256: 'f'.repeat(64), pages: [{ width: 595, height: 842, rotation: 0 }, { width: 595, height: 842, rotation: 0 }], fields: contract.status === 'draft' ? [] : contractFields }))
 const month = TODAY.slice(0, 7)
+
+// A drawn line standing in for a handwritten signature (PNG built by hand, no canvas needed).
+function signaturePng() {
+  const width = 240, height = 80, rows = []
+  for (let y = 0; y < height; y++) {
+    const row = Buffer.alloc(1 + width * 4)
+    for (let x = 0; x < width; x++) if (x > 12 && x < 228 && Math.abs(y - 40 - 24 * Math.sin(x / 19)) < 2.4) row.set([24, 24, 28, 255], 1 + x * 4)
+    rows.push(row)
+  }
+  const chunk = (type, data) => { const head = Buffer.alloc(4); head.writeUInt32BE(data.length); const tail = Buffer.alloc(4); tail.writeUInt32BE(crc32(Buffer.concat([Buffer.from(type), data]))); return Buffer.concat([head, Buffer.from(type), data, tail]) }
+  const header = Buffer.alloc(13); header.writeUInt32BE(width, 0); header.writeUInt32BE(height, 4); header.set([8, 6, 0, 0, 0], 8)
+  return `data:image/png;base64,${Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', deflateSync(Buffer.concat(rows))), chunk('IEND', Buffer.alloc(0))]).toString('base64')}`
+}
+const signaturePngData = signaturePng()
+const signatureRows = contract => [
+  { id: `${contract.id}-sig-client`, party: 'client', signer_name: `Contato ${contract.client_name.split(' ')[0]}`, signed_at: `${shift(-2)}T14:12:08Z`, consent: 'Li o documento e concordo em assiná-lo eletronicamente, registrando meu nome, assinatura, data, endereço IP e navegador como evidências de aceite. Confirmo o acesso ao e-mail do participante por código e autorizo o registro dessa confirmação como evidência.', ip_address: '203.0.113.24', user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.7.5 Mobile/15E148 Safari/604.1', field_values: {}, verification_method: 'email_otp', verified_email: contract.client_email, email_verified_at: `${shift(-2)}T14:10:41Z`, verification_challenge_id: '33333333-3333-4333-8333-333333333333', png: signaturePngData },
+  { id: `${contract.id}-sig-duuk`, party: 'duuk', signer_name: 'Marina Teste', signed_at: `${shift(-1)}T19:40:52Z`, consent: 'Li o documento e concordo em assiná-lo eletronicamente, registrando meu nome, assinatura, data, endereço IP e navegador como evidências de aceite.', ip_address: '198.51.100.7', user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36', field_values: {}, verification_method: null, verified_email: null, email_verified_at: null, verification_challenge_id: null, png: signaturePngData },
+].slice(0, contract.status === 'signed' ? 2 : contract.status === 'partial' ? 1 : 0)
+
+// Fictional contract PDFs served by the storage mock: the original, and the signed copy with the acceptance page.
+async function contractPdf(contract, signed) {
+  const pdf = await PDFDocument.create(), font = await pdf.embedFont(StandardFonts.Helvetica), bold = await pdf.embedFont(StandardFonts.HelveticaBold)
+  const signatures = signatureRows(contract), image = signed && signatures.length ? await pdf.embedPng(signaturePngData) : null
+  for (let index = 0; index < 2; index++) {
+    const page = pdf.addPage([595, 842])
+    page.drawText(index ? 'Assinaturas' : contract.title, { x: 56, y: 770, size: 18, font: bold, color: rgb(0.1, 0.1, 0.1) })
+    for (let line = 0; line < 22; line++) page.drawText('Cláusula fictícia para teste visual do contrato. Nenhum dado real.', { x: 56, y: 730 - line * 22, size: 11, font, color: rgb(0.3, 0.3, 0.3) })
+    if (index === 1 && image) for (const signature of signatures) { const field = contractFields.find(item => item.party === signature.party), box = image.scaleToFit(field.width * 595, field.height * 842); page.drawImage(image, { x: field.x * 595, y: 842 - (field.y + field.height) * 842, width: box.width, height: box.height }) }
+  }
+  if (signed) await drawAcceptanceRecord(pdf, { rgb, StandardFonts }, acceptanceRecord({ contract, signatures }))
+  return Buffer.from(await pdf.save())
+}
+const signedContract = contracts.find(item => item.status === 'signed')
+export const storageFiles = {
+  'original.pdf': await contractPdf(signedContract, false),
+  'signed.pdf': await contractPdf(signedContract, true),
+}
+const fileUrl = path => `https://ilohuxhyfqikjlvoarts.supabase.co/storage/v1/object/sign/duuk-documents/${path}?token=test`
+function contractDetails(id) {
+  const contract = contracts.find(item => item.id === id)
+  if (!contract) return { __status: 404, body: { error: 'Contrato não encontrado.' } }
+  const signatures = signatureRows(contract)
+  return { contract, signatures, invites: [], original_url: fileUrl(contract.original_path), signed_url: contract.signed_path ? fileUrl(contract.signed_path) : null }
+}
 const expenses = [['Locação de câmera', 'equipment', 280000, 3, 'pending'], ['Seguro de equipamentos', 'insurance', 89000, -4, 'paid'], ['Assinatura de software', 'software', 24900, 8, 'pending'], ['Transporte da equipe', 'transport', 56000, -1, 'pending'], ['Aluguel do estúdio', 'rent', 450000, 1, 'pending'], ['Alimentação no set', 'food', 38000, -6, 'paid']].map(([title, category, amount, due, status], index) => ({ id: `expense-${index + 1}`, title, description: '', amount_cents: amount, category, due_date: shift(due), status, paid_date: status === 'paid' ? shift(due) : null, created_by: user.id, version: 1, created_at: shift(-20), updated_at: shift(-2) }))
 const income = [['Filme institucional — Estúdio Prisma', 1250000, -3, 'paid', 'Estúdio Prisma'], ['Campanha de lançamento — Norte Bikes', 980000, 6, 'pending', 'Norte Bikes'], ['Série para redes — Café Horizonte', 420000, 12, 'pending', 'Café Horizonte']].map(([title, amount, due, status, counterparty], index) => ({ id: `income-${index + 1}`, title, description: '', amount_cents: amount, category: 'production', counterparty_name: counterparty, due_date: shift(due), status, paid_date: status === 'paid' ? shift(due) : null, created_by: user.id, version: 1, created_at: shift(-20), updated_at: shift(-2) }))
 const notifications = [['agenda', 'Gravação hoje às 9h', 'Atelier Aurora · São Paulo', '/admin/agenda'], ['contracts', 'Contrato aguardando assinatura', 'Aditivo de cronograma — Café Horizonte', '/admin/contratos'], ['commercial', 'Follow-up para hoje', 'Retomar negociação com Norte Bikes', '/admin/comercial/follow-ups'], ['finance', 'Conta vence amanhã', 'Aluguel do estúdio', '/admin/financeiro'], ['system', 'Nova versão disponível', 'Atualize quando terminar o que está fazendo.', '/admin/configuracoes/sobre']].map(([category, title, body, link], index) => ({ id: `notification-${index + 1}`, user_id: user.id, category, required_permission: null, title, body, link, dedupe_key: `test-${index}`, read_at: index > 2 ? shift(-1, '10:00:00') : null, push_attempts: 0, push_sent_at: null, next_attempt_at: shift(-1), created_at: shift(-index, '08:00:00') }))
@@ -137,10 +188,21 @@ export const functions = {
     if (body.action === 'access') return { keys: permissionKeys.map(key => ({ key, label: key })), roles: [{ id: 'role-admin', name: 'Administrador', description: 'Gestão dos módulos', members: 2 }, { id: 'role-sales', name: 'Comercial', description: 'Prospecção e clientes', members: 1 }], users: people.map(person => ({ ...person, avatar_url: null })), role_permissions: permissionKeys.map(key => ({ role_id: 'role-admin', permission: key, allowed: key !== 'drive' })), user_permissions: [] }
     return undefined
   },
-  'duuk-office': body => body.action === 'directory' ? people.map(person => ({ id: person.id, name: person.name })) : undefined,
+  'duuk-office': body => {
+    if (body.action === 'directory') return people.map(person => ({ id: person.id, name: person.name }))
+    if (body.action === 'details') return contractDetails(body.id)
+    // Invites, cancelling and rendering change real contracts; the sweep never follows them.
+    if (['fields', 'invite', 'cancel', 'trash', 'restore', 'delete', 'render'].includes(body.action)) return { __status: 409, body: { error: 'Ação real desativada nos testes isolados.' } }
+    return undefined
+  },
+  'duuk-sign': body => {
+    const contract = contracts.find(item => item.status === 'pending')
+    if (body.action === 'get') return { id: contract.id, title: contract.title, party: 'client', name: contract.client_name, pages: contract.pages, fields: contract.fields.filter(field => field.party === 'client'), status: contract.status, signed: false, expires_at: `${shift(5)}T12:00:00-03:00`, verification: { required: false }, original_url: fileUrl('original.pdf'), signed_url: null }
+    return { __status: 409, body: { error: 'Ação real desativada nos testes isolados.' } }
+  },
   'duuk-notifications': { status: { configured: true, subscribed: false, devices: [] } },
   'duuk-calendar': { status: { configured: true, connected: false } },
-  'duuk-drive': { status: { configured: true, connected: true, account_email: 'arquivos@exemplo.test', pending: 0, failed: 0 }, browse: { connected: true, account_email: 'arquivos@exemplo.test', folders: [{ id: 'folder-1', name: 'Contratos', revision: 1, item_count: 3 }, { id: 'folder-2', name: 'Roteiros', revision: 1, item_count: 5 }], documents: [{ id: 'doc-1', title: 'Roteiro — campanha fictícia', file_name: 'roteiro.pdf', mime_type: 'application/pdf', byte_size: 182000, status: 'synced', created_at: shift(-3, '10:00:00'), revision: 1 }], breadcrumbs: [{ id: 'root', name: 'DUUK' }], folder: { id: 'root', name: 'DUUK' }, total: 1 }, folders: { folders: [] } },
+  'duuk-drive': { documents: { documents: [] }, status: { configured: true, connected: true, account_email: 'arquivos@exemplo.test', pending: 0, failed: 0 }, browse: { connected: true, account_email: 'arquivos@exemplo.test', folders: [{ id: 'folder-1', name: 'Contratos', revision: 1, item_count: 3 }, { id: 'folder-2', name: 'Roteiros', revision: 1, item_count: 5 }], documents: [{ id: 'doc-1', title: 'Roteiro — campanha fictícia', file_name: 'roteiro.pdf', mime_type: 'application/pdf', byte_size: 182000, status: 'synced', created_at: shift(-3, '10:00:00'), revision: 1 }], breadcrumbs: [{ id: 'root', name: 'DUUK' }], folder: { id: 'root', name: 'DUUK' }, total: 1 }, folders: { folders: [] } },
   'duuk-mail': { status: { configured: true, can_configure: true, address: 'contato@exemplo.test' }, list: body => ({ messages: body.folder === 'sent' ? [] : [{ uid: 2, subject: 'Orçamento para vídeo institucional', from: [{ name: 'Cliente Fictício', address: 'cliente@exemplo.test' }], to: [{ name: 'DUUK', address: 'contato@exemplo.test' }], date: iso(TODAY, '08:42:00'), message_id: '<m2@exemplo.test>', unread: true, has_attachments: false, folder: 'inbox' }, { uid: 1, subject: 'Re: Cronograma de gravação', from: [{ name: 'Produção Fictícia', address: 'producao@exemplo.test' }], to: [{ name: 'DUUK', address: 'contato@exemplo.test' }], date: shift(-1, '17:10:00'), message_id: '<m1@exemplo.test>', unread: false, has_attachments: true, folder: 'inbox' }].filter(item => !body.unread_only || item.unread), more: false, total: 2 }) },
   'duuk-pluggy': { status: { configured: true, version: 3 }, overview, statement: body => ({ month: body.month, account: overview.account, transactions: overview.transactions.filter(item => item.posted_date.startsWith(body.month)), complete: true }) },
   'duuk-ai': { status: { configured: true, consent: { accepted: true, version: 'test' }, consent_version: 'test', quota: { remaining: 20, limit: 25 } }, list: { conversations: [{ id: 'conversation-1', title: 'Roteiro para campanha fictícia', mode: 'script', updated_at: shift(-1, '15:00:00') }] }, documents: { documents: [] }, projects: { projects: [] } },

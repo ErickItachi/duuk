@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, degrees, rgb } from 'npm:pdf-lib@1.17.1'
 import { checked, database, HttpError, sha256 } from './http.ts'
+import { acceptanceRecord, drawAcceptanceRecord } from './acceptance-record.mjs'
 
 export function fieldsFor(document: any, pages: any[]) {
   if (!Array.isArray(document) || document.length>30) throw new HttpError('Use até 30 campos por contrato.')
@@ -13,25 +14,6 @@ export function fieldsFor(document: any, pages: any[]) {
   })
 }
 const latin = (value: unknown) => String(value||'').normalize('NFC').replace(/[^\x20-\x7e\xa0-\xff]/g,'?')
-function auditLines(line:string,font:any,size=9) {
-  const lines:string[]=[];let part=''
-  for(const character of latin(line)){
-    if(part&&font.widthOfTextAtSize(part+character,size)>523){lines.push(part);part=''}
-    part+=character
-  }
-  lines.push(part)
-  return lines
-}
-function drawAudit(pdf:any,font:any,rows:string[]) {
-  let page:any,y=0
-  for(let index=0;index<rows.length;index++){
-    const size=index===0?16:9
-    for(const line of auditLines(rows[index],font,size)){
-      if(!page||y<42){page=pdf.addPage([595,842]);y=800}
-      page.drawText(line,{x:36,y,size,font,color:rgb(.12,.13,.12)});y-=23
-    }
-  }
-}
 function rectangle(page: any, field: any) {
   const box=page.getCropBox(),rotation=((page.getRotation().angle%360)+360)%360
   const dw=rotation%180 ? box.height : box.width,dh=rotation%180 ? box.width : box.height
@@ -61,16 +43,8 @@ export async function renderSigned(db: ReturnType<typeof database>, initial: any
         }
       }
     }
-    // Append evidence without changing the uploaded pages.
-    const rows=['DUUK | Registro de assinatura eletronica',`Contrato: ${latin(contract.title)}`,`Identificador: ${contract.id}`,`SHA-256 do PDF original:`,contract.original_sha256,'']
-    for(const s of signatures){
-      rows.push(`${s.party==='client'?'Cliente':'DUUK'}: ${latin(s.signer_name)}`,`Data: ${new Date(s.signed_at).toISOString()}`,`Registro: ${s.id}`,`Aceite: Li o documento e concordo em assina-lo eletronicamente.`)
-      if(s.verification_method==='email_otp')rows.push(`Acesso confirmado por codigo enviado ao e-mail: ${latin(s.verified_email)}`,`Confirmacao do e-mail: ${new Date(s.email_verified_at).toISOString()}`,`Registro da confirmacao: ${s.verification_challenge_id}`,`A confirmacao comprova acesso ao e-mail, sem verificacao civil de identidade.`)
-      else rows.push('Nome informado pelo participante; acesso autorizado por link privado.')
-      rows.push('')
-    }
-    rows.push('Assinatura eletronica por aceite e desenho. Sem certificado ICP-Brasil.','O registro completo fica restrito ao administrativo da DUUK.')
-    drawAudit(pdf,font,rows)
+    // Append the acceptance record without changing the uploaded pages.
+    await drawAcceptanceRecord(pdf,{rgb,StandardFonts},acceptanceRecord({contract,signatures}))
     const bytes=await pdf.save(),path=`signed/${contract.id}/${crypto.randomUUID()}.pdf`,hash=await sha256(bytes)
     checked(await db.storage.from('duuk-documents').upload(path,bytes,{contentType:'application/pdf',upsert:false}))
     const accepted=checked(await db.rpc('duuk_office_render',{target:contract.id,revision:contract.version,object_path:path,digest:hash}))

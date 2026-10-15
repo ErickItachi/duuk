@@ -64,7 +64,7 @@ function filterRows(rows, params) {
   return output
 }
 
-export function createSupabaseMock({ user, profile, permissions, tables = {}, rpc = {}, functions = {}, log = () => {} }) {
+export function createSupabaseMock({ user, profile, permissions, tables = {}, rpc = {}, functions = {}, files = {}, log = () => {} }) {
   const store = clone(tables)
   const calls = []
   const session = fakeSession(user)
@@ -137,6 +137,8 @@ export function createSupabaseMock({ user, profile, permissions, tables = {}, rp
       if (parts[3] === 'object' && parts[4] === 'sign') {
         if (method === 'POST' && parts.length === 6) return route.fulfill(json((body?.paths || []).map(item => ({ path: item, signedURL: `/object/sign/${parts[5]}/${item}?token=test`, error: null }))))
         if (method === 'POST') return route.fulfill(json({ signedURL: `/object/sign/${parts.slice(5).join('/')}?token=test` }))
+        const file = files[parts.slice(6).join('/')]
+        if (file) return route.fulfill({ status: 200, headers: { 'content-type': 'application/pdf', 'access-control-allow-origin': '*' }, body: file })
         return route.fulfill({ status: 200, headers: { 'content-type': 'image/svg+xml', 'access-control-allow-origin': '*' }, body: placeholderImage(parts.at(-1)) })
       }
       if (parts[3] === 'object' && method === 'POST') return route.fulfill(json({ Key: parts.slice(4).join('/') }))
