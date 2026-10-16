@@ -14,7 +14,7 @@ const states = {
   trashed: { icon: 'trash', label: 'Na lixeira do Drive', hint: 'A cópia do Drive está na lixeira. O original e as assinaturas continuam preservados no painel.' },
   synced: { icon: 'cloudCheck', label: 'Sincronizado', hint: 'Guardado no Google Drive da DUUK.' },
   pending: { icon: 'cloudUpload', label: 'Pendente', hint: 'Aguardando o envio automático ao Google Drive.' },
-  error: { icon: 'cloudAlert', label: 'Erro de sincronização', hint: 'Não foi possível guardar no Google Drive. O documento continua salvo no DUUK Admin.' },
+  error: { icon: 'cloudAlert', label: 'Erro de sincronização', hint: 'Não foi possível guardar no Google Drive. O documento continua salvo no DUUK PAINEL ADMINISTRATIVO.' },
 }
 const kindLabels = { contract_original: 'Contrato original', contract_signed: 'Contrato assinado', proposal: 'Proposta comercial', document: 'Documento' }
 
@@ -71,7 +71,7 @@ export function DriveDocuments({ scope, contract = null, title = 'Google Drive',
   const retry = item => run(async () => { await driveRequest({ action: 'retry', id: item.id }); await reload(); say('Nova tentativa solicitada. O estado será atualizado em instantes.') })
   return <section className="drive-panel" aria-label={title}>
     <div className="drive-panel__head"><h3><Icon name="cloud" size={16} />{title}</h3><div className="drive-panel__tools"><DriveChip state={current ? state : null} /><RefreshButton onRefresh={reload} disabled={busy} /></div></div>
-    {query.error && <div className="ds-alert ds-alert--warning drive-panel__alert" role="status"><Icon name="cloudAlert" /><span>Não foi possível atualizar o estado do Google Drive. Os PDFs continuam no DUUK Admin.</span><button type="button" className="admin-text-button" disabled={query.loading} onClick={reload}>Tentar novamente</button></div>}
+    {query.error && <div className="ds-alert ds-alert--warning drive-panel__alert" role="status"><Icon name="cloudAlert" /><span>Não foi possível atualizar o estado do Google Drive. Os PDFs continuam no DUUK PAINEL ADMINISTRATIVO.</span><button type="button" className="admin-text-button" disabled={query.loading} onClick={reload}>Tentar novamente</button></div>}
     {documents.length ? <div className="drive-documents">{documents.map(item => <DriveDocumentRow key={item.id} document={item} busy={busy} canManage={canManage} onView={view} onDownload={download} onRetry={retry} />)}</div>
       : query.loading && !query.data || !current && !query.error ? <div className="drive-panel__loading" role="status"><span className="ds-visually-hidden">Consultando o armazenamento…</span><span className="ds-skeleton" aria-hidden="true" /><span className="ds-skeleton" aria-hidden="true" /></div>
       : <p className="office-muted office-small">{empty}</p>}
@@ -98,7 +98,7 @@ function DocumentUpload({ client, kind, onUploaded }) {
       const body = new FormData()
       body.append('file', file); body.append('client_id', client.id); body.append('kind', kind); body.append('title', title.trim())
       await driveRequest(body)
-      if (alive.current) { setTitle(''); onUploaded(); say(`${proposal ? 'Proposta anexada' : 'Documento anexado'}. O PDF foi salvo no DUUK Admin e entrou na fila do Google Drive.`) }
+      if (alive.current) { setTitle(''); onUploaded(); say(`${proposal ? 'Proposta anexada' : 'Documento anexado'}. O PDF foi salvo no DUUK PAINEL ADMINISTRATIVO e entrou na fila do Google Drive.`) }
     } catch (cause) { if (alive.current) say(cause.message, true) } finally { working.current = false; if (alive.current) setBusy(false) }
   }
   return <div className="drive-upload" aria-busy={busy}>

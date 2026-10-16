@@ -64,6 +64,7 @@ export function providerFailure(status) {
  if(status===429)return new PluggyError('O limite de consultas do Meu Pluggy foi atingido. Aguarde antes de atualizar.',429)
  return new PluggyError('O Meu Pluggy está indisponível. Tente novamente; seus registros financeiros foram preservados.')
 }
+/** @param {any} credentials @param {{fetcher?: typeof fetch, signal?: AbortSignal}} [options] */
 export async function createPluggyClient(credentials,{fetcher=fetch,signal}={}) {
  async function call(path,init={}) {
   const response=await fetcher(pluggyOrigin+path,{...init,signal,redirect:'error',headers:{'Content-Type':'application/json',...(init.headers||{})}})

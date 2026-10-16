@@ -1,5 +1,15 @@
 # Fluxo de trabalho da DUUK
 
+## Segurança e identificação — 2.4.0
+
+- Em 16/10/2026 o usuário pediu auditoria/correção sem custos, o nome **DUUK PAINEL ADMINISTRATIVO** e confirmou **TOTP obrigatório para toda a equipe**. Preserve a logo original; não adicione referências ao painel nas páginas públicas. Nome curto da PWA: DUUK PAINEL. Não restaure histórico ou janelas de novidades.
+- `duuk_private.has_permission` exige sessão existente em `auth.sessions`, usuário correspondente, AAL2, expiração válida e o fator TOTP verificado associado à sessão. A RPC `duuk_authorize_session` é exclusiva de `service_role`. `member()` verifica o JWT pelo Auth antes de ler claims e repete a checagem de sessão. Nunca use só o gate visual ou o `member_permission(actor,...)` de jobs para autorizar navegadores.
+- O helper de visibilidade Drive exige a checagem central. Não permita contornar MFA pelo Storage, REST, RPC ou Edge Functions. Limite geral: 180 chamadas/minuto por membro, além dos limites menores por ação.
+- Configurações > Segurança permite autenticador de reserva e logout oficial das outras sessões. A UI não remove o último fator. Remover um autenticador renova a sessão. Perda de todos os fatores exige recuperação oficial pelo proprietário no Supabase; não invente bypass por senha/e-mail. Não configure fatores reais de pessoas para testar.
+- A conferência da senha atual usa cliente temporário sem persistência/broadcast, encerrado em `finally`; não substitua a sessão AAL2 principal por `signInWithPassword`. Senhas criadas/redefinidas no painel: 12–128 caracteres; isso não altera a política global do Auth. Manter conectado começa desmarcado.
+- CORS de produção só aceita domínios DUUK. `DUUK_ALLOW_LOCAL_ORIGINS=true` é exclusivo de desenvolvimento e não foi habilitado em produção. CSP privada permite apenas scripts próprios; o site público usa os hosts específicos do projeto para conexões. Regras privadas incluem o shell direto e a PWA.
+- Migração/fixture: `20261016065523_duuk_session_mfa_security.sql` e `supabase/tests/session-mfa-security.sql`. Relatório: `docs/security-audit-2026-10-16.md`. Preserve as alterações locais anteriores em `src/office/ContractsPage.jsx` e `tests/e2e/contracts.mjs`, excluídas desta tarefa.
+
 ## Refinamentos e notificações — 2.3.0
 
 - Não mostre janela de novidades nem histórico de versões. Sobre mantém somente identificação, versão/data reais, consulta e atualização explícita. A instalação também usa o loader mínimo, com a situação real; preserve formulários pendentes.

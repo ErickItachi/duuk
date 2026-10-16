@@ -12,7 +12,7 @@ const modes = [
   { id: 'script', icon: 'film', label: 'Criar roteiro', description: 'Imagem, som e uma história que funciona.', prompt: 'Quero criar um roteiro audiovisual. Meu briefing é: ' },
   { id: 'concept', icon: 'spark', label: 'Desenvolver conceito', description: 'Encontre a ideia que sustenta o filme.', prompt: 'Vamos desenvolver um conceito de campanha. A ideia inicial é: ' },
   { id: 'commercial', icon: 'briefcase', label: 'Assistente comercial', description: 'Propostas claras e conversas melhores.', prompt: 'Preciso de ajuda comercial para um projeto audiovisual: ' },
-  { id: 'help', icon: 'info', label: 'Ajuda com a DUUK', description: 'O próximo passo dentro da plataforma.', prompt: 'Como posso utilizar o DUUK Admin para ' },
+  { id: 'help', icon: 'info', label: 'Ajuda com a DUUK', description: 'O próximo passo dentro da plataforma.', prompt: 'Como posso utilizar o DUUK PAINEL ADMINISTRATIVO para ' },
 ]
 const documentTypes = [['script', 'Roteiro'], ['concept', 'Conceito'], ['proposal', 'Proposta'], ['briefing', 'Briefing'], ['other', 'Documento']]
 const consentVersion = '2026-10-09'
@@ -61,7 +61,7 @@ function Markdown({ content = '' }) {
 async function exportPdf(document) {
   const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib')
   const pdf = await PDFDocument.create(), font = await pdf.embedFont(StandardFonts.Helvetica), bold = await pdf.embedFont(StandardFonts.HelveticaBold)
-  pdf.setTitle(document.title); pdf.setAuthor('DUUK'); pdf.setCreator('DUUK Admin')
+  pdf.setTitle(document.title); pdf.setAuthor('DUUK'); pdf.setCreator('DUUK PAINEL ADMINISTRATIVO')
   const logoResponse = await fetch('/media/duuk-logo-white.png', { credentials: 'same-origin' })
   if (!logoResponse.ok) throw new Error('Não foi possível carregar a logo da DUUK. Tente novamente.')
   const logo = await pdf.embedPng(await logoResponse.arrayBuffer())
@@ -361,7 +361,7 @@ export default function AiPage({ embedded = false, context = '', notify = () => 
   const configured = status?.configured === true, lastAssistant = messages.findLastIndex(item => item.role === 'assistant')
   const suggestions = embedded ? [
     modes[0], modes[1],
-    { ...modes[3], label: 'Usar esta tela', prompt: 'Explique como usar esta tela do DUUK Admin e as principais ações disponíveis.' },
+    { ...modes[3], label: 'Usar esta tela', prompt: 'Explique como usar esta tela do DUUK PAINEL ADMINISTRATIVO e as principais ações disponíveis.' },
     { id: 'free', icon: 'edit', label: 'Melhorar um texto', prompt: 'Melhore este texto mantendo uma linguagem simples e humana: ' },
   ] : [{ id: 'free', icon: 'calendar', label: 'Agendar compromisso', prompt: 'Quero agendar um compromisso: ' }, modes[0], modes[1]]
   const actionCardProps = { options: actionOptions, optionsError: actionOptionsError, optionsLoading: actionOptionsLoading, memberId, hasPermission: auth?.hasPermission, onUpdated: actionUpdated, onDirtyChange: actionDirtyChanged, onBusyChange: actionBusyChanged, onRefreshOptions: refreshActionOptions, onSearchClients: searchActionClients, generating: busy }

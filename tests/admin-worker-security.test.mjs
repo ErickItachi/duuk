@@ -39,11 +39,13 @@ test('cached PWA document retains deployed CSP and private document protections'
 
 test('private routes restrict requests to DUUK services while public media retains compatibility', () => {
   const publicCsp = configuration.headers.find(rule => rule.source === '/(.*)').headers.find(header => header.key === 'Content-Security-Policy').value
-  assert.match(publicCsp, /connect-src 'self' https:/)
-  for (const route of ['/admin/:path*', '/assinar/:path*']) {
+  assert(!publicCsp.split(';').find(item => item.trim().startsWith('connect-src')).includes(' https: '))
+  assert.match(publicCsp, /media-src 'self' blob: https:/)
+  for (const route of ['/admin', '/admin/:path*', '/admin-shell.html', '/assinar/:path*']) {
     const csp = configuration.headers.find(rule => rule.source === route).headers.find(header => header.key === 'Content-Security-Policy').value
     const connections = csp.split(';').find(directive => directive.trim().startsWith('connect-src')).trim().split(/\s+/).slice(1)
     assert.deepEqual(connections, ["'self'", 'https://ilohuxhyfqikjlvoarts.supabase.co', 'https://ilohuxhyfqikjlvoarts.storage.supabase.co', 'wss://ilohuxhyfqikjlvoarts.supabase.co'])
+    assert.equal(csp.split(';').find(directive => directive.trim().startsWith('script-src ')).trim(), "script-src 'self'")
   }
   const transport = configuration.headers.find(rule => rule.headers.some(header => header.key === 'Strict-Transport-Security'))
   assert.equal(transport.headers[0].value, 'max-age=31536000')

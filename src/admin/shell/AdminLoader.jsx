@@ -2,7 +2,7 @@ import './admin-loader.css'
 
 // Progress moves only when a real step finishes: app, admin module, session, permissions.
 const loaderSteps = {
-  boot: 'Abrindo o DUUK Admin',
+  boot: 'Abrindo o DUUK PAINEL ADMINISTRATIVO',
   module: 'Carregando o painel',
   session: 'Verificando sua sessão',
   access: 'Conferindo suas permissões',

@@ -16,3 +16,15 @@ export const supabase = adminEnabled ? createClient(
 ) : null
 export const MEDIA_BUCKET = 'duuk-media'
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+
+// Re-authentication must not replace the active AAL2 session with a new AAL1
+// session, nor broadcast the temporary password check to the other tabs.
+export async function verifyCurrentPassword(email, password) {
+  const verifier = createClient(supabase.supabaseUrl, supabase.supabaseKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: `duuk-password-check-${crypto.randomUUID()}` },
+  })
+  try {
+    const { error } = await verifier.auth.signInWithPassword({ email, password })
+    if (error) throw new Error('A senha atual não confere ou a verificação está temporariamente limitada.')
+  } finally { await verifier.auth.signOut({ scope: 'local' }).catch(() => {}) }
+}

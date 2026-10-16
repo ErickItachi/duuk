@@ -116,7 +116,7 @@ export default function PushDevice() {
           : await Notification.requestPermission();
       if (permission !== "granted")
         throw new Error(
-          "Permita as notificações em Ajustes > Notificações > DUUK Admin e tente novamente.",
+          "Permita as notificações em Ajustes > Notificações > DUUK PAINEL ADMINISTRATIVO e tente novamente.",
         );
       const result = await notificationRequest({ action: "status" });
       const reg = await registration();
@@ -216,7 +216,7 @@ export default function PushDevice() {
     disconnected: "O cadastro deste dispositivo precisa ser reconectado",
     disabled: "Notificações ainda não ativadas neste dispositivo",
     blocked: "As notificações estão bloqueadas no aparelho",
-    install: "Abra o DUUK Admin pelo ícone da Tela de Início",
+    install: "Abra o DUUK PAINEL ADMINISTRATIVO pelo ícone da Tela de Início",
     unsupported: "Este navegador não oferece notificações",
     error: "Não foi possível verificar a conexão",
   };
@@ -290,7 +290,7 @@ export default function PushDevice() {
             <div className="ds-alert ds-alert--warning">
               <Icon name="warning" />
               <span>
-                No iPhone, abra Ajustes → Notificações → DUUK Admin → Permitir
+                No iPhone, abra Ajustes → Notificações → DUUK PAINEL ADMINISTRATIVO → Permitir
                 Notificações. Confira também o modo Foco e o Resumo Agendado.
               </span>
             </div>
@@ -351,7 +351,7 @@ export default function PushDevice() {
             onClick={pwa.install}
           >
             <Icon name="download" />
-            Instalar DUUK Admin
+            Instalar DUUK PAINEL ADMINISTRATIVO
           </button>
         </div>
       )}

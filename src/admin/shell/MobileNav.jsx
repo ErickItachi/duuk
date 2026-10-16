@@ -38,7 +38,7 @@ export function NavDrawer({ open, onClose, groups, folded, onToggleGroup, notify
     if (!open && element.open) element.close()
   }, [open])
   const settings = pathname.startsWith('/admin/configuracoes')
-  return <dialog ref={dialog} className="ds-drawer admin-popover" aria-label="Menu do DUUK Admin" onCancel={event => { event.preventDefault(); onClose() }} onClose={() => { if (open) onClose() }} onClick={event => { if (event.target === dialog.current) onClose() }}>
+  return <dialog ref={dialog} className="ds-drawer admin-popover" aria-label="Menu do DUUK PAINEL ADMINISTRATIVO" onCancel={event => { event.preventDefault(); onClose() }} onClose={() => { if (open) onClose() }} onClick={event => { if (event.target === dialog.current) onClose() }}>
     {open && <div className="ds-drawer__panel">
       <div className="ds-drawer__head">
         <Brand onNavigate={onClose} />

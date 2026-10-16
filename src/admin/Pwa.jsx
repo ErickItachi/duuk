@@ -40,7 +40,7 @@ export function PwaProvider({ children }) {
       if (metadata.build_id !== installedBuild) {
         setAvailable(metadata);
         setCheckStatus('available');
-        setMessage(`DUUK Admin ${metadata.version} disponível.`);
+        setMessage(`DUUK PAINEL ADMINISTRATIVO ${metadata.version} disponível.`);
       } else {
         setAvailable(null);
         setCheckStatus('current');
@@ -334,7 +334,7 @@ export function AboutAdminPage() {
   return (
     <>
       <PageTitle
-        title="Sobre o DUUK Admin"
+        title="Sobre o DUUK PAINEL ADMINISTRATIVO"
         description="O espaço da equipe. Sempre em movimento."
       />
       <div className="settings-about">
@@ -350,7 +350,7 @@ export function AboutAdminPage() {
               alt=""
             />
             <div>
-              <h2 id="settings-about-title">DUUK Admin</h2>
+              <h2 id="settings-about-title">DUUK PAINEL ADMINISTRATIVO</h2>
               <p>
                 Versão instalada <strong>{currentRelease.version}</strong>
               </p>

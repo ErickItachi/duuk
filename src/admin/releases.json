@@ -1,5 +1,19 @@
 [
   {
+    "version": "2.4.0",
+    "date": "2026-10-16",
+    "title": "Proteção reforçada para a equipe DUUK",
+    "new": [
+      "Dois fatores obrigatórios por aplicativo autenticador gratuito.",
+      "Segurança com autenticadores de reserva e encerramento de outras sessões."
+    ],
+    "improved": [
+      "Sessões encerradas bloqueadas no banco e nas funções privadas.",
+      "Proteções do navegador e controle de origem reforçados.",
+      "Novo nome: DUUK PAINEL ADMINISTRATIVO."
+    ]
+  },
+  {
     "version": "2.3.0",
     "date": "2026-10-15",
     "title": "Mais clareza no dia a dia",

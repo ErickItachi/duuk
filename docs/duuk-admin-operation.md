@@ -1,4 +1,10 @@
-# Operação do DUUK Admin
+# Operação do DUUK PAINEL ADMINISTRATIVO
+
+## Segurança e acesso — 2.4.0
+
+Toda a equipe usa senha e TOTP gratuito, conforme escolha do proprietário em 16/10/2026. No primeiro acesso, adicione a DUUK ao autenticador e confirme o código antes de abrir os módulos. Configurações > Segurança permite cadastrar outro autenticador, preserva o último e oferece encerrar outras sessões sem sair do aparelho atual. Guarde a chave em local seguro; sem nenhum fator, a recuperação precisa do gerenciamento oficial do Supabase pelo proprietário, sem bypass por e-mail/senha.
+
+RLS e Edge Functions verificam a sessão atual e o fator, bloqueando tokens de sessões encerradas antes da expiração. Migração, evidências, custos, limites e cuidados de recuperação estão em [security-audit-2026-10-16.md](security-audit-2026-10-16.md). Não ative proteção de senhas vazadas paga para eliminar o aviso do advisor. PWA já instalada deve receber atualização explícita; preserve formulários pendentes.
 
 ## Refinamentos, notificações e e-mail — 2.3.0
 

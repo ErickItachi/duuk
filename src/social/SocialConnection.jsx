@@ -176,7 +176,7 @@ function AppSettings({ status, reload, notify }) {
   }
   const remove = async () => {
     await socialRequest({ action: 'remove_app', expected_version: status.version })
-    notify('App do Instagram removido do DUUK Admin.')
+    notify('App do Instagram removido do DUUK PAINEL ADMINISTRATIVO.')
     await reload()
   }
   return <form className="ds-card social-app" onSubmit={save} noValidate>

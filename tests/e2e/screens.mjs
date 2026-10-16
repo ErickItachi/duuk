@@ -74,7 +74,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const full = process.argv.includes('--full')
   await mkdir(out, { recursive: true })
   const { server, origin } = await startServer()
-  const browser = await chromium.launch()
+  const browser = await chromium.launch(process.env.DUUK_BROWSER_PATH ? { executablePath: process.env.DUUK_BROWSER_PATH } : { channel: 'chrome' })
   const report = []
   try {
     for (const route of routes) for (const theme of themes) for (const width of widths) {

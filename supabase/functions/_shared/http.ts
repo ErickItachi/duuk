@@ -1,11 +1,13 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2'
+import { verifiedSessionClaims } from './session-claims.mjs'
 
 export class HttpError extends Error { constructor(message: string, public status = 400) { super(message) } }
 export const database = () => createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false, autoRefreshToken: false } })
 export function cors(req: Request) {
   const origin = req.headers.get('origin') || ''
-  if (origin && !['https://www.duukfilms.com','https://duukfilms.com'].includes(origin) && !/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin) && !/^https:\/\/duuk-[a-z0-9-]+-duuk1\.vercel\.app$/.test(origin)) throw new HttpError('Origem não permitida.',403)
-  return { 'Access-Control-Allow-Origin': origin || 'https://www.duukfilms.com', 'Access-Control-Allow-Headers': 'authorization,x-client-info,apikey,content-type,x-supabase-client-platform,x-supabase-client-platform-version,x-supabase-client-runtime,x-supabase-client-runtime-version', 'Access-Control-Allow-Methods':'POST,OPTIONS', 'Vary':'Origin', 'Cache-Control':'no-store' }
+  const local = Deno.env.get('DUUK_ALLOW_LOCAL_ORIGINS') === 'true' && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)
+  if (origin && !['https://www.duukfilms.com','https://duukfilms.com'].includes(origin) && !local) throw new HttpError('Origem não permitida.',403)
+  return { 'Access-Control-Allow-Origin': origin || 'https://www.duukfilms.com', 'Access-Control-Allow-Headers': 'authorization,x-client-info,apikey,content-type,x-supabase-client-platform,x-supabase-client-platform-version,x-supabase-client-runtime,x-supabase-client-runtime-version', 'Access-Control-Allow-Methods':'POST,OPTIONS', 'Vary':'Origin', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff', 'Referrer-Policy':'no-referrer' }
 }
 export function json(data: unknown, headers: Record<string,string>, status = 200) { return new Response(JSON.stringify(data), {status,headers:{...headers,'Content-Type':'application/json'}}) }
 export function checked<T>(result: { data: T, error: any }): T { if (result.error) { const code=String(result.error.code||''); if(!code.startsWith('PT'))console.error(JSON.stringify({source:'database',code})); throw new HttpError(code.startsWith('PT') ? result.error.message : 'Não foi possível concluir a operação.',code.startsWith('PT') ? Number(code.slice(2)) : 500) } return result.data }
@@ -14,8 +16,13 @@ export async function member(req: Request, db: ReturnType<typeof database>, perm
   if (!token) throw new HttpError('Entre no painel.',401)
   const { data, error } = await db.auth.getUser(token)
   if (error || !data.user) throw new HttpError('Sua sessão expirou. Entre novamente.',401)
+  const claims = verifiedSessionClaims(token)
+  if (!claims) throw new HttpError('Confirme os dois fatores para acessar o painel.',403)
+  const valid = checked(await db.rpc('duuk_authorize_session',{actor:data.user.id,...claims}))
+  if (!valid) throw new HttpError('Sua sessão foi encerrada. Entre novamente e confirme os dois fatores.',401)
   const allowed = checked(await db.rpc('duuk_check_permission',{actor:data.user.id,requested:permission}))
   if (!allowed) throw new HttpError('Sua conta não tem acesso a este módulo.',403)
+  await rateLimit(db,data.user.id,'admin-request',180)
   return data.user
 }
 export const admin = (req: Request, db: ReturnType<typeof database>) => member(req,db,'contracts')

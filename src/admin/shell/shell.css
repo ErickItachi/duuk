@@ -64,7 +64,7 @@
 .ds-brand, .ds-brand:hover, .ds-brand:focus-visible, .ds-topbar__brand:focus-visible { background: transparent !important; box-shadow: none; }
 /* The original PNG keeps its proportions and transparency; only the light admin turns it black. */
 .ds-brand img { display: block; flex-shrink: 0; width: auto; height: 24px; filter: var(--ds-logo-filter); }
-.ds-brand span { padding-left: 10px; border-left: 1px solid var(--ds-border-strong); color: var(--ds-text-2); font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); letter-spacing: 0; line-height: 16px; white-space: nowrap; }
+.ds-brand span { padding-left: 10px; border-left: 1px solid var(--ds-border-strong); color: var(--ds-text-2); font-size: 10px; font-weight: var(--ds-weight-medium); letter-spacing: .06em; line-height: 13px; white-space: nowrap; }
 
 /* ---------- Sidebar ---------- */
 .ds-sidebar { position: sticky; top: 0; z-index: 40; display: flex; flex-direction: column; height: 100vh; height: 100dvh; min-width: 0; border-right: 1px solid var(--ds-border); background: var(--ds-bg-subtle); overflow: hidden; }

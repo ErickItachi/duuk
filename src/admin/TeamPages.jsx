@@ -1,7 +1,7 @@
 import { useUnsavedChanges } from "./unsavedChanges";
 import { Link } from "react-router-dom";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { supabase } from "../content/supabase";
+import { supabase, verifyCurrentPassword } from "../content/supabase";
 import { useAuth } from "../content/AuthContext";
 import { useQuery } from "../office/useQuery";
 import { teamRequest, rows } from "./api";
@@ -46,8 +46,8 @@ function emailError(value) {
     : "";
 }
 const passwordError = (value) =>
-  value.length < 8 || value.length > 128
-    ? "Use uma senha entre 8 e 128 caracteres."
+  value.length < 12 || value.length > 128
+    ? "Use uma senha entre 12 e 128 caracteres."
     : "";
 const onlyErrors = (errors) =>
   Object.fromEntries(Object.entries(errors).filter(([, message]) => message));
@@ -254,10 +254,10 @@ function UserEditor({ user, roles, onClose, onSaved }) {
               value={form.password}
               onChange={(v) => update("password", v)}
               error={errors.password}
-              hint="Entre 8 e 128 caracteres."
+              hint="Entre 12 e 128 caracteres."
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={12}
               maxLength={128}
             />
           )}
@@ -356,9 +356,9 @@ function PasswordReset({ user, onClose, notify }) {
               setFieldError("");
             }}
             error={fieldError}
-            hint="Entre 8 e 128 caracteres."
+            hint="Entre 12 e 128 caracteres."
             autoComplete="new-password"
-            minLength={8}
+            minLength={12}
             maxLength={128}
             required
           />
@@ -1223,12 +1223,9 @@ export function ProfilePage({ notify }) {
     if (Object.keys(found).length) return focusFirstInvalid(e.currentTarget);
     setBusy("security");
     try {
-      const verify = await supabase.auth.signInWithPassword({
-        email: auth.user.email,
-        password: currentPassword,
-      });
-      if (verify.error) throw new Error("A senha atual não confere.");
+      await verifyCurrentPassword(auth.user.email, currentPassword);
       const result = await supabase.auth.updateUser({
+        current_password: currentPassword,
         ...(email !== auth.user.email ? { email } : {}),
         ...(password ? { password } : {}),
       });
@@ -1412,9 +1409,9 @@ export function ProfilePage({ notify }) {
               label="Nova senha"
               optional
               autoComplete="new-password"
-              minLength={8}
+              minLength={12}
               maxLength={128}
-              hint="Entre 8 e 128 caracteres. Deixe em branco para manter a atual."
+              hint="Entre 12 e 128 caracteres. Deixe em branco para manter a atual."
               value={password}
               onChange={editSecurity("password", setPassword)}
               error={securityErrors.password}

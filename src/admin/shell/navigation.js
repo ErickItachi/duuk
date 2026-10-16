@@ -35,13 +35,14 @@ export const navGroups = [
 
 export const settingsItems = [
   { to: '/admin/configuracoes/perfil', label: 'Meu perfil', icon: 'user' },
+  { to: '/admin/configuracoes/seguranca', label: 'Segurança', icon: 'shield' },
   { to: '/admin/configuracoes/notificacoes', label: 'Notificações', icon: 'bell' },
   { to: '/admin/configuracoes/integracoes', label: 'Integrações', icon: 'link' },
   { to: '/admin/configuracoes/usuarios', label: 'Usuários', icon: 'users', permission: 'team' },
   { to: '/admin/configuracoes/grupos', label: 'Grupos de acesso', icon: 'shield', permission: 'permissions' },
   { to: '/admin/configuracoes/permissoes', label: 'Permissões individuais', icon: 'lock', permission: 'permissions' },
   { to: '/admin/configuracoes/historico', label: 'Histórico de alterações', icon: 'history', permission: 'audit' },
-  { to: '/admin/configuracoes/sobre', label: 'Sobre o DUUK Admin', icon: 'info' },
+  { to: '/admin/configuracoes/sobre', label: 'Sobre o DUUK PAINEL ADMINISTRATIVO', icon: 'info' },
 ]
 
 const extraRoutes = [

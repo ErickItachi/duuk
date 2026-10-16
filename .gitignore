@@ -12,6 +12,12 @@ dist
 dist-ssr
 test-results/
 *.local
+.env
+.env.*
+!.env.example
+!.env.*.example
+.vercel/
+supabase/.temp/
 
 # Editor directories and files
 .vscode/*

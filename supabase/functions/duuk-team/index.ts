@@ -20,8 +20,8 @@ const emailOf = (v: unknown) => {
 };
 const passwordOf = (v: unknown) => {
   const p = String(v || "");
-  if (p.length < 8 || p.length > 128)
-    throw new HttpError("Use uma senha entre 8 e 128 caracteres.");
+  if (p.length < 12 || p.length > 128)
+    throw new HttpError("Use uma senha entre 12 e 128 caracteres.");
   return p;
 };
 handler(async (req, headers) => {

@@ -3,8 +3,9 @@ import { AuthContext } from './AuthContext'
 import { supabase } from './supabase'
 import { teamRequest, notificationRequest } from '../admin/api'
 import { adminAuthStorageKey, clearAdminAuthStorage, endAdminSession, removeDeviceSubscription } from './sessionExit.mjs'
+import { mfaRequirement } from './mfa.mjs'
 
-const empty = { ready: !supabase, stage: 'session', user: null, profile: null, permissions: {}, isAdmin: false, error: '' }
+const empty = { ready: !supabase, stage: 'session', user: null, profile: null, permissions: {}, isAdmin: false, mfa: null, error: '' }
 export function AuthProvider({ children }) {
   const [state, setState] = useState(empty)
   const [presence, setPresence] = useState({ ready: false, ids: [] })
@@ -20,11 +21,16 @@ export function AuthProvider({ children }) {
       if (!session) { if (active.current && current === revision.current) setState({ ...empty, ready: true }); return }
       const { data: { user }, error } = await supabase.auth.getUser()
       if (error) throw error
+      const mfa = await mfaRequirement(supabase.auth)
+      if (mfa) {
+        if (active.current && current === revision.current) setState({ ...empty, ready: true, user, mfa })
+        return
+      }
       // The start screen reports the real step: the session is valid, permissions come next.
       if (active.current && current === revision.current) setState(previous => previous.ready ? previous : { ...previous, stage: 'access' })
       try {
         const context = await teamRequest({ action: 'context' })
-        if (active.current && current === revision.current) setState({ ready: true, user, ...context, isAdmin: true, error: '' })
+        if (active.current && current === revision.current) setState({ ready: true, user, ...context, isAdmin: true, mfa: null, error: '' })
       } catch (cause) {
         if (active.current && current === revision.current) setState(previous => navigator.onLine === false && previous.isAdmin ? { ...previous, ready: true } : { ...empty, ready: true, user, error: cause.message })
       }

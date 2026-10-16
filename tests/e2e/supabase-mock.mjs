@@ -9,7 +9,7 @@ const randomId = () => crypto.randomUUID()
 function base64url(value) { return Buffer.from(JSON.stringify(value)).toString('base64url') }
 export function fakeSession(user, now = Date.now()) {
   const exp = Math.floor(now / 1000) + 60 * 60 * 24 * 365
-  const token = `${base64url({ alg: 'HS256', typ: 'JWT' })}.${base64url({ sub: user.id, email: user.email, role: 'authenticated', aud: 'authenticated', exp })}.test-signature`
+  const token = `${base64url({ alg: 'HS256', typ: 'JWT' })}.${base64url({ sub: user.id, email: user.email, role: 'authenticated', aud: 'authenticated', exp, aal: 'aal2', session_id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', amr: [{ method: 'password', timestamp: Math.floor(now / 1000) }, { method: 'totp', timestamp: Math.floor(now / 1000) }] })}.test-signature`
   return { access_token: token, token_type: 'bearer', expires_in: 3600 * 24 * 365, expires_at: exp, refresh_token: 'test-refresh-token', user }
 }
 
@@ -67,6 +67,7 @@ function filterRows(rows, params) {
 export function createSupabaseMock({ user, profile, permissions, tables = {}, rpc = {}, functions = {}, log = () => {} }) {
   const store = clone(tables)
   const calls = []
+  user = { factors: [{ id: 'ffffffff-ffff-4fff-8fff-ffffffffffff', factor_type: 'totp', friendly_name: 'Autenticador de teste', status: 'verified' }], ...user }
   const session = fakeSession(user)
   async function handle(route) {
     const request = route.request(), url = new URL(request.url()), path = url.pathname, method = request.method()

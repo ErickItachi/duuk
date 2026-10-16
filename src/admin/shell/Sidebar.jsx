@@ -10,9 +10,9 @@ export function NavIcon({ item, size = 18 }) {
 }
 
 export function Brand({ rail = false, onNavigate }) {
-  return <Link className="ds-brand" to="/admin" onClick={onNavigate} aria-label="DUUK Admin, visão geral" data-ds-tooltip={rail ? 'Visão geral' : undefined}>
+  return <Link className="ds-brand" to="/admin" onClick={onNavigate} aria-label="DUUK PAINEL ADMINISTRATIVO, visão geral" data-ds-tooltip={rail ? 'Visão geral' : undefined}>
     <img src="/media/duuk-logo-white.png" width="718" height="886" alt="" />
-    <span>Admin</span>
+    <span>PAINEL<br />ADMINISTRATIVO</span>
   </Link>
 }
 
@@ -68,7 +68,7 @@ export default function Sidebar({ groups, rail, canCollapse, onToggleCollapse, f
   const { pathname } = useLocation()
   const settings = pathname.startsWith('/admin/configuracoes')
   const [aside, tip] = useRailTooltip(rail)
-  return <aside ref={aside} className={`ds-sidebar${rail ? ' is-rail' : ''}`} aria-label="Menu do DUUK Admin">
+  return <aside ref={aside} className={`ds-sidebar${rail ? ' is-rail' : ''}`} aria-label="Menu do DUUK PAINEL ADMINISTRATIVO">
     {tip && <span className="ds-rail-tooltip" role="presentation" style={{ top: tip.top, left: tip.left }}>{tip.label}</span>}
     <div className="ds-sidebar__head">
       <Brand rail={rail} onNavigate={onNavigate} />
@@ -81,7 +81,7 @@ export default function Sidebar({ groups, rail, canCollapse, onToggleCollapse, f
     <nav className="ds-nav" aria-label="Módulos"><NavGroups groups={groups} rail={rail} folded={folded} onToggleGroup={onToggleGroup} onNavigate={onNavigate} /></nav>
     <div className="ds-sidebar__foot">
       <NavLink to="/admin/configuracoes/perfil" className={`ds-nav__item${settings ? ' active' : ''}`} aria-current={settings ? 'page' : undefined} onClick={onNavigate} aria-label={rail ? 'Configurações' : undefined} data-ds-tooltip={rail ? 'Configurações' : undefined}><Icon name="settings" /><span>Configurações</span></NavLink>
-      <Link className="ds-sidebar__version" to="/admin/configuracoes/sobre" onClick={onNavigate} title="Sobre o DUUK Admin">{rail ? `v${currentRelease.version}` : `DUUK Admin ${currentRelease.version}`}</Link>
+      <Link className="ds-sidebar__version" to="/admin/configuracoes/sobre" onClick={onNavigate} title="Sobre o DUUK PAINEL ADMINISTRATIVO">v{currentRelease.version}</Link>
     </div>
   </aside>
 }

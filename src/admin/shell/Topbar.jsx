@@ -46,7 +46,7 @@ export function ProfileMenu({ onShortcuts, notify }) {
       <div className="ds-profile__theme"><span>Aparência</span><ThemeSelector compact /></div>
       <div className="ds-menu__separator" />
       {onShortcuts && <button type="button" className="ds-menu__item ds-profile__shortcuts" onClick={() => { close(); onShortcuts() }}><Icon name="keyboard" />Atalhos de teclado<small><kbd className="ds-kbd">?</kbd></small></button>}
-      <Link className="ds-menu__item" to="/admin/configuracoes/sobre" onClick={close}><Icon name="info" />Sobre o DUUK Admin<small>{currentRelease.version}</small></Link>
+      <Link className="ds-menu__item" to="/admin/configuracoes/sobre" onClick={close}><Icon name="info" />Sobre o DUUK PAINEL ADMINISTRATIVO<small>{currentRelease.version}</small></Link>
       <a className="ds-menu__item ds-profile__site" href="/" target="_blank" rel="noopener" onClick={close}><Icon name="external" />Ver site da DUUK</a>
       <div className="ds-menu__separator" />
       <button type="button" className="ds-menu__item ds-menu__item--danger" onClick={signOut}><Icon name="logout" />Sair da conta</button>
@@ -57,7 +57,7 @@ export function ProfileMenu({ onShortcuts, notify }) {
 export default function Topbar({ location, onMenu, onSearch, onShortcuts, notify }) {
   return <header className="ds-topbar admin-topbar">
     <button type="button" className="admin-icon-button ds-topbar__menu" onClick={onMenu} aria-label="Abrir menu" aria-haspopup="dialog"><Icon name="menu" size={20} /></button>
-    <Link className="ds-topbar__brand" to="/admin" aria-label="DUUK Admin, visão geral"><img src="/media/duuk-logo-white.png" width="718" height="886" alt="" /></Link>
+    <Link className="ds-topbar__brand" to="/admin" aria-label="DUUK PAINEL ADMINISTRATIVO, visão geral"><img src="/media/duuk-logo-white.png" width="718" height="886" alt="" /></Link>
     <nav className="ds-breadcrumb" aria-label="Você está em">
       <ol>
         {location.groupLabel && <li className="ds-breadcrumb__group">{location.parent ? <Link to={location.parent}>{location.groupLabel}</Link> : <span>{location.groupLabel}</span>}<Icon name="right" size={14} aria-hidden="true" /></li>}

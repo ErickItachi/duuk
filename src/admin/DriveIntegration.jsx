@@ -37,7 +37,7 @@ export default function DriveIntegration({ callback, notify }) {
       const result = await driveRequest({ action })
       if (action === 'start') { const url = new URL(result.url); if (url.origin !== 'https://accounts.google.com') throw new Error('O Google não confirmou o endereço de conexão.'); window.location.assign(url.href); return }
       await reload()
-      if (alive.current) notify(action === 'disconnect' ? 'Conexão central removida do DUUK Admin. Os arquivos já salvos continuam no Drive.' : 'Pendências enviadas para nova tentativa.')
+      if (alive.current) notify(action === 'disconnect' ? 'Conexão central removida do DUUK PAINEL ADMINISTRATIVO. Os arquivos já salvos continuam no Drive.' : 'Pendências enviadas para nova tentativa.')
     } catch (cause) { if (propagate) throw cause; if (alive.current) notify(cause.message, true) } finally { working.current = false; if (alive.current) setBusy('') }
   }
   const status = busy === 'callback' ? 'Concluindo conexão…' : !query.data?.configured ? 'Aguardando configuração' : !connected ? 'Nenhuma conta conectada' : connection.status === 'error' ? 'Reconexão necessária' : counts.error ? 'Conectado · documentos com erro' : counts.pending ? `Conectado · ${counts.pending} aguardando envio` : 'Conectado'
@@ -57,7 +57,7 @@ export default function DriveIntegration({ callback, notify }) {
         <div><dt>Documentos</dt><dd>{counts.synced || 0} salvos · {counts.pending || 0} pendentes · {counts.error || 0} com erro</dd></div>
       </dl>}
       {connection?.last_error && connected && <div className="drive-integration__alert"><ErrorState>{connection.last_error}</ErrorState></div>}
-      <p className="calendar-integration__privacy"><Icon name="shield" size={17} /><span>Os arquivos ficam em pastas privadas da conta {account}. O DUUK Admin só acessa o que ele mesmo criou, nunca cria links públicos e guarda as credenciais criptografadas no servidor.</span></p>
+      <p className="calendar-integration__privacy"><Icon name="shield" size={17} /><span>Os arquivos ficam em pastas privadas da conta {account}. O DUUK PAINEL ADMINISTRATIVO só acessa o que ele mesmo criou, nunca cria links públicos e guarda as credenciais criptografadas no servidor.</span></p>
       {!query.data.configured && <div className="ds-alert ds-alert--info drive-integration__alert"><Icon name="info" /><span>A administração precisa concluir a configuração do aplicativo no Google Cloud e ativar a Google Drive API. A conexão ficará disponível aqui assim que estiver pronta.</span></div>}
       <div className="calendar-integration__actions">
         <button type="button" className={`admin-button${connected && connection.status === 'connected' ? ' admin-button--secondary' : ''}`} disabled={!!busy || !query.data.configured} aria-busy={busy === 'start'} onClick={() => act('start')}><Icon name="link" />{busy === 'start' ? 'Abrindo Google…' : connected ? 'Reconectar conta' : 'Conectar Google Drive'}</button>
@@ -66,6 +66,6 @@ export default function DriveIntegration({ callback, notify }) {
         {connected && <button type="button" className="admin-text-button drive-integration__end" disabled={!!busy} aria-busy={busy === 'disconnect'} onClick={() => setDisconnect(true)}>{busy === 'disconnect' ? 'Desconectando…' : 'Desconectar conta'}</button>}
       </div>
     </>}
-    {disconnect && <ConfirmModal title="Desconectar Google Drive?" message="A conexão central será removida do DUUK Admin. Os arquivos já salvos continuam no Drive e os registros são preservados. Novos documentos ficam pendentes até reconectar. As agendas Google dos membros continuam funcionando." action="Desconectar conta" onClose={() => setDisconnect(false)} onConfirm={() => act('disconnect', true)} />}
+    {disconnect && <ConfirmModal title="Desconectar Google Drive?" message="A conexão central será removida do DUUK PAINEL ADMINISTRATIVO. Os arquivos já salvos continuam no Drive e os registros são preservados. Novos documentos ficam pendentes até reconectar. As agendas Google dos membros continuam funcionando." action="Desconectar conta" onClose={() => setDisconnect(false)} onConfirm={() => act('disconnect', true)} />}
   </section>
 }

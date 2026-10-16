@@ -6,7 +6,7 @@ const root = new URL("../dist/", import.meta.url),
   );
 let html = await readFile(new URL("index.html", root), "utf8");
 html = html
-  .replace(/<title>[^<]*<\/title>/, "<title>DUUK Admin</title>")
+  .replace(/<title>[^<]*<\/title>/, "<title>DUUK PAINEL ADMINISTRATIVO</title>")
   .replace(/<link[^>]*rel="icon"[^>]*>/g, "")
   .replace(
     "</head>",
@@ -15,7 +15,7 @@ html = html
   // The start screen is in the HTML itself, so it shows before any script downloads.
   .replace(
     '<div id="root"></div>',
-    '<div id="root"><div class="admin-loader" role="status" aria-live="polite" aria-busy="true" style="--admin-loader-progress:.12"><div class="admin-loader__content"><div class="admin-loader__stage"><span class="admin-loader__frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span><img class="admin-loader__logo" src="/media/duuk-logo-white.png" alt="DUUK" width="718" height="886" fetchpriority="high"></div><span class="admin-loader__progress" aria-hidden="true"><span></span></span><p class="admin-loader__label">Abrindo o DUUK Admin…</p></div></div></div>',
+    '<div id="root"><div class="admin-loader" role="status" aria-live="polite" aria-busy="true" style="--admin-loader-progress:.12"><div class="admin-loader__content"><div class="admin-loader__stage"><span class="admin-loader__frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span><img class="admin-loader__logo" src="/media/duuk-logo-white.png" alt="DUUK" width="718" height="886" fetchpriority="high"></div><span class="admin-loader__progress" aria-hidden="true"><span></span></span><p class="admin-loader__label">Abrindo o DUUK PAINEL ADMINISTRATIVO…</p></div></div></div>',
   );
 await writeFile(new URL("admin-shell.html", root), html);
 const assets = (await readdir(new URL("assets/", root)))

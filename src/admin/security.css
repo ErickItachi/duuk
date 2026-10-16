@@ -1,0 +1,18 @@
+.admin-mfa { display: grid; gap: 16px; min-width: 0; }
+.admin-mfa p { color: var(--ds-text-2); font-size: 13px; line-height: 1.65; margin: 0; }
+.admin-mfa__heading { display: flex; align-items: center; gap: 10px; }
+.admin-mfa__heading h2 { font-size: 18px; margin: 0; }
+.admin-mfa__setup { display: grid; gap: 14px; }
+.admin-mfa__qr { width: min(224px, 100%); height: auto; padding: 10px; background: #fff; border-radius: 12px; justify-self: center; }
+.admin-mfa details { font-size: 13px; }
+.admin-mfa summary { cursor: pointer; padding: 8px 0; }
+.admin-mfa__secret { display: block; padding: 12px; overflow-wrap: anywhere; user-select: all; background: var(--ds-surface); }
+.admin-mfa__code { letter-spacing: .35em; font-size: 20px !important; }
+.admin-mfa form { display: grid; gap: 16px; }
+.admin-security { display: grid; gap: 20px; max-width: 780px; }
+.admin-security .admin-panel { padding: clamp(16px, 3vw, 28px); min-width: 0; }
+.admin-security h2 { margin: 0 0 10px; font-size: 18px; }
+.admin-security p { font-size: 14px; line-height: 1.7; color: var(--ds-text-2); }
+.admin-security__factors { display: grid; gap: 12px; padding: 0; list-style: none; }
+.admin-security__factors li { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.admin-security__factors li span { flex: 1; overflow-wrap: anywhere; }

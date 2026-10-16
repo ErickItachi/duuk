@@ -8,6 +8,7 @@ import { dirtyForms } from './unsavedChanges'
 import { useContent } from '../content/useContent'
 import { useAuth } from '../content/AuthContext'
 import LoginPage from './LoginPage'
+import SecurityPage from './SecurityPage'
 import { ConfirmModal, Icon } from './components'
 import { LoadingPanel } from './forms'
 import { PwaProvider, AboutAdminPage, UpdateNotice } from './Pwa'
@@ -105,7 +106,7 @@ function AdminWorkspace() {
   const sequences = useMemo(() => Object.fromEntries(shortcutItems.map(item => [item.shortcut, () => go(item.to)])), [shortcutItems, go])
   useShortcuts({ sequences, onPalette: () => { setMenuOpen(false); setPalette(open => !open) }, onHelp: () => setHelp(true), onToggleSidebar: desktop ? toggleCollapse : null })
 
-  useEffect(() => { document.title = `${place.label} · DUUK Admin` }, [place.label])
+  useEffect(() => { document.title = `${place.label} · DUUK PAINEL ADMINISTRATIVO` }, [place.label])
   useEffect(() => {
     if (pathname === firstPath.current) return
     firstPath.current = pathname
@@ -177,6 +178,7 @@ function AdminWorkspace() {
               <Route path="grupos" element={guarded('permissions', <PermissionsPage notify={notify} />)} />
               <Route path="permissoes" element={guarded('permissions', <PermissionsPage mode="users" notify={notify} />)} />
               <Route path="perfil" element={<ProfilePage notify={notify} />} />
+              <Route path="seguranca" element={<SecurityPage />} />
               <Route path="integracoes" element={<IntegrationsPage notify={notify} />} />
               <Route path="historico" element={guarded('audit', <AuditPage />)} />
               <Route path="notificacoes" element={<NotificationSettingsPage notify={notify} />} />
@@ -188,7 +190,7 @@ function AdminWorkspace() {
           </Routes>}
         </div>
       </main>
-      <footer className="admin-footer ds-footer"><span>DUUK Admin</span><Link to="/admin/configuracoes/sobre">Versão {currentRelease.version}</Link></footer>
+      <footer className="admin-footer ds-footer"><span>DUUK PAINEL ADMINISTRATIVO</span><Link to="/admin/configuracoes/sobre">Versão {currentRelease.version}</Link></footer>
     </div>
     <BottomNav items={destinations} menuOpen={menuOpen} onMenu={() => setMenuOpen(true)} />
     <NavDrawer open={menuOpen} onClose={() => setMenuOpen(false)} groups={groups} folded={folded} onToggleGroup={toggleGroup} notify={notify} />
@@ -215,7 +217,7 @@ function AdminExperience() {
     return () => clearTimeout(timer)
   }, [auth.ready])
   useEffect(() => {
-    document.title = 'DUUK Admin'
+    document.title = 'DUUK PAINEL ADMINISTRATIVO'
     const existing = Array.from(document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"],link[rel="manifest"]'))
     const publicIcons = existing.filter(node => !node.href.includes('/admin-assets/'))
     existing.forEach(node => node.remove())
