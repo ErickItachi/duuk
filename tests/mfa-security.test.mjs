@@ -3,8 +3,17 @@ import test from 'node:test'
 import { authenticatorImage, mfaRequirement, validMfaCode } from '../src/content/mfa.mjs'
 import { verifiedSessionClaims } from '../supabase/functions/_shared/session-claims.mjs'
 import { prepareSqlFixture } from '../scripts/prepare-sql-fixture.mjs'
+import { privateEntryRedirect } from '../src/content/privateEntry.mjs'
 
 const factor = { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', status: 'verified' }
+test('private URL aliases navigate to the protected canonical document before mounting the application', () => {
+  const base = 'https://www.duukfilms.com'
+  for (const path of ['/ADMIN', '/ad%6din', '/%61dmin']) assert.equal(privateEntryRedirect(base + path + '?code=preserved#hash'), base + '/admin?code=preserved#hash')
+  assert.equal(privateEntryRedirect(base + '/Admin/agenda/'), base + '/admin/agenda/')
+  assert.equal(privateEntryRedirect(base + '/ASSINAR/abc'), base + '/assinar/abc')
+  assert.equal(privateEntryRedirect(base + '/%61dmin/project%252fkeep?state=ABC'), base + '/admin/project%252fkeep?state=ABC')
+  for (const path of ['/admin/', '/admin/agenda', '/assinar/abc', '/portfolio', '/administrator', '/admin/%broken']) assert.equal(privateEntryRedirect(base + path), null)
+})
 const client = (factors, currentLevel, error = null) => ({ mfa: {
   listFactors: async () => ({ data: { totp: factors }, error }),
   getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel }, error: null }),

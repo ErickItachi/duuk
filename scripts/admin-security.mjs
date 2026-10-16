@@ -4,7 +4,7 @@ export function adminShellHeaders(configuration) {
   const headers = new Headers({ 'Content-Type': 'text/html; charset=utf-8' })
   for (const rule of configuration.headers || []) {
     if (rule.has || rule.missing) continue
-    if (!['/(.*)', '/admin', '/admin/:path*'].includes(rule.source)) continue
+    if (!['/(.*)', '/admin', '/admin/:path*', '/admin/(.*)'].includes(rule.source)) continue
     for (const { key, value } of rule.headers || []) headers.set(key, value)
   }
   // The same cached shell serves OAuth callbacks and other private routes.

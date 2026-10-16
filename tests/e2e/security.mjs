@@ -103,4 +103,15 @@ try {
     console.log(`Security settings ${width}: reserve factor guard and scoped session revocation passed`)
     await context.close()
   }
+  for (const path of ['/ADMIN', '/ad%6din', '/%61dmin', '/Admin/']) {
+    const context = await browser.newContext({ serviceWorkers: 'block' }), page = await context.newPage(), privateCalls = []
+    await installSupabaseMock(page, { user: fixtures.user, profile: fixtures.profile, permissions: fixtures.permissions, tables: fixtures.tables(), rpc: fixtures.rpc, functions: fixtures.functions })
+    await page.route(`${SUPABASE_URL}/functions/v1/**`, route => { privateCalls.push(new URL(page.url()).pathname); return route.fallback() })
+    await page.goto(origin + path, { waitUntil: 'domcontentloaded' })
+    await page.waitForSelector('.admin-shell')
+    assert(['/admin', '/admin/'].includes(new URL(page.url()).pathname))
+    assert(privateCalls.length > 0 && privateCalls.every(path => ['/admin', '/admin/'].includes(path)))
+    console.log(`Canonical private entry ${path}: redirected before private requests`)
+    await context.close()
+  }
 } finally { await browser.close(); await new Promise(resolve => server.httpServer.close(resolve)) }

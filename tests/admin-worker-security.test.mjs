@@ -41,7 +41,7 @@ test('private routes restrict requests to DUUK services while public media retai
   const publicCsp = configuration.headers.find(rule => rule.source === '/(.*)').headers.find(header => header.key === 'Content-Security-Policy').value
   assert(!publicCsp.split(';').find(item => item.trim().startsWith('connect-src')).includes(' https: '))
   assert.match(publicCsp, /media-src 'self' blob: https:/)
-  for (const route of ['/admin', '/admin/:path*', '/admin-shell.html', '/assinar/:path*']) {
+  for (const route of ['/admin', '/admin/:path*', '/admin/(.*)', '/admin-shell.html', '/assinar/:path*', '/assinar/(.*)']) {
     const csp = configuration.headers.find(rule => rule.source === route).headers.find(header => header.key === 'Content-Security-Policy').value
     const connections = csp.split(';').find(directive => directive.trim().startsWith('connect-src')).trim().split(/\s+/).slice(1)
     assert.deepEqual(connections, ["'self'", 'https://ilohuxhyfqikjlvoarts.supabase.co', 'https://ilohuxhyfqikjlvoarts.storage.supabase.co', 'wss://ilohuxhyfqikjlvoarts.supabase.co'])
