@@ -64,3 +64,25 @@ test('private API and document responses remain outside the worker cache', () =>
     assert.equal(intercepted, false, url)
   }
 })
+
+test('waiting update adds explicit recovery only to legacy cached HTML without activating or clearing assets', async () => {
+  const listeners = new Map(), headers = adminShellHeaders(configuration)
+  const oldShell = '<html><head><title>DUUK Admin</title></head><body>legacy</body></html>'
+  const old = new Map([['/admin-shell.html', new Response(oldShell, { headers })], ['/assets/legacy.js', new Response('legacy code')]])
+  const recent = new Map([['/admin-shell.html', new Response('<title>DUUK PAINEL ADMINISTRATIVO</title>')]])
+  const current = new Map(), buckets = new Map([['duuk-admin-old', old], ['duuk-admin-2.4', recent], ['unrelated', new Map()], ['duuk-admin-fixture', current]])
+  let activated = false, deleted = false
+  vm.runInNewContext(source, {
+    BUILD: 'fixture', SHELL: '<head>current</head>', SHELL_HEADERS: headers, ASSETS: ['/admin-assets/login-recovery.js'],
+    self: { location: { origin: 'https://www.duukfilms.com' }, addEventListener: (event, listener) => listeners.set(event, listener), skipWaiting: () => { activated = true } },
+    caches: { keys: async () => [...buckets.keys()], delete: () => { deleted = true }, open: async key => ({ match: async path => buckets.get(key)?.get(path)?.clone(), put: async (path, response) => buckets.get(key).set(path, response), addAll: async () => {} }) },
+    URL, Response, Map, Set,
+  })
+  let installed; listeners.get('install')({ waitUntil: promise => { installed = promise } }); await installed
+  const patched = old.get('/admin-shell.html')
+  assert.match(await patched.clone().text(), /<script src="\/admin-assets\/login-recovery.js" defer><\/script><\/head>/)
+  assert.equal(patched.headers.get('content-security-policy'), headers['content-security-policy'])
+  assert.equal(await old.get('/assets/legacy.js').text(), 'legacy code')
+  assert.equal(await recent.get('/admin-shell.html').text(), '<title>DUUK PAINEL ADMINISTRATIVO</title>')
+  assert.equal(activated, false); assert.equal(deleted, false)
+})

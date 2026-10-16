@@ -12,6 +12,22 @@ self.addEventListener("install", (event) =>
         }),
       );
       await cache.addAll(ASSETS);
+      // Pre-MFA versions only offered updates inside the authenticated shell.
+      // Give their generic cached login a small, non-sensitive recovery UI.
+      // Keep its app code/assets, every open document and all credentials intact.
+      if (ASSETS.includes('/admin-assets/login-recovery.js')) {
+        for (const key of await caches.keys()) {
+          if (!key.startsWith('duuk-admin-') || key === CACHE) continue;
+          const previous = await caches.open(key), shell = await previous.match('/admin-shell.html');
+          if (!shell) continue;
+          const html = await shell.text();
+          if (!/<title>DUUK Admin<\/title>/.test(html) || html.includes('/admin-assets/login-recovery.js')) continue;
+          await previous.put('/admin-shell.html', new Response(
+            html.replace('</head>', '<script src="/admin-assets/login-recovery.js" defer></script></head>'),
+            { headers: shell.headers },
+          ));
+        }
+      }
       // Updating workers wait for explicit SKIP_WAITING from an acknowledged client.
     })(),
   ),

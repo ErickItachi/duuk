@@ -1,13 +1,16 @@
 // The browser controls the challenge UI. Database policies and every private
 // Edge Function independently enforce the same requirement.
-export async function mfaRequirement(auth) {
+export const mfaRequiredMessage = 'Confirme os dois fatores para acessar o painel.'
+export const requiresMfaConfirmation = error => error?.message === mfaRequiredMessage
+
+export async function mfaRequirement(auth, { requireChallenge = false, token } = {}) {
   const [factors, assurance] = await Promise.all([
-    auth.mfa.listFactors(), auth.mfa.getAuthenticatorAssuranceLevel(),
+    auth.mfa.listFactors(), auth.mfa.getAuthenticatorAssuranceLevel(token),
   ])
   if (factors.error || assurance.error) throw new Error('Não foi possível verificar os dois fatores. Tente novamente.')
   const verified = (factors.data?.totp || []).filter(factor => factor.status === 'verified')
   if (!verified.length) return { step: 'enroll', factors: [] }
-  if (assurance.data?.currentLevel !== 'aal2') return { step: 'challenge', factors: verified }
+  if (requireChallenge || assurance.data?.currentLevel !== 'aal2') return { step: 'challenge', factors: verified }
   return null
 }
 

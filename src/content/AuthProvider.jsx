@@ -3,7 +3,7 @@ import { AuthContext } from './AuthContext'
 import { supabase } from './supabase'
 import { teamRequest, notificationRequest } from '../admin/api'
 import { adminAuthStorageKey, clearAdminAuthStorage, endAdminSession, removeDeviceSubscription } from './sessionExit.mjs'
-import { mfaRequirement } from './mfa.mjs'
+import { mfaRequirement, requiresMfaConfirmation } from './mfa.mjs'
 
 const empty = { ready: !supabase, stage: 'session', user: null, profile: null, permissions: {}, isAdmin: false, mfa: null, error: '' }
 export function AuthProvider({ children }) {
@@ -19,9 +19,9 @@ export function AuthProvider({ children }) {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       if (sessionError) throw sessionError
       if (!session) { if (active.current && current === revision.current) setState({ ...empty, ready: true }); return }
-      const { data: { user }, error } = await supabase.auth.getUser()
+      const { data: { user }, error } = await supabase.auth.getUser(session.access_token)
       if (error) throw error
-      const mfa = await mfaRequirement(supabase.auth)
+      const mfa = await mfaRequirement(supabase.auth, { token: session.access_token })
       if (mfa) {
         if (active.current && current === revision.current) setState({ ...empty, ready: true, user, mfa })
         return
@@ -29,9 +29,16 @@ export function AuthProvider({ children }) {
       // The start screen reports the real step: the session is valid, permissions come next.
       if (active.current && current === revision.current) setState(previous => previous.ready ? previous : { ...previous, stage: 'access' })
       try {
-        const context = await teamRequest({ action: 'context' })
+        const context = await teamRequest({ action: 'context' }, { headers: { Authorization: `Bearer ${session.access_token}` } })
         if (active.current && current === revision.current) setState({ ready: true, user, ...context, isAdmin: true, mfa: null, error: '' })
       } catch (cause) {
+        // A server request for MFA is a login step, never an account denial.
+        // Re-challenge even if a cached/local assurance result said AAL2.
+        if (requiresMfaConfirmation(cause)) {
+          const pending = await mfaRequirement(supabase.auth, { requireChallenge: true, token: session.access_token })
+          if (active.current && current === revision.current) setState({ ...empty, ready: true, user, mfa: pending })
+          return
+        }
         if (active.current && current === revision.current) setState(previous => navigator.onLine === false && previous.isAdmin ? { ...previous, ready: true } : { ...empty, ready: true, user, error: cause.message })
       }
     } catch {

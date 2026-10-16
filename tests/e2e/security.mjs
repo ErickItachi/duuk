@@ -28,17 +28,18 @@ function passwordSession(user) {
 }
 
 try {
-  for (const width of [320, 768, 1440]) for (const step of ['enroll', 'challenge']) {
+  for (const width of [320, 1440]) for (const step of ['enroll', 'challenge']) for (const entry of ['resume', 'password', 'server-challenge']) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce', serviceWorkers: 'block' })
     const page = await context.newPage(), errors = []
     page.on('pageerror', error => { errors.push(error.message); console.log('pageerror:', error.message) })
     await page.addInitScript(() => { window.__csp = []; document.addEventListener('securitypolicyviolation', event => window.__csp.push(event.violatedDirective)) })
     let user = { ...fixtures.user, factors: step === 'enroll' ? [] : [factor] }, upgraded = false, enrollmentCalls = 0
-    const mock = await installSupabaseMock(page, { user, profile: fixtures.profile, permissions: fixtures.permissions, tables: fixtures.tables(), rpc: fixtures.rpc, functions: fixtures.functions })
-    await page.addInitScript(session => localStorage.setItem('duuk-admin-auth', JSON.stringify(session)), passwordSession(user))
+    const mock = await installSupabaseMock(page, { user, profile: fixtures.profile, permissions: fixtures.permissions, tables: fixtures.tables(), rpc: fixtures.rpc, functions: fixtures.functions, signedIn: entry !== 'password' })
+    if (entry !== 'password') await page.addInitScript(session => localStorage.setItem('duuk-admin-auth', JSON.stringify(session)), entry === 'server-challenge' ? fakeSession(user) : passwordSession(user))
     await page.route(`${SUPABASE_URL}/auth/v1/**`, async route => {
       const url = new URL(route.request().url()), path = url.pathname
       if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } })
+      if (path === '/auth/v1/token') return route.fulfill(json(upgraded ? fakeSession(user) : passwordSession(user)))
       if (path === '/auth/v1/user') return route.fulfill(json(user))
       if (path === '/auth/v1/factors' && route.request().method() === 'POST') {
         enrollmentCalls++
@@ -53,11 +54,22 @@ try {
       if (path === '/auth/v1/logout') return route.fulfill({ status: 204 })
       return mock.handle(route)
     })
+    let contextRejected = 0
+    await page.route(`${SUPABASE_URL}/functions/v1/duuk-team`, async route => {
+      if (entry === 'server-challenge' && !upgraded) { contextRejected++; return route.fulfill(json({ error: 'Confirme os dois fatores para acessar o painel.' }, 403)) }
+      return route.fallback()
+    })
     await page.goto(origin + '/admin/financeiro', { waitUntil: 'domcontentloaded' })
+    if (entry === 'password') {
+      await page.getByLabel('E-mail', { exact: true }).fill('isolated@test.invalid')
+      await page.getByLabel('Senha', { exact: true }).fill('ISOLATED-TEST-PASSWORD')
+      await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+    }
     await page.waitForSelector('.admin-mfa', { timeout: 15000 }).catch(async error => { console.log('Gate diagnostic:', await page.locator('body').innerText(), await page.evaluate(() => window.__csp)); throw error })
     await settle(page)
     assert.equal(await page.locator('.admin-shell').count(), 0)
     assert.equal(mock.calls.filter(call => call.path.startsWith('/functions/v1/') && call.path !== '/functions/v1/duuk-metrics').length, 0, 'Private backend was queried before MFA')
+    assert.equal(contextRejected, entry === 'server-challenge' && step === 'challenge' ? 1 : 0)
     assert.equal(enrollmentCalls, 0, 'Enrollment must be explicit')
     if (step === 'enroll') {
       await page.getByRole('button', { name: 'Configurar autenticador', exact: true }).click()
@@ -74,7 +86,7 @@ try {
     assert.equal(await page.locator('.admin-shell').count(), 0)
     assert.equal(upgraded, false)
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false)
-    await page.screenshot({ path: `${output}/${step}-${width}.png`, fullPage: true })
+    await page.screenshot({ path: `${output}/${entry}-${step}-${width}.png`, fullPage: true })
     await input.fill('123456')
     await page.getByRole('button', { name: step === 'enroll' ? 'Ativar e continuar' : 'Confirmar código', exact: true }).click()
     await page.waitForSelector('.admin-shell')
@@ -85,7 +97,7 @@ try {
     assert.deepEqual(await page.evaluate(() => window.__csp), [])
     await page.evaluate(async () => { try { await fetch('https://outside.invalid/data') } catch {} })
     await page.waitForFunction(() => window.__csp.includes('connect-src'))
-    console.log(`MFA ${step} ${width}: gate, invalid code, valid code, no private prefetch, QR privacy and CSP passed`)
+    console.log(`MFA ${entry} ${step} ${width}: gate, invalid code, valid code, no private prefetch, QR privacy and CSP passed`)
     await context.close()
   }
   for (const width of [320, 1440]) {

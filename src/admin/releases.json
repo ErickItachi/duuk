@@ -1,5 +1,12 @@
 [
   {
+    "version": "2.4.1",
+    "date": "2026-10-16",
+    "title": "Entrada no aplicativo atualizado",
+    "fixed": ["A solicitação de dois fatores pelo servidor abre o autenticador, em vez de bloquear a conta na tela de entrada.", "Versões antigas instaladas podem atualizar na própria tela de entrada, sem remover contas ou dados."],
+    "improved": ["Dois fatores obrigatórios e atualização explícita preservados."]
+  },
+  {
     "version": "2.4.0",
     "date": "2026-10-16",
     "title": "Proteção reforçada para a equipe DUUK",

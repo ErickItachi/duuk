@@ -1,9 +1,10 @@
 import { supabase } from "../content/supabase";
 
-export async function platformRequest(functionName, body) {
+export async function platformRequest(functionName, body, options = {}) {
   if (navigator.onLine === false)
     throw new Error("Você está offline. Reconecte para continuar.");
   const { data, error } = await supabase.functions.invoke(functionName, {
+    ...options,
     body,
   });
   if (error) {
@@ -17,7 +18,7 @@ export async function platformRequest(functionName, body) {
   if (data?.error) throw new Error(data.error);
   return data;
 }
-export const teamRequest = (body) => platformRequest("duuk-team", body);
+export const teamRequest = (body, options) => platformRequest("duuk-team", body, options);
 export const notificationRequest = (body) =>
   platformRequest("duuk-notifications", body);
 export const mailRequest = (body) => platformRequest("duuk-mail", body);

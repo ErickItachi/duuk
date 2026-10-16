@@ -8,7 +8,7 @@ const digest = createHash('sha256')
 for (const name of readdirSync(new URL('./src/', import.meta.url), { recursive: true }).sort()) {
   if (/\.(jsx?|mjs|json|css)$/.test(name)) digest.update(name).update(readFileSync(new URL(`./src/${name}`, import.meta.url)))
 }
-for (const name of ['scripts/admin-worker.template.js', 'scripts/build-admin-worker.mjs', 'scripts/admin-security.mjs', 'vercel.json']) {
+for (const name of ['scripts/admin-worker.template.js', 'scripts/build-admin-worker.mjs', 'scripts/admin-security.mjs', 'public/admin-assets/login-recovery.js', 'vercel.json']) {
   const content = readFileSync(new URL(`./${name}`, import.meta.url))
   // Vercel compacts this configuration before building. Hash its canonical
   // content so the same release has the same identifier locally and remotely.

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { authenticatorImage, mfaRequirement, validMfaCode } from '../src/content/mfa.mjs'
+import { authenticatorImage, mfaRequirement, validMfaCode, requiresMfaConfirmation, mfaRequiredMessage } from '../src/content/mfa.mjs'
 import { verifiedSessionClaims } from '../supabase/functions/_shared/session-claims.mjs'
 import { prepareSqlFixture } from '../scripts/prepare-sql-fixture.mjs'
 import { privateEntryRedirect } from '../src/content/privateEntry.mjs'
@@ -23,6 +23,10 @@ test('mandatory MFA gates enrollment, password-only sessions, and unverified fac
   assert.equal((await mfaRequirement(client([{ ...factor, status: 'unverified' }], 'aal2'))).step, 'enroll')
   assert.deepEqual(await mfaRequirement(client([factor], 'aal1')), { step: 'challenge', factors: [factor] })
   assert.equal(await mfaRequirement(client([factor], 'aal2')), null)
+  assert.deepEqual(await mfaRequirement(client([factor], 'aal2'), { requireChallenge: true }), { step: 'challenge', factors: [factor] })
+  assert.equal((await mfaRequirement(client([], 'aal2'), { requireChallenge: true })).step, 'enroll')
+  assert(requiresMfaConfirmation(new Error(mfaRequiredMessage)))
+  assert(!requiresMfaConfirmation(new Error('Sua conta não tem acesso a este módulo.')))
   await assert.rejects(mfaRequirement(client([], 'aal1', new Error('Network'))), /verificar os dois fatores/)
 })
 test('MFA inputs accept only six ASCII digits and QR images never use an external service', () => {

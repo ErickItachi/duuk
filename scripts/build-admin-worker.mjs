@@ -24,7 +24,7 @@ const assets = (await readdir(new URL("assets/", root)))
 const fonts = (await readdir(new URL("fonts/", root), { recursive: true }))
   .filter((f) => /\.woff2?$/.test(f))
   .map((f) => "/fonts/" + f);
-const icons = [32, 64, 180, 192, 512].map((s) => `/admin-assets/icon-${s}.png`).concat("/admin-assets/boot.js");
+const icons = [32, 64, 180, 192, 512].map((s) => `/admin-assets/icon-${s}.png`).concat("/admin-assets/boot.js", "/admin-assets/login-recovery.js");
 const source = await readFile(
   new URL("admin-worker.template.js", import.meta.url),
   "utf8",
