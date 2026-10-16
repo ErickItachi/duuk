@@ -1,5 +1,9 @@
 # Operação do DUUK PAINEL ADMINISTRATIVO
 
+## Spotify pessoal — 2.5.0
+
+Cada membro conecta a própria conta em Seu espaço > Spotify. Configuração, limites, recursos e privacidade: [spotify-setup.md](spotify-setup.md). A música usa o Embed oficial e o controle dos próprios dispositivos via API; o Spotify define disponibilidade/Premium e até cinco contas no aplicativo atual. O novo botão da IA permanece movível, com nome visível e proteção dos formulários.
+
 ## Segurança e acesso — 2.4.0
 
 Toda a equipe usa senha e TOTP gratuito, conforme escolha do proprietário em 16/10/2026. No primeiro acesso, adicione a DUUK ao autenticador e confirme o código antes de abrir os módulos. Configurações > Segurança permite cadastrar outro autenticador, preserva o último e oferece encerrar outras sessões sem sair do aparelho atual. Guarde a chave em local seguro; sem nenhum fator, a recuperação precisa do gerenciamento oficial do Supabase pelo proprietário, sem bypass por e-mail/senha.

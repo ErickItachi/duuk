@@ -27,6 +27,9 @@ export const navGroups = [
     { to: '/admin/midias', label: 'Mídias do site', icon: 'media', permission: 'site' },
     { to: '/admin/insights', label: 'Insights do site', short: 'Insights', icon: 'trend', permission: 'insights' },
   ] },
+  { id: 'music', label: 'Seu espaço', items: [
+    { to: '/admin/spotify', label: 'Spotify', icon: 'music' },
+  ] },
   // Google Drive stays the last item of the main navigation.
   { id: 'files', label: 'Arquivos', items: [
     { to: '/admin/drive', label: 'Google Drive', icon: 'drive', permission: 'drive', app: 'drive' },

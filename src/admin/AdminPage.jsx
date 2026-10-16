@@ -8,6 +8,8 @@ import { dirtyForms } from './unsavedChanges'
 import { useContent } from '../content/useContent'
 import { useAuth } from '../content/AuthContext'
 import LoginPage from './LoginPage'
+import SpotifyProvider from '../spotify/SpotifyProvider'
+import SpotifyDock from '../spotify/SpotifyDock'
 import SecurityPage from './SecurityPage'
 import { ConfirmModal, Icon } from './components'
 import { LoadingPanel } from './forms'
@@ -46,6 +48,7 @@ import './settings.css'
 import './ai-entry.css'
 import './shell/shell.css'
 const AiPage = lazy(() => import('../ai/AiPage'))
+const SpotifyPage = lazy(() => import('../spotify/SpotifyPage'))
 const SocialPage = lazy(() => import('../social/SocialPage'))
 const aiLoading = <LoadingPanel label="Abrindo DUUK AI…" />
 
@@ -159,6 +162,7 @@ function AdminWorkspace() {
             <Route index element={<DashboardPage />} />
             <Route path="ai" element={guarded('ai', <Suspense fallback={aiLoading}><AiPage notify={notify} /></Suspense>)} />
             <Route path="social/*" element={guarded('social', <Suspense fallback={<LoadingPanel label="Abrindo Social Media…" />}><SocialPage notify={notify} /></Suspense>)} />
+            <Route path="spotify" element={<Suspense fallback={<LoadingPanel label="Abrindo Spotify…" />}><SpotifyPage notify={notify} /></Suspense>} />
             <Route path="drive" element={guarded('drive', <DrivePage notify={notify} />)} />
             <Route path="portfolio" element={guarded('site', <ProjectList notify={notify} />)} />
             <Route path="inicio" element={guarded('site', <HomeEditor notify={notify} />)} />
@@ -200,6 +204,7 @@ function AdminWorkspace() {
     {aiOpen && auth.hasPermission('ai') && <AiFloatingDialog userId={auth.user.id} onClose={closeAi}><Suspense fallback={aiLoading}><AiPage embedded context={pathname} notify={notify} onDirtyChange={setAiDirty} onClose={closeAi} /></Suspense></AiFloatingDialog>}
     {aiDiscard && <ConfirmModal title="Fechar DUUK AI?" message="Há um texto ainda não enviado ou uma resposta em andamento. O histórico já salvo será preservado." action="Fechar" onConfirm={async () => { setAiOpen(false); setAiDiscard(false); setAiDirty(false) }} onClose={() => setAiDiscard(false)} />}
     {destination && <ConfirmModal title="Sair sem salvar?" message="Existem alterações pendentes nesta página. Salve antes de continuar ou descarte ao sair." action="Sair sem salvar" tone="danger" onClose={() => setDestination(null)} onConfirm={() => { focusMain.current = true; navigate(destination) }} />}
+    <SpotifyDock />
     <ToastRegion toasts={toasts} remove={remove} hold={hold} resume={resume} />
   </div>
 }
@@ -228,7 +233,7 @@ function AdminExperience() {
   }, [])
   useEffect(() => { const meta = document.querySelector('meta[data-duuk-admin-theme-meta]'); if (meta) meta.content = theme === 'light' ? '#fafafa' : '#0a0a0a' }, [theme])
   return <>
-    {auth.ready && <div className="admin-experience">{auth.isAdmin ? <NotificationProvider><AdminWorkspace /></NotificationProvider> : <LoginPage />}</div>}
+    {auth.ready && <div className="admin-experience">{auth.isAdmin ? <NotificationProvider><SpotifyProvider><AdminWorkspace /></SpotifyProvider></NotificationProvider> : <LoginPage />}</div>}
     {covered && <AdminLoader step={auth.ready ? 'ready' : auth.stage || 'session'} leaving={auth.ready} />}
   </>
 }

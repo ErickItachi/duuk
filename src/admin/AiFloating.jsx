@@ -28,6 +28,8 @@ function useFloatingPosition(ref, { userId, kind, enabled = true }) {
     if (kind === 'launcher') {
       const topbar = document.querySelector('.admin-topbar')?.getBoundingClientRect()
       if (topbar && topbar.bottom > view.top) minimum.y = Math.min(topbar.bottom + 12, maximum.y)
+      const dock = document.querySelector('.spotify-dock')?.getBoundingClientRect()
+      if (dock && dock.top < view.top + view.height) maximum.y = Math.max(minimum.y, Math.min(maximum.y, dock.top - rect.height - 12))
       const footer = document.querySelector('.admin-footer')?.getBoundingClientRect()
       if (footer && footer.bottom > view.top && footer.top < view.top + view.height) maximum.y = Math.max(minimum.y, footer.top - rect.height - 12)
       // On phones the launcher stays above the tab bar while it is visible.
@@ -55,7 +57,7 @@ function useFloatingPosition(ref, { userId, kind, enabled = true }) {
       const area = bounds()
       if (!area) return
       const stored = readPosition(storageKey)
-      fit(stored ? { x: area.view.left + stored.x * (area.view.width - area.rect.width), y: area.view.top + stored.y * (area.view.height - area.rect.height) } : { x: area.rect.left, y: area.rect.top })
+      fit(stored ? { x: area.view.left + stored.x * (area.view.width - area.rect.width), y: area.view.top + stored.y * (area.view.height - area.rect.height) } : { x: area.view.left + area.view.width - area.rect.width - 16, y: area.view.top + area.view.height - area.rect.height - 16 })
     }
     const resize = () => {
       cancelAnimationFrame(frame.current)
@@ -69,13 +71,15 @@ function useFloatingPosition(ref, { userId, kind, enabled = true }) {
     const observer = new ResizeObserver(resize)
     const content = document.querySelector('.admin-main')
     if (content) observer.observe(content)
+    const overlays = new MutationObserver(place), shell = document.querySelector('.admin-shell')
+    if (shell) overlays.observe(shell, { childList: true })
     return () => {
       cancelAnimationFrame(frame.current)
       window.removeEventListener('resize', resize)
       window.removeEventListener('scroll', resize, true)
       window.visualViewport?.removeEventListener('resize', resize)
       window.visualViewport?.removeEventListener('scroll', resize)
-      observer.disconnect()
+      observer.disconnect(); overlays.disconnect()
       gesture.current = null
     }
     // Helpers intentionally read current viewport geometry.
@@ -137,7 +141,7 @@ export function AiFloatingLauncher({ userId, onOpen }) {
   const floating = useFloatingPosition(button, { userId, kind: 'launcher' })
   return <>
     <button ref={button} type="button" className={`duuk-ai-help${floating.dragging ? ' is-dragging' : ''}`} style={floating.style} {...floating.handlers} aria-label="Abrir DUUK AI" aria-describedby={hintId} title="DUUK AI · arraste para mover" onClick={event => { if (!floating.consumeDrag(event)) onOpen() }}>
-      <span className="duuk-ai-help__spark" aria-hidden="true"><Icon name="message" size={24} /><Icon className="duuk-ai-help__glint" name="spark" size={12} /></span><span className="duuk-ai-help__label">DUUK AI</span>
+      <span className="duuk-ai-help__spark" aria-hidden="true"><Icon name="spark" size={19} /></span><span className="duuk-ai-help__label">DUUK <b>AI</b></span>
     </button>
     <span id={hintId} className="duuk-ai-floating-hint">Arraste para mudar a posição, ou use as setas do teclado. Pressione Enter para abrir.</span>
   </>

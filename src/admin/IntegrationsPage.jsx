@@ -40,6 +40,7 @@ export default function IntegrationsPage({notify}) {
   <PageTitle title="Integrações" description="Suas ferramentas, conectadas ao dia a dia da DUUK."><RefreshButton onRefresh={reload}/></PageTitle>
   <div className="settings-integrations">
    <IntegrationGroup id="integrations-account" title="Na sua conta" description="Cada pessoa conecta e autoriza a própria conta.">
+    <section className="admin-panel calendar-integration"><div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="spotify"/></span><div><h2>Spotify</h2><p>Sua biblioteca, playlists e música durante o trabalho. Cada membro conecta a própria conta.</p></div></div><div className="calendar-integration__actions"><Link className="admin-button admin-button--secondary" to="/admin/spotify"><Icon name="music"/>Abrir Spotify</Link></div></section>
     <section className="admin-panel calendar-integration" aria-labelledby="calendar-integration-title" aria-busy={query.loading&&!query.data}>
      <div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="calendar"/></span><div><p className="admin-eyebrow">AGENDA / INTEGRAÇÕES</p><h2 id="calendar-integration-title">Google Calendar</h2><p>Leve os compromissos da equipe para um calendário DUUK na sua conta.</p></div></div>
      {callbackError&&<div className="settings-integration__alert"><ErrorState>{callbackError}</ErrorState></div>}

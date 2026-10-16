@@ -1,10 +1,26 @@
 [
   {
+    "version": "2.5.0",
+    "date": "2026-10-16",
+    "title": "Seu espaço para ouvir e criar",
+    "new": [
+      "Spotify pessoal com biblioteca, busca, playlists, fila, dispositivos e player oficial."
+    ],
+    "improved": [
+      "Novo botão DUUK AI, compacto e legível no celular e no computador."
+    ]
+  },
+  {
     "version": "2.4.1",
     "date": "2026-10-16",
     "title": "Entrada no aplicativo atualizado",
-    "fixed": ["A solicitação de dois fatores pelo servidor abre o autenticador, em vez de bloquear a conta na tela de entrada.", "Versões antigas instaladas podem atualizar na própria tela de entrada, sem remover contas ou dados."],
-    "improved": ["Dois fatores obrigatórios e atualização explícita preservados."]
+    "fixed": [
+      "A solicitação de dois fatores pelo servidor abre o autenticador, em vez de bloquear a conta na tela de entrada.",
+      "Versões antigas instaladas podem atualizar na própria tela de entrada, sem remover contas ou dados."
+    ],
+    "improved": [
+      "Dois fatores obrigatórios e atualização explícita preservados."
+    ]
   },
   {
     "version": "2.4.0",
@@ -224,21 +240,34 @@
     "version": "1.7.2",
     "date": "2026-10-09",
     "title": "DUUK AI: respostas melhores e mais conforto",
-    "improved": ["Instruções específicas, contexto de ajuda relevante e escolha do modelo conforme o pedido, com continuidade nas revisões.", "Aceite de privacidade salvo na conta, disponível nos outros aparelhos e revogável pelo próprio assistente.", "Seleção e foco mais discretos no administrativo, sem os contornos vermelhos na conversa."]
+    "improved": [
+      "Instruções específicas, contexto de ajuda relevante e escolha do modelo conforme o pedido, com continuidade nas revisões.",
+      "Aceite de privacidade salvo na conta, disponível nos outros aparelhos e revogável pelo próprio assistente.",
+      "Seleção e foco mais discretos no administrativo, sem os contornos vermelhos na conversa."
+    ]
   },
   {
     "version": "1.7.1",
     "date": "2026-10-09",
     "title": "DUUK AI: conexão com Gemini",
-    "fixed": ["Compatibilidade com as novas chaves de autenticação emitidas pelo Google AI Studio, com validação real dos modelos no servidor."],
-    "improved": ["DUUK AI com interface mais limpa no painel e na ajuda contextual, no celular e no desktop."]
+    "fixed": [
+      "Compatibilidade com as novas chaves de autenticação emitidas pelo Google AI Studio, com validação real dos modelos no servidor."
+    ],
+    "improved": [
+      "DUUK AI com interface mais limpa no painel e na ajuda contextual, no celular e no desktop."
+    ]
   },
   {
     "version": "1.7.0",
     "date": "2026-10-08",
     "title": "Novo: DUUK AI",
-    "new": ["Conheça o novo assistente inteligente da DUUK. Crie roteiros audiovisuais, desenvolva conceitos criativos, prepare propostas comerciais e encontre ajuda para utilizar a plataforma.", "Conversas privadas, documentos com versões e exportação em PDF."],
-    "improved": ["Ajuda contextual nas telas do painel e conexão segura ao Gemini pelo próprio administrativo."]
+    "new": [
+      "Conheça o novo assistente inteligente da DUUK. Crie roteiros audiovisuais, desenvolva conceitos criativos, prepare propostas comerciais e encontre ajuda para utilizar a plataforma.",
+      "Conversas privadas, documentos com versões e exportação em PDF."
+    ],
+    "improved": [
+      "Ajuda contextual nas telas do painel e conexão segura ao Gemini pelo próprio administrativo."
+    ]
   },
   {
     "version": "1.6.0",
