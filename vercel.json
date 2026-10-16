@@ -75,7 +75,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://ilohuxhyfqikjlvoarts.supabase.co https://ilohuxhyfqikjlvoarts.storage.supabase.co wss://ilohuxhyfqikjlvoarts.supabase.co; worker-src 'self' blob:; frame-src 'self' https://open.spotify.com; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' https://sdk.scdn.co/spotify-player.js; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://ilohuxhyfqikjlvoarts.supabase.co https://ilohuxhyfqikjlvoarts.storage.supabase.co wss://ilohuxhyfqikjlvoarts.supabase.co; worker-src 'self' blob:; frame-src 'self' https://sdk.scdn.co/embedded/; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
         },
         {
           "key": "Referrer-Policy",
@@ -183,7 +183,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://ilohuxhyfqikjlvoarts.supabase.co https://ilohuxhyfqikjlvoarts.storage.supabase.co wss://ilohuxhyfqikjlvoarts.supabase.co; worker-src 'self' blob:; frame-src 'self' https://open.spotify.com; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' https://sdk.scdn.co/spotify-player.js; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://ilohuxhyfqikjlvoarts.supabase.co https://ilohuxhyfqikjlvoarts.storage.supabase.co wss://ilohuxhyfqikjlvoarts.supabase.co; worker-src 'self' blob:; frame-src 'self' https://sdk.scdn.co/embedded/; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
         },
         {
           "key": "Referrer-Policy",
@@ -208,7 +208,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://ilohuxhyfqikjlvoarts.supabase.co https://ilohuxhyfqikjlvoarts.storage.supabase.co wss://ilohuxhyfqikjlvoarts.supabase.co; worker-src 'self' blob:; frame-src 'self' https://open.spotify.com; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' https://sdk.scdn.co/spotify-player.js; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://ilohuxhyfqikjlvoarts.supabase.co https://ilohuxhyfqikjlvoarts.storage.supabase.co wss://ilohuxhyfqikjlvoarts.supabase.co; worker-src 'self' blob:; frame-src 'self' https://sdk.scdn.co/embedded/; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
         },
         {
           "key": "Referrer-Policy",
@@ -233,7 +233,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://ilohuxhyfqikjlvoarts.supabase.co https://ilohuxhyfqikjlvoarts.storage.supabase.co wss://ilohuxhyfqikjlvoarts.supabase.co; worker-src 'self' blob:; frame-src 'self' https://open.spotify.com; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' https://sdk.scdn.co/spotify-player.js; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://ilohuxhyfqikjlvoarts.supabase.co https://ilohuxhyfqikjlvoarts.storage.supabase.co wss://ilohuxhyfqikjlvoarts.supabase.co; worker-src 'self' blob:; frame-src 'self' https://sdk.scdn.co/embedded/; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
         },
         {
           "key": "Referrer-Policy",

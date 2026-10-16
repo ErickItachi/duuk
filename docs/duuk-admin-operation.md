@@ -1,8 +1,8 @@
 # Operação do DUUK PAINEL ADMINISTRATIVO
 
-## Spotify pessoal — 2.5.0
+## Spotify pessoal — 2.5.1
 
-Cada membro conecta a própria conta em Seu espaço > Spotify. Configuração, limites, recursos e privacidade: [spotify-setup.md](spotify-setup.md). A música usa o Embed oficial e o controle dos próprios dispositivos via API; o Spotify define disponibilidade/Premium e até cinco contas no aplicativo atual. O novo botão da IA permanece movível, com nome visível e proteção dos formulários.
+Cada membro conecta a própria conta em Seu espaço > Spotify. Configuração, limites, recursos e privacidade: [spotify-setup.md](spotify-setup.md). A música usa o Web Playback SDK oficial para faixas completas com Premium, com ativação de áudio no iPhone e escolha dos próprios dispositivos via API; o Spotify define disponibilidade/Premium e até cinco contas no aplicativo atual. O novo botão da IA permanece movível, com nome visível e proteção dos formulários.
 
 ## Segurança e acesso — 2.4.0
 

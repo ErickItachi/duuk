@@ -1,5 +1,5 @@
 export const SPOTIFY_REDIRECT = 'https://www.duukfilms.com/admin/spotify'
-export const SPOTIFY_SCOPES = ['user-read-private','user-read-playback-state','user-modify-playback-state','user-read-currently-playing','user-read-recently-played','user-top-read','user-library-read','user-library-modify','playlist-read-private','playlist-read-collaborative','playlist-modify-private','playlist-modify-public','user-follow-read','user-follow-modify'].join(' ')
+export const SPOTIFY_SCOPES = ['streaming','user-read-email','user-read-private','user-read-playback-state','user-modify-playback-state','user-read-currently-playing','user-read-recently-played','user-top-read','user-library-read','user-library-modify','playlist-read-private','playlist-read-collaborative','playlist-modify-private','playlist-modify-public','user-follow-read','user-follow-modify'].join(' ')
 export class SpotifyError extends Error { constructor(message,status=400){super(message);this.status=status;this.retryAfter=60;this.invalidGrant=false} }
 const fail = message => { throw new SpotifyError(message) }
 const id = value => /^[A-Za-z0-9]{22}$/.test(value || '') ? value : fail('Identificador Spotify inválido.')
@@ -63,9 +63,15 @@ export async function spotifyFetch(plan,token,fetcher=fetch) {
  const response=await fetcher(url,{method:plan.method,headers:{Authorization:`Bearer ${token}`,...(plan.body===undefined?{}:{'Content-Type':'application/json'})},...(plan.body===undefined?{}:{body:JSON.stringify(plan.body)}),signal:AbortSignal.timeout(15000),redirect:'error'})
  if(response.status===204)return null
  if(response.ok)return response.json()
+ const details=await response.json().catch(()=>({})),upstream=String(details?.error?.message||'').toLowerCase()
  let message='O Spotify não concluiu a operação.'
  if(response.status===401)message='Sua autorização Spotify expirou. Reconecte sua conta.'
- if(response.status===403)message='O Spotify não liberou este recurso. Confira o Premium, as contas autorizadas do aplicativo e as permissões da conexão.'
+ if(response.status===403){
+  message='O Spotify não liberou este recurso para este aplicativo. Confira o Premium e as contas autorizadas em User Management.'
+  if(/scope/.test(upstream))message='O Spotify pediu uma nova autorização. Reconecte sua conta para liberar este recurso.'
+  if(/not.*registered|not.*allowlist|not.*approved|not.*whitelist|user.*not/.test(upstream))message='Sua conta precisa ser liberada em User Management no aplicativo Spotify da DUUK. Depois, conecte novamente.'
+  if(/premium/.test(upstream))message='Este recurso exige Spotify Premium na conta conectada.'
+ }
  if(response.status===404)message='Nenhum dispositivo ativo ou item disponível. Abra o Spotify ou ative o player da DUUK.'
  if(response.status===429)message='O Spotify pediu uma pausa por limite de uso. Aguarde antes de tentar novamente.'
  const error=new SpotifyError(message,response.status);error.retryAfter=Math.min(86400,Math.max(1,Number(response.headers.get('retry-after'))||60));throw error

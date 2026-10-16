@@ -45,7 +45,8 @@ test('private routes restrict requests to DUUK services while public media retai
     const csp = configuration.headers.find(rule => rule.source === route).headers.find(header => header.key === 'Content-Security-Policy').value
     const connections = csp.split(';').find(directive => directive.trim().startsWith('connect-src')).trim().split(/\s+/).slice(1)
     assert.deepEqual(connections, ["'self'", 'https://ilohuxhyfqikjlvoarts.supabase.co', 'https://ilohuxhyfqikjlvoarts.storage.supabase.co', 'wss://ilohuxhyfqikjlvoarts.supabase.co'])
-    assert.equal(csp.split(';').find(directive => directive.trim().startsWith('script-src ')).trim(), "script-src 'self'")
+    assert.equal(csp.split(';').find(directive => directive.trim().startsWith('script-src ')).trim(), route.startsWith('/admin') ? "script-src 'self' https://sdk.scdn.co/spotify-player.js" : "script-src 'self'")
+    if(route.startsWith('/admin'))assert.equal(csp.split(';').find(directive=>directive.trim().startsWith('frame-src')).trim(),"frame-src 'self' https://sdk.scdn.co/embedded/")
   }
   const transport = configuration.headers.find(rule => rule.headers.some(header => header.key === 'Strict-Transport-Security'))
   assert.equal(transport.headers[0].value, 'max-age=31536000')

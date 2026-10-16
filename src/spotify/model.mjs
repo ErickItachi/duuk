@@ -3,11 +3,7 @@ export const spotifyLink = item => {
  const uri=typeof item==='string'?item:item?.uri,match=/^spotify:(track|episode|album|artist|playlist|show|audiobook|chapter):([A-Za-z0-9]{22})$/.exec(uri||'')
  return match?`https://open.spotify.com/${match[1]}/${match[2]}`:''
 }
-export const spotifyEmbed = item => {
- const link=spotifyLink(item)
- if(!link||/\/(artist|audiobook|chapter)\//.test(link))return ''
- return link.replace('open.spotify.com/','open.spotify.com/embed/')+'?utm_source=generator&theme=0'
-}
+export const spotifyPlayable = item => ['track','episode','album','artist','playlist'].includes(item?.type)&&Boolean(spotifyLink(item))
 export const spotifyArtwork = item => (item?.images||item?.album?.images||[]).find(image=>typeof image?.url==='string'&&image.url.startsWith('https://'))?.url||''
 export const spotifyItems = data => {
  const list=data?.items||data?.artists?.items||data?.tracks?.items||data?.albums?.items||data?.playlists?.items||data?.shows?.items||data?.episodes?.items||data?.audiobooks?.items||data?.queue||[]

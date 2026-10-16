@@ -34,21 +34,27 @@ handler(async (req,headers) => {
    return json(await rpc('status'),headers)
   }
   // Validate the bounded operation before reading credentials or making any request.
-  const plan=spotifyPlan(body)
+  const plan=body.action==='sdk_token'?null:spotifyPlan(body)
   await rateLimit(db,user.id,'spotify-api',80)
-  const credentials=await rpc('credentials');let tokens=credentials.tokens
+  const credentials=await rpc('credentials');let tokens=credentials.tokens,expiresAt=credentials.expires_at
   if(new Date(credentials.expires_at).getTime()<Date.now()+60000) {
    const lease=await rpc('claim_refresh',{generation:credentials.generation})
    const identity={generation:credentials.generation,lease_id:lease.lease_id}
    try {
     const refreshed=await spotifyTokens({client_id:credentials.client_id,grant_type:'refresh_token',refresh_token:tokens.refresh_token})
     tokens={...tokens,...refreshed,refresh_token:refreshed.refresh_token||tokens.refresh_token}
-    await rpc('rotate',{...identity,tokens,expires_at:tokenExpiry(tokens.expires_in)})
+    expiresAt=tokenExpiry(tokens.expires_in)
+    await rpc('rotate',{...identity,tokens,expires_at:expiresAt})
    } catch(cause) {
     if(cause instanceof SpotifyError && cause.invalidGrant)await rpc('reconnect',identity)
     else { await rpc('release',identity).catch(()=>{}); if(cause instanceof SpotifyError && cause.status===429)await rpc('cooldown',{seconds:cause.retryAfter}) }
     throw cause
    }
+  }
+  if(body.action==='sdk_token'){
+   const scopes=String(credentials.scopes).split(' ')
+   if(!['streaming','user-read-email','user-read-private'].every(scope=>scopes.includes(scope)))throw new HttpError('Reconecte sua conta para autorizar o player completo do Spotify.',403)
+   return json({access_token:tokens.access_token,expires_at:new Date(expiresAt).getTime()},headers)
   }
   try { return json({data:await spotifyFetch(plan,tokens.access_token)},headers) }
   catch(cause) {

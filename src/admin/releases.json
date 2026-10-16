@@ -1,5 +1,16 @@
 [
   {
+    "version": "2.5.1",
+    "date": "2026-10-16",
+    "title": "Músicas completas no seu aparelho",
+    "new": [
+      "Player oficial com músicas completas para Spotify Premium e ativação de áudio no celular."
+    ],
+    "improved": [
+      "Logo oficial no menu, seleção dos próprios dispositivos e continuidade da reprodução entre módulos."
+    ]
+  },
+  {
     "version": "2.5.0",
     "date": "2026-10-16",
     "title": "Seu espaço para ouvir e criar",

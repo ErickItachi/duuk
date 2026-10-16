@@ -1,14 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { SPOTIFY_REDIRECT, SPOTIFY_SCOPES, spotifyAuthorization, spotifyFetch, spotifyPlan, spotifyTokens, spotifyUri } from '../supabase/functions/_shared/spotify.mjs'
-import { spotifyArtwork, spotifyEmbed, spotifyItems, spotifyLink } from '../src/spotify/model.mjs'
+import { spotifyArtwork, spotifyPlayable, spotifyItems, spotifyLink } from '../src/spotify/model.mjs'
 const id='a'.repeat(22),uri='spotify:track:'+id
 const response=(status,body={},headers={})=>new Response(status===204?null:JSON.stringify(body),{status,headers:{'Content-Type':'application/json',...headers}})
 test('Spotify authorization uses fixed HTTPS callback, PKCE and individual consent without client secrets',()=>{
  const u=new URL(spotifyAuthorization('client','state','challenge'))
  assert.equal(u.origin,'https://accounts.spotify.com');assert.equal(u.pathname,'/authorize')
  assert.equal(u.searchParams.get('redirect_uri'),SPOTIFY_REDIRECT);assert.equal(u.searchParams.get('code_challenge_method'),'S256');assert.equal(u.searchParams.get('show_dialog'),'true')
- assert(!SPOTIFY_SCOPES.includes('streaming'));assert(!u.searchParams.has('client_secret'))
+ assert(SPOTIFY_SCOPES.includes('streaming'));assert(SPOTIFY_SCOPES.includes('user-read-email'));assert(!u.searchParams.has('client_secret'))
 })
 test('Spotify request planner accepts bounded resources and rejects arbitrary URLs, IDs and inputs',()=>{
  for(const body of [{action:'https://evil.invalid'},{action:'entity',type:'../../users',id},{action:'items',type:'track',id},{action:'search',q:'',type:'track'},{action:'search',q:'x',type:'arbitrary'},{action:'search',q:'x',offset:-1},{action:'volume',volume_percent:101},{action:'volume',volume_percent:null},{action:'transfer',device_id:'../../x'},{action:'play',uris:[uri],context_uri:'spotify:album:'+id},{action:'enqueue',uri:'https://evil.invalid'},{action:'playlist_add',id,uris:Array(101).fill(uri)}])assert.throws(()=>spotifyPlan(body))
@@ -37,10 +37,10 @@ test('Spotify responses preserve 204, limits and safe actionable errors without 
  assert.equal(data.expires_in,3600)
  await assert.rejects(spotifyTokens({},async()=>response(400,{error:'invalid_grant',error_description:'PRIVATE'})),e=>e.invalidGrant&&!e.message.includes('PRIVATE'))
 })
-test('Spotify UI links, images and embeds do not carry tokens or trust arbitrary URLs',()=>{
+test('Spotify UI links, artwork and playback eligibility do not carry tokens or trust arbitrary URLs',()=>{
  assert.equal(spotifyLink(uri),`https://open.spotify.com/track/${id}`)
- assert.equal(new URL(spotifyEmbed(uri)).origin,'https://open.spotify.com')
- for(const value of ['javascript:alert(1)','https://evil.invalid','spotify:track:../../x','spotify:local:x']){assert.equal(spotifyLink(value),'');assert.equal(spotifyEmbed(value),'')}
+ assert(spotifyPlayable({uri,type:'track'}));assert(!spotifyPlayable({uri,type:'audiobook'}))
+ for(const value of ['javascript:alert(1)','https://evil.invalid','spotify:track:../../x','spotify:local:x']){assert.equal(spotifyLink(value),'');assert.equal(spotifyPlayable({uri:value,type:'track'}),false)}
  assert.equal(spotifyArtwork({images:[{url:'http://insecure.invalid'}]}),'')
  const item={uri,name:'Only member A',type:'track'};assert.deepEqual(spotifyItems({items:[{item}]}),[item]);assert.deepEqual(spotifyItems({items:[{track:item}]}),[item]);assert.deepEqual(spotifyItems({artists:{items:[item]}}),[item])
 })
