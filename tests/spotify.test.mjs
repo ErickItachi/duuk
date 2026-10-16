@@ -32,6 +32,9 @@ test('Spotify requests cannot select another member and mutations are never auto
 })
 test('Spotify responses preserve 204, limits and safe actionable errors without upstream secrets',async()=>{
  assert.equal(await spotifyFetch(spotifyPlan({action:'pause'}),'t',async()=>response(204)),null)
+ assert.equal(await spotifyFetch(spotifyPlan({action:'pause'}),'t',async()=>new Response('',{status:200})),null)
+ assert.equal(await spotifyFetch(spotifyPlan({action:'pause'}),'t',async()=>new Response('OK',{status:200})),null)
+ await assert.rejects(spotifyFetch(spotifyPlan({action:'player'}),'t',async()=>new Response('invalid-json',{status:200})),e=>e.status===502)
  for(const status of [401,403,404,429,500])await assert.rejects(spotifyFetch(spotifyPlan({action:'player'}),'t',async()=>response(status,{error:{message:'PRIVATE-SENSITIVE-DETAILS'}},{'Retry-After':'120'})),e=>e.status===status&&!e.message.includes('PRIVATE')&&(status!==429||e.retryAfter===120))
  const data=await spotifyTokens({grant_type:'authorization_code',client_id:'public',code_verifier:'verifier'},async(url,o)=>{assert.equal(url,'https://accounts.spotify.com/api/token');assert(!o.body.has('client_secret'));assert.equal(o.redirect,'error');return response(200,{access_token:'private-access',refresh_token:'private-refresh',expires_in:3600})})
  assert.equal(data.expires_in,3600)

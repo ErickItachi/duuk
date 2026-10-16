@@ -62,7 +62,7 @@ export async function spotifyFetch(plan,token,fetcher=fetch) {
  for(const [key,value] of Object.entries(plan.params))url.searchParams.set(key,String(value))
  const response=await fetcher(url,{method:plan.method,headers:{Authorization:`Bearer ${token}`,...(plan.body===undefined?{}:{'Content-Type':'application/json'})},...(plan.body===undefined?{}:{body:JSON.stringify(plan.body)}),signal:AbortSignal.timeout(15000),redirect:'error'})
  if(response.status===204)return null
- if(response.ok)return response.json()
+ if(response.ok){if(plan.method!=='GET'&&plan.path.startsWith('/me/player'))return null;const content=await response.text();if(!content.trim())return null;try{return JSON.parse(content)}catch{throw new SpotifyError('O Spotify retornou uma resposta inválida. Tente novamente.',502)}}
  const details=await response.json().catch(()=>({})),upstream=String(details?.error?.message||'').toLowerCase()
  let message='O Spotify não concluiu a operação.'
  if(response.status===401)message='Sua autorização Spotify expirou. Reconecte sua conta.'
