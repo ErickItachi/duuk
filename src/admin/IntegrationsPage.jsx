@@ -68,7 +68,8 @@ export default function IntegrationsPage({notify}) {
      <p className="calendar-integration__privacy"><Icon name="shield" size={17}/><span>Um super administrador conecta um projeto Gemini sem faturamento. A chave permanece protegida no servidor.</span></p>
      <div className="calendar-integration__actions"><Link className="admin-button admin-button--secondary" to="/admin/ai"><Icon name="spark"/>Abrir DUUK AI</Link></div>
     </section>}
-    {finance&&<PluggyIntegration notify={notify}/>}
+    {finance&&<><section className="admin-panel calendar-integration"><div className="calendar-integration__heading"><span className="calendar-integration__icon"><Icon name="wallet" size={30}/></span><div><h2>Asaas · Cobranças</h2><p>Faturas da DUUK com Pix, boleto e cartão. Conta empresarial e confirmação dos pagamentos pelo Asaas.</p></div></div><div className="calendar-integration__actions"><Link className="admin-button admin-button--secondary" to="/admin/cobrancas?configurar=1"><Icon name="link"/>Configurar cobranças</Link></div></section>
+    <PluggyIntegration notify={notify}/></>}
     {central&&<DriveIntegration callback={driveCallback} notify={notify}/>}
    </IntegrationGroup>}
   </div>

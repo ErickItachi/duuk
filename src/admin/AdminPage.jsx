@@ -48,6 +48,7 @@ import './settings.css'
 import './ai-entry.css'
 import './shell/shell.css'
 const AiPage = lazy(() => import('../ai/AiPage'))
+const BillingPage = lazy(() => import('../billing/BillingPage'))
 const SpotifyPage = lazy(() => import('../spotify/SpotifyPage'))
 const SocialPage = lazy(() => import('../social/SocialPage'))
 const aiLoading = <LoadingPanel label="Abrindo DUUK AI…" />
@@ -170,6 +171,7 @@ function AdminWorkspace() {
             <Route path="contratos" element={guarded('contracts', <ContractsPage notify={notify} />)} />
             <Route path="contratos/:id" element={guarded('contracts', <ContractEditor notify={notify} />)} />
             <Route path="agenda" element={guarded('agenda', <AgendaPage notify={notify} />)} />
+            <Route path="cobrancas" element={guarded('finance', <Suspense fallback={<LoadingPanel label="Abrindo cobranças…" />}><BillingPage notify={notify} /></Suspense>)} />
             <Route path="financeiro" element={guarded('finance', <FinancePage notify={notify} />)} />
             <Route path="despesas" element={guarded('finance', <ExpensesPage notify={notify} />)} />
             <Route path="insights" element={guarded('insights', <InsightsPage />)} />

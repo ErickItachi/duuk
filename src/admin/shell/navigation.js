@@ -19,6 +19,7 @@ export const navGroups = [
   { id: 'management', label: 'Gestão', items: [
     { to: '/admin/contratos', label: 'Contratos', icon: 'document', permission: 'contracts', shortcut: 'g k' },
     { to: '/admin/financeiro', label: 'Financeiro', icon: 'wallet', permission: 'finance', shortcut: 'g f' },
+    { to: '/admin/cobrancas', label: 'Cobranças', icon: 'incoming', permission: 'finance' },
   ] },
   { id: 'content', label: 'Conteúdo', items: [
     { to: '/admin/social', label: 'Social Media', short: 'Social', icon: 'instagram', permission: 'social', shortcut: 'g s' },

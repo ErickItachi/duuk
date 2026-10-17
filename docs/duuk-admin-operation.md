@@ -236,3 +236,9 @@ A conta pessoal Nubank do proprietário foi conectada **apenas para teste**, con
 Arquivos OFX agora têm Importações recentes > Ver movimentos / Remover importação com confirmação. `duuk_remove_bank_import` apaga apenas metadados/movimentos dessa importação, conserva receitas/despesas e audita a remoção privada. Um recibo privado bloqueia reenvios atrasados da solicitação antiga; escolher o arquivo de novo é uma nova importação intencional. Novos nomes armazenados são canônicos, sem o número da conta que pode aparecer no nome original do arquivo. Ao importar, o mês do arquivo abre automaticamente, e o período escolhido permanece no endereço.
 
 Migrações: `20261014060244_duuk_bank_import_removal.sql` e `20261014062607_duuk_pluggy_readonly.sql`. Fixtures com rollback: `supabase/tests/bank-import-removal.sql` e `supabase/tests/pluggy.sql`; regressão `supabase/tests/bank-ofx.sql`. A ajuda estática DUUK AI foi atualizada, preservando ferramentas e restrição de dados financeiros.
+
+## Cobranças Asaas · 2.6.0
+
+Menu Gestão > Cobranças, protegido por Financeiro e MFA, com Pix/boleto/cartão por fatura externa. Conta recebedora empresarial da DUUK. Instalação da integração não significa conta aprovada: cadastro/KYC do CNPJ, chave do Sandbox e homologação real ainda dependem do proprietário. Nenhum recebimento, cobrança real ou serviço adicional pago foi realizado. Guia completo: `docs/asaas-billing-setup.md`.
+
+Credenciais no Vault, tabelas privadas com RLS, RPC exclusiva do servidor, webhook autenticado/deduplicado e consulta canônica antes de atualizar. Timeout não repete criação automaticamente. CONFIRMED difere de RECEIVED. Não grava CPF/CNPJ/cartão nem cria receitas/despesas automaticamente. Produção exige revisão e aceite das tarifas do Asaas; links são compartilhados manualmente. A conexão pode ser removida preservando faturas/histórico, e a conta original é exigida para reconectar. Cron por minuto reutiliza a infraestrutura gratuita existente.

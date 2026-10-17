@@ -1,5 +1,18 @@
 [
   {
+    "version": "2.6.0",
+    "date": "2026-10-17",
+    "title": "Cobranças da DUUK",
+    "added": [
+      "Módulo de cobranças com Pix, boleto e cartão por fatura segura do Asaas.",
+      "Ambientes de testes e produção separados, conexão empresarial e conferência automática dos pagamentos."
+    ],
+    "improved": [
+      "Cobranças com revisão, prevenção de duplicidades e confirmação antes de cancelar.",
+      "Chaves protegidas no servidor e acesso restrito ao Financeiro com dois fatores."
+    ]
+  },
+  {
     "version": "2.5.2",
     "date": "2026-10-17",
     "title": "Controles do Spotify sincronizados",
