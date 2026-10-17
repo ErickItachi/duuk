@@ -12,24 +12,26 @@ const headers=adminShellHeaders(JSON.parse(await readFile(new URL('../../vercel.
 const server=await preview({root:new URL('../../',import.meta.url).pathname,preview:{host:'127.0.0.1',port:0,headers}}),origin=`http://127.0.0.1:${server.httpServer.address().port}`
 const browser=await chromium.launch({channel:'chrome'}),out='/tmp/duuk-spotify-e2e';await mkdir(out,{recursive:true})
 const track={id:'a'.repeat(22),uri:'spotify:track:'+'a'.repeat(22),type:'track',name:'Música fictícia de trabalho',artists:[{name:'Artista de teste'}],duration_ms:180000,album:{name:'Álbum de teste',images:[{url:SUPABASE_URL+'/storage/v1/object/sign/duuk-media/fixture.png'}]}}
+const second={...track,id:'c'.repeat(22),uri:'spotify:track:'+'c'.repeat(22),name:'Segunda música fictícia'}
 const playlist={id:'b'.repeat(22),uri:'spotify:playlist:'+'b'.repeat(22),type:'playlist',name:'Foco da pessoa A',description:'Lista privada fictícia',public:false,owner:{display_name:'Pessoa A'},images:track.album.images,snapshot_id:'isolated-snapshot'}
 try{
  for(const width of (process.env.DUUK_SPOTIFY_WIDTHS?process.env.DUUK_SPOTIFY_WIDTHS.split(',').map(Number):[320,390,768,1440]))for(const theme of ['dark','light']){
   const context=await browser.newContext({viewport:{width,height:width<768?844:1000},serviceWorkers:'block',reducedMotion:'reduce'}),page=await context.newPage(),errors=[],calls=[]
   page.on('pageerror',e=>errors.push(e.message));let connected=true,created=0,sdkLoads=0,activeDevice='fixture-device',playing=false
   await page.addInitScript(()=>{window.__spotifyCsp=[];document.addEventListener('securitypolicyviolation',e=>window.__spotifyCsp.push(e.violatedDirective))})
-  const handler=body=>{calls.push(body)
+  const handler=async body=>{calls.push(body)
    if(body.action==='status')return {configured:true,client_id:'f'.repeat(32),connection:connected?{display_name:'Pessoa A',status:'connected',scopes:'streaming user-read-email user-read-private'}:null}
    if(body.action==='disconnect'){connected=false;return {}}
    if(body.action==='sdk_token')return {access_token:'ephemeral-fixture-access',expires_at:Date.now()+3600000}
-   if(body.action==='play'){activeDevice=body.device_id||activeDevice;playing=true;return {data:null}}
+   if(body.action==='play'){activeDevice=body.device_id||activeDevice;playing=true;if(activeDevice==='fixture-sdk')await page.evaluate(({tracks})=>window.__sdk?.serverPlay(tracks),{tracks:[track,second]});return {data:null}}
    if(body.action==='pause'){playing=false;return {data:null}}
    if(body.action==='transfer'){activeDevice=body.device_id;playing=false;return {data:null}}
    if(body.action==='player')return {data:{item:track,is_playing:playing,progress_ms:30000,timestamp:123,repeat_state:'off',shuffle_state:false,device:{id:activeDevice,name:activeDevice==='fixture-sdk'?'DUUK · Este aparelho':activeDevice==='fixture-phone'?'iPhone de teste':'Computador de teste',type:'Computer',supports_volume:true,volume_percent:30},actions:{disallows:{}}}}
    if(body.action==='collection')return {data:{items:body.kind==='playlists'?[playlist]:[{track}],next:null}}
-   if(body.action==='search')return {data:{tracks:{items:[track],next:null}}}
+   if(body.action==='search')return {data:{tracks:{items:[track,second],next:null}}}
    if(body.action==='entity')return {data:playlist}
    if(body.action==='items')return {data:{items:[{item:track}]}}
+   if(['shuffle','repeat'].includes(body.action)&&activeDevice==='fixture-sdk'){await page.evaluate(body=>{window.__sdk.state[body.action==='shuffle'?'shuffle':'repeat_mode']=body.action==='shuffle'?body.state:['off','context','track'].indexOf(body.state);window.__sdk.emit()},body);return {data:null}}
    if(body.action==='queue')return {data:{currently_playing:track,queue:[track]}}
    if(body.action==='devices')return {data:{devices:[{id:'fixture-device',name:'Computador de teste',type:'Computer',is_active:true},{id:'fixture-phone',name:'Celular de teste',type:'Smartphone',is_active:false}]}}
    if(body.action==='playlist_create'){created++;return {data:{...playlist,name:body.name}}}
@@ -38,12 +40,22 @@ try{
   const mock=await installSupabaseMock(page,{user:fixtures.user,profile:fixtures.profile,permissions:fixtures.permissions,tables:fixtures.tables(),rpc:fixtures.rpc,functions:{...fixtures.functions,'duuk-spotify':handler},theme})
   await page.route('https://sdk.scdn.co/spotify-player.js',route=>{sdkLoads++;return route.fulfill({contentType:'application/javascript',body:`
     window.__sdkCalls=[];window.Spotify={Player:class {
-     constructor(options){window.__sdk=this;this.options=options;this.events={};window.__sdkCalls.push('construct')}
+     constructor(options){window.__sdk=this;this.options=options;this.events={};this.volume=.35;this.state=null;this.tracks=[];this.index=0;window.__sdkCalls.push('construct')}
      addListener(k,f){this.events[k]=f}
      connect(){this.options.getOAuthToken(t=>{if(t!=='ephemeral-fixture-access')throw new Error('Wrong token');setTimeout(()=>this.events.ready({device_id:'fixture-sdk'}),10)});return Promise.resolve(true)}
      disconnect(){window.__sdkCalls.push('disconnect')}
      activateElement(){window.__sdkCalls.push('activate');return Promise.resolve()}
-     resume(){window.__sdkCalls.push('resume');return Promise.resolve()}
+     emit(){this.events.player_state_changed?.(this.state)}
+     serverPlay(tracks){this.tracks=tracks;this.index=0;this.state={paused:false,position:0,duration:tracks[0].duration_ms,shuffle:false,repeat_mode:0,disallows:{},track_window:{current_track:tracks[0],next_tracks:tracks.slice(1),previous_tracks:[]}};this.emit()}
+     getCurrentState(){return Promise.resolve(this.state)}
+     getVolume(){return Promise.resolve(this.volume)}
+     setVolume(value){window.__sdkCalls.push('volume:'+value);this.volume=value;return Promise.resolve()}
+     pause(){window.__sdkCalls.push('pause');if(this.state)this.state.paused=true;this.emit();return Promise.resolve()}
+     resume(){window.__sdkCalls.push('resume');if(this.state)this.state.paused=false;this.emit();return Promise.resolve()}
+     seek(value){window.__sdkCalls.push('seek:'+value);this.state.position=value;this.emit();return Promise.resolve()}
+     move(step){this.index=Math.max(0,Math.min(this.tracks.length-1,this.index+step));this.state.track_window={current_track:this.tracks[this.index],next_tracks:this.tracks.slice(this.index+1),previous_tracks:this.tracks.slice(0,this.index)};this.state.position=0;this.emit();return Promise.resolve()}
+     nextTrack(){window.__sdkCalls.push('next');return this.move(1)}
+     previousTrack(){window.__sdkCalls.push('previous');return this.move(-1)}
     }};window.onSpotifyWebPlaybackSDKReady();`})})
   try {
   page.setDefaultTimeout(15000)
@@ -55,6 +67,20 @@ try{
   await page.getByRole('button',{name:`Ouvir ${track.name} no painel`,exact:true}).last().click();await page.locator('.spotify-dock').waitFor();await page.waitForTimeout(200)
   assert.equal(sdkLoads,1);assert.equal(await page.locator('iframe[src*="open.spotify.com/embed"]').count(),0)
   assert(calls.some(b=>b.action==='play'&&b.device_id==='fixture-sdk'&&b.uris[0]===track.uri))
+  assert(calls.some(b=>b.action==='play'&&b.uris?.length===2),'Starting a track lost the rest of the queue')
+  await page.getByRole('button',{name:'Próxima faixa',exact:true}).click();await page.getByRole('heading',{name:second.name,exact:true}).waitFor()
+  await page.getByRole('button',{name:'Atualizar',exact:true}).first().click();await page.waitForTimeout(100);assert.equal(await page.locator('.spotify-now h3').innerText(),second.name,'Stale Web API metadata replaced the local SDK track')
+  await page.getByRole('button',{name:'Faixa anterior',exact:true}).click();await page.getByRole('heading',{name:track.name,exact:true}).waitFor()
+  await page.getByRole('button',{name:'Pausar Spotify',exact:true}).click();await page.getByRole('button',{name:'Reproduzir Spotify',exact:true}).waitFor();await page.getByRole('button',{name:'Reproduzir Spotify',exact:true}).click();await page.getByRole('button',{name:'Pausar Spotify',exact:true}).waitFor()
+  await page.locator('.spotify-volume input').press('End');await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>window.__sdk.volume),1)
+  await page.getByRole('button',{name:'Silenciar',exact:true}).click();await page.getByRole('button',{name:'Ativar som',exact:true}).waitFor();assert.equal(await page.evaluate(()=>window.__sdk.volume),0)
+  await page.getByRole('button',{name:'Ativar som',exact:true}).click();await page.getByRole('button',{name:'Silenciar',exact:true}).waitFor();assert.equal(await page.evaluate(()=>window.__sdk.volume),1)
+  await page.getByRole('slider',{name:'Posição da reprodução',exact:true}).press('End');await page.waitForTimeout(100);assert(await page.evaluate(()=>window.__sdkCalls.includes('seek:180000')))
+  await page.getByRole('slider',{name:'Posição da reprodução',exact:true}).press('Home')
+  await page.getByRole('button',{name:'Alternar reprodução aleatória'}).click();await page.waitForTimeout(100);assert.equal(await page.getByRole('button',{name:'Alternar reprodução aleatória'}).getAttribute('aria-pressed'),'true')
+  await page.getByRole('button',{name:'Alternar repetição'}).click();await page.waitForTimeout(100);assert.match(await page.getByRole('button',{name:'Alternar repetição'}).getAttribute('title'),/lista/)
+  assert(!calls.some(b=>['pause','next','previous','seek','volume'].includes(b.action)&&b.device_id==='fixture-sdk'),'Local controls used delayed remote endpoints')
+
   if(width===390&&theme==='dark'){
    await page.evaluate(()=>{window.__sdk.continuity='same-player';window.__sdk.events.autoplay_failed()})
    await page.locator('.spotify-dock').getByRole('button',{name:'Ativar áudio neste aparelho',exact:true}).click()

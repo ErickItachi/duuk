@@ -45,7 +45,8 @@ export function spotifyPlan(body) {
  const d={device_id:device(body.device_id)}
  if(action==='play') {
   if(body.context_uri&&body.uris)fail('Escolha uma lista ou uma faixa.')
-  return make('PUT','/me/player/play',d,body.context_uri?{context_uri:spotifyUri(body.context_uri,['album','artist','playlist']),...(body.offset===undefined?{}:{offset:{position:integer(body.offset,0,100000)}})}:body.uris?{uris:uriList(body.uris,['track','episode'])}:{})
+  if(body.offset_uri&&(body.offset!==undefined||!/^spotify:(album|playlist):/.test(body.context_uri||'')))fail('A posição precisa de um álbum ou playlist.')
+  return make('PUT','/me/player/play',d,body.context_uri?{context_uri:spotifyUri(body.context_uri,['album','artist','playlist']),...(body.offset_uri?{offset:{uri:spotifyUri(body.offset_uri,['track','episode'])}}:body.offset===undefined?{}:{offset:{position:integer(body.offset,0,100000)}})}:body.uris?{uris:uriList(body.uris,['track','episode'])}:{})
  }
  if(action==='pause')return make('PUT','/me/player/pause',d)
  if(action==='next'||action==='previous')return make('POST',`/me/player/${action}`,d)

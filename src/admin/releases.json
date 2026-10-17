@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.5.2",
+    "date": "2026-10-17",
+    "title": "Controles do Spotify sincronizados",
+    "improved": [
+      "Volume, silêncio, posição e troca de faixas usam o player local quando você ouve neste aparelho.",
+      "Reprodução preserva a sequência da lista escolhida e o contexto de álbuns e playlists.",
+      "Estado e controles acompanham o dispositivo selecionado; iPhone e iPad usam volume físico."
+    ]
+  },
+  {
     "version": "2.5.1",
     "date": "2026-10-16",
     "title": "Músicas completas no seu aparelho",

@@ -133,3 +133,9 @@ body:has(dialog[open]) .spotify-dock { visibility: hidden; pointer-events: none;
 .spotify-dock__error { padding:0 14px 14px; margin:0; font-size:11px; line-height:1.6; color:#ffb6b6; }
 .admin-shell:has(.spotify-dock) .ds-frame { padding-bottom:180px; }
 @media(max-width:767px) { .admin-shell:has(.spotify-dock) .ds-frame { padding-bottom:220px; } .spotify-dock__body { gap:8px; padding:12px; } }
+.spotify-volume__value { min-width:30px; font-size:10px; font-variant-numeric:tabular-nums; }
+.spotify-dock__volume { display:flex; align-items:center; gap:8px; padding:0 14px 10px; color:#b3b3b3; }
+.spotify-dock__volume input { flex:1; min-width:0; height:24px; padding:0; accent-color:#1ed760; }
+.spotify-dock__volume .admin-icon-button { width:28px; height:28px; color:#fff; }
+.spotify-dock__volume > span { min-width:30px; font-size:10px; text-align:right; }
+@media(max-width:390px) { .spotify-dock__body > img { width:36px; height:36px; } .spotify-dock__body .admin-icon-button { width:28px; } }

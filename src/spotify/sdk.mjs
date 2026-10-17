@@ -23,7 +23,7 @@ export const sdkErrorMessage=kind=>({
 })[kind]||'Não foi possível iniciar o Spotify.'
 export function createSpotifyBrowserPlayer(Spotify,{getToken,onState,onReady,onError,onOffline,onAutoplay}) {
  let disposed=false,settled=false,resolveReady,rejectReady
- const instance=new Spotify.Player({name:'DUUK · Este aparelho',volume:0.35,getOAuthToken:callback=>{
+ const instance=new Spotify.Player({name:'DUUK · Este aparelho',volume:0.35,enableMediaSession:true,getOAuthToken:callback=>{
   Promise.resolve().then(getToken).then(token=>{if(!disposed)callback(token)}).catch(error=>{if(!disposed)failure(error.message)})
  }})
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject})
