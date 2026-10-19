@@ -1,5 +1,9 @@
 # Operação do DUUK PAINEL ADMINISTRATIVO
 
+## Cobranças, consultas e permissões — 2.7.0
+
+Asaas central: simulador oficial, taxas vigentes, saldo/estatísticas, extrato CSV e consultas de clientes, cobranças, parcelamentos e assinaturas. Edição de descrição/vencimento, restauração e Pix/boleto preservam a conferência canônica. Saques continuam bloqueados. Dashboard inclui Asaas e Spotify pessoal. `billing` e `spotify` agora são independentes, configuráveis em Grupos de acesso e Permissões individuais, com acessos anteriores preservados. Deploy backend: duuk-billing v3 e duuk-spotify v8. Escopo, validação e limitações em [asaas-billing-setup.md](asaas-billing-setup.md#expansão-de-cobranças-e-consultas--270--19102026).
+
 ## Spotify pessoal — 2.5.1
 
 Cada membro conecta a própria conta em Seu espaço > Spotify. Configuração, limites, recursos e privacidade: [spotify-setup.md](spotify-setup.md). A música usa o Web Playback SDK oficial para faixas completas com Premium, com ativação de áudio no iPhone e escolha dos próprios dispositivos via API; o Spotify define disponibilidade/Premium e até cinco contas no aplicativo atual. O novo botão da IA permanece movível, com nome visível e proteção dos formulários.

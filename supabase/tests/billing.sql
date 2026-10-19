@@ -8,7 +8,7 @@ begin
  insert into auth.users(id,email) values(a,a::text||'@test.invalid'),(b,b::text||'@test.invalid'),(inactive,inactive::text||'@test.invalid');
  insert into public.duuk_profiles(id,name,email,role_id,active,is_super_admin) values
  (a,'Billing fixture admin',a::text||'@test.invalid',r,true,true),(b,'Billing fixture denied',b::text||'@test.invalid',r,true,false),(inactive,'Billing fixture inactive',inactive::text||'@test.invalid',r,false,true);
- insert into public.duuk_user_permissions(user_id,permission,allowed) values(b,'finance',false);
+ insert into public.duuk_user_permissions(user_id,permission,allowed) values(b,'billing',false);
  -- Hide configurations inside rollback, without touching real histories.
  delete from duuk_private.billing_jobs;
  delete from duuk_private.billing_charges;
@@ -52,6 +52,13 @@ begin
  perform public.duuk_billing_backend(a,'sync_apply',p||jsonb_build_object('lease_id',lease,'status','RECEIVED','has_refunds',true));
  x:=public.duuk_billing_backend(a,'list',jsonb_build_object('month',to_char(current_date,'YYYY-MM')));
  if (x#>>'{stats,received_cents}')::bigint<>0 then raise exception 'Refunded amount counted';end if;
+ -- Provider metadata is applied only under the same generation, amount and lease guards.
+ x:=public.duuk_billing_backend(a,'sync_claim',p);lease:=(x->>'lease_id')::uuid;
+ x:=public.duuk_billing_backend(a,'sync_apply',p||jsonb_build_object('lease_id',lease,'title','Updated provider description','due_date',current_date+1));
+ if x->>'title'<>'Updated provider description' or (x->>'due_date')::date<>current_date+1 then raise exception 'Canonical metadata lost';end if;
+ x:=public.duuk_billing_backend(a,'sync_claim',p);lease:=(x->>'lease_id')::uuid;
+ x:=public.duuk_billing_backend(a,'sync_apply',p||jsonb_build_object('lease_id',lease,'title',null,'due_date',null));
+ if x->>'title'<>'Updated provider description' or (x->>'due_date')::date<>current_date+1 then raise exception 'Null metadata erased values';end if;
  p:=jsonb_build_object('config_id',cfg->>'config_id','payment_id','pay_fixture','event_id','evt_fixture','event_type','PAYMENT_RECEIVED');
  perform public.duuk_billing_backend(null,'enqueue',p);perform public.duuk_billing_backend(null,'enqueue',p);
  perform public.duuk_billing_backend(null,'enqueue',p||'{"event_id":"evt_foreign","payment_id":"pay_foreign"}');

@@ -268,3 +268,16 @@ a.dashboard-balance:hover { border-color: var(--ds-border-strong); }
   .dashboard-stages__bar i, .dashboard-spark__bars span { animation: none; }
 }
 
+.dashboard-card__head h2 .integration-app-logo { object-fit:contain; }
+.dashboard-integration-action { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:16px; margin-top:12px; border-top:1px solid var(--ds-border); font-size:12px; color:var(--ds-text); }
+.dashboard-integration-account { font-size:11px; color:var(--ds-text-2); margin:0 0 16px; }
+.dashboard-spotify-track { display:flex; gap:14px; align-items:center; min-width:0; }
+.dashboard-spotify-track > img { object-fit:cover; border-radius:8px; flex-shrink:0; }
+.dashboard-spotify-track > div { display:grid; gap:6px; min-width:0; }
+.dashboard-spotify-track strong { color:var(--ds-text); font-size:14px; overflow-wrap:anywhere; }
+.dashboard-spotify-track span,.dashboard-spotify-track small { color:var(--ds-text-2); font-size:11px; line-height:1.5; }
+.dashboard-spotify-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:18px; }
+.dashboard-card .billing-account-values { grid-template-columns:1fr; gap:8px; }
+.dashboard-card .billing-account-values section { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding:14px; }
+.dashboard-card .billing-account-values strong { font-size:18px; }
+.dashboard-card .billing-list-note,.dashboard-card .billing-checked { color:var(--ds-text-2); font-size:10px; line-height:1.7; }

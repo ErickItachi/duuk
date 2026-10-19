@@ -188,11 +188,11 @@ export const quickActions = [
 // ---------- Layout ----------
 // Cards in reading priority: what needs attention today first. Columns keep the DOM order equal
 // to the visual order, so keyboard and screen reader users meet the cards as they are seen.
-export const cardOrder = ['agenda', 'followups', 'contracts', 'finance', 'actions', 'pipeline', 'activity', 'social', 'site']
+export const cardOrder = ['agenda', 'followups', 'contracts', 'finance', 'asaas', 'spotify', 'actions', 'pipeline', 'activity', 'social', 'site']
 const primaryCards = ['agenda', 'followups', 'pipeline', 'activity']
-const asideCards = ['actions', 'contracts', 'finance', 'social', 'site']
+const asideCards = ['actions', 'contracts', 'finance', 'asaas', 'spotify', 'social', 'site']
 // Typical card heights, in hundreds of pixels, so two columns end close to each other.
-const weights = { agenda: 4, followups: 3, contracts: 4, finance: 6, actions: 3, pipeline: 7, activity: 4, social: 4, site: 4 }
+const weights = { agenda: 4, followups: 3, contracts: 4, finance: 6, asaas: 5, spotify: 3, actions: 3, pipeline: 7, activity: 4, social: 4, site: 4 }
 const weight = keys => keys.reduce((sum, key) => sum + weights[key], 0)
 export function dashboardColumns(keys, mode) {
   const present = cardOrder.filter(key => keys.includes(key))

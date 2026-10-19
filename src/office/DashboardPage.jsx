@@ -11,6 +11,7 @@ import StudioPulse from './dashboard/StudioPulse'
 import { combine, useDashboardData, useMinute } from './dashboard/data'
 import { activityView, agendaView, contractView, dashboardColumns, digestItems, financeView, followupView, metricsView, nowTime, pipelineView, quickActions, socialView } from './dashboard/model'
 import { ActivityCard, AgendaCard, ContractsCard, FinanceCard, FollowupsCard, PipelineCard, QuickActionsCard, SiteCard, SocialCard } from './dashboard/cards'
+import { AsaasCard, SpotifyCard } from './dashboard/IntegrationCards'
 import './dashboard-experience.css'
 
 const firstName = name => String(name || '').trim().split(/\s+/)[0]
@@ -37,6 +38,8 @@ export default function DashboardPage() {
     activities: hasPermission('crm.activities'),
     contracts: hasPermission('contracts'),
     finance: hasPermission('finance'),
+    billing: hasPermission('billing'),
+    spotify: hasPermission('spotify'),
     insights: hasPermission('insights'),
     site: hasPermission('site'),
     social: hasPermission('social'),
@@ -69,6 +72,8 @@ export default function DashboardPage() {
     followups: can.followups && <FollowupsCard state={combine(followups, clients)} view={views.followups} day={day} names={names} />,
     contracts: can.contracts && <ContractsCard state={combine(contracts)} view={views.contracts} />,
     finance: can.finance && <FinanceCard state={combine(finance)} bank={combine(data.bank)} view={views.finance} month={month} day={day} canConnect={auth.profile?.is_super_admin === true} />,
+    asaas: can.billing && <AsaasCard state={combine(data.asaas)}/>,
+    spotify: can.spotify && <SpotifyCard/>,
     actions: actions.length > 0 && <QuickActionsCard actions={actions} />,
     pipeline: can.pipeline && <PipelineCard state={combine(clients)} view={views.pipeline} day={day} clientLink={clientLink} canCreateLead={can.clients} />,
     activity: can.activity && <ActivityCard state={combine(activities, clients)} items={views.activity} day={day} names={names} userId={auth.user?.id} to={can.activities ? '/admin/comercial/contatos' : '/admin/comercial'} area={can.activities ? 'Contatos e atividades' : 'Comercial'} clientLink={clientLink} />,

@@ -3,7 +3,7 @@ import { verifiedSessionClaims } from '../_shared/session-claims.mjs'
 import { SPOTIFY_REDIRECT, SPOTIFY_SCOPES, SpotifyError, spotifyAuthorization, spotifyFetch, spotifyPlan, spotifyTokens } from '../_shared/spotify.mjs'
 
 handler(async (req,headers) => {
- const db=database(),user=await member(req,db),body=await readJson(req,16000)
+ const db=database(),user=await member(req,db,'spotify'),body=await readJson(req,16000)
  const session=verifiedSessionClaims(req.headers.get('authorization')!.slice(7))!.session
  const rpc=async(operation:string,payload:Record<string,unknown>={})=>checked(await db.rpc('duuk_spotify_backend',{actor:user.id,operation,payload})) as any
  const tokenExpiry=(seconds:number)=>new Date(Date.now()+Math.min(86400,Math.max(1,seconds))*1000).toISOString()

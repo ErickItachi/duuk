@@ -12,7 +12,7 @@ const people = [
   { id: '00000000-0000-4000-8000-000000000002', name: 'Rafael Exemplo', email: 'rafael@exemplo.test', phone: '', job_title: 'Comercial', avatar_path: null, role_id: 'role-sales', active: true, is_super_admin: false, created_at: iso('2026-10-02'), updated_at: iso('2026-10-10') },
   { id: '00000000-0000-4000-8000-000000000003', name: 'Bianca Fictícia', email: 'bianca@exemplo.test', phone: '', job_title: 'Direção de arte', avatar_path: null, role_id: 'role-admin', active: true, is_super_admin: false, created_at: iso('2026-10-03'), updated_at: iso('2026-10-10') },
 ]
-export const permissionKeys = ['agenda', 'ai', 'audit', 'contracts', 'crm', 'crm.activities', 'crm.clients', 'crm.dashboard', 'crm.followups', 'crm.pipeline', 'crm.reports', 'drive', 'finance', 'insights', 'mail', 'permissions', 'site', 'social', 'team']
+export const permissionKeys = ['agenda', 'ai', 'audit', 'contracts', 'crm', 'crm.activities', 'crm.clients', 'crm.dashboard', 'crm.followups', 'crm.pipeline', 'crm.reports', 'drive', 'billing', 'spotify', 'finance', 'insights', 'mail', 'permissions', 'site', 'social', 'team']
 export const profile = { ...people[0], avatar_url: null, role_name: 'Administrador' }
 export const permissions = Object.fromEntries(permissionKeys.map(key => [key, true]))
 

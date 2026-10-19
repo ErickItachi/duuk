@@ -687,9 +687,9 @@ function RoleEditor({ role, onClose, onSaved }) {
 
 // Modules are grouped like the menu. Keys the server adds later still appear, under "Outros módulos".
 const permissionSections = [
-  ["Dia a dia", ["agenda", "ai"]],
+  ["Dia a dia", ["agenda", "ai", "spotify"]],
   ["Comercial", ["crm", "crm.dashboard", "crm.clients", "crm.pipeline", "crm.activities", "crm.followups", "crm.reports", "mail"]],
-  ["Gestão", ["contracts", "finance"]],
+  ["Gestão", ["contracts", "finance", "billing"]],
   ["Conteúdo", ["social", "site", "insights"]],
   ["Arquivos", ["drive"]],
   ["Administração", ["team", "permissions", "audit"]],
@@ -707,6 +707,8 @@ const permissionIcons = {
   mail: "mail",
   contracts: "document",
   finance: "wallet",
+  billing: "incoming",
+  spotify: "music",
   social: "instagram",
   site: "globe",
   insights: "trend",
@@ -826,7 +828,8 @@ export function PermissionsPage({ notify, mode = "roles" }) {
             item ? "Ajuste individual" : "",
             dependent ? "Depende de Comercial" : "",
           ];
-    const text = meta.filter(Boolean).join(" · ");
+    const scope = key.key === "billing" ? "Conta Asaas da DUUK, cobranças, taxas e consultas; sem saques" : key.key === "spotify" ? "Conexão e player da própria conta Spotify" : "";
+    const text = [...meta, scope].filter(Boolean).join(" · ");
     return (
       <li
         key={key.key}

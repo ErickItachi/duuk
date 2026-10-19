@@ -1,5 +1,19 @@
 [
   {
+    "version": "2.7.0",
+    "date": "2026-10-19",
+    "title": "Asaas completo no dia a dia",
+    "added": [
+      "Simulador oficial de vendas, taxas da conta, saldo e extrato Asaas.",
+      "Consultas de clientes, cobranças, parcelamentos e assinaturas.",
+      "Asaas e Spotify na visão geral, com permissões próprias individuais e por grupo."
+    ],
+    "improved": [
+      "Pix e boleto por consulta, edição de vencimento e descrição e restauração de cobranças.",
+      "Logo oficial do Asaas nas integrações e no menu de Cobranças."
+    ]
+  },
+  {
     "version": "2.6.1",
     "date": "2026-10-19",
     "title": "Asaas central da DUUK",

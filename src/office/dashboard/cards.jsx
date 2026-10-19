@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import AppLogo from '../../admin/AppLogo'
 import { Icon } from '../../admin/components'
 import { useMediaQuery } from '../../admin/shell/hooks'
 import { Avatar, EmptyState, ErrorState } from '../../admin/forms'
@@ -32,11 +33,11 @@ export function CountUp({ value, format = number => number.toLocaleString('pt-BR
 }
 
 // Card frame: title, an optional tool (privacy eye) and the "Ver tudo" link to the module.
-export function DashboardCard({ id, title, icon, to, area, tools, state, children }) {
+export function DashboardCard({ id, title, icon, brand, to, area, tools, state, children }) {
   const refreshing = state?.loading && state?.ready
   return <section className={`ds-card dashboard-card${refreshing ? ' is-refreshing' : ''}`} aria-labelledby={`dashboard-${id}`} aria-busy={state?.loading || undefined}>
     <header className="ds-card__head dashboard-card__head">
-      <h2 id={`dashboard-${id}`}><Icon name={icon} />{title}</h2>
+      <h2 id={`dashboard-${id}`}>{brand?<AppLogo app={brand} size={22}/>:<Icon name={icon} />}{title}</h2>
       {(tools || to) && <div className="dashboard-card__tools">
         {tools}
         {to && <Link className="dashboard-card__link" to={to}>Ver tudo<span className="ds-visually-hidden"> em {area || title}</span><Icon name="right" /></Link>}

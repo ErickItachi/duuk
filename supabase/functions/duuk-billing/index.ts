@@ -1,5 +1,7 @@
 import { checked, cors, database, HttpError, json, member, rateLimit, readJson, sha256, uuid } from '../_shared/http.ts'
 import { asaasRequest, BILLING_EVENTS, BillingError, billingEnvironment, canonicalPayment, chargeInput, constantHashEqual, payerReference, providerId, webhookEvent } from '../_shared/billing.mjs'
+import { billingQuery, queryActions } from '../_shared/billing-queries.mjs'
+import { editInput } from '../_shared/billing-resources.mjs'
 
 const callbackBase='https://ilohuxhyfqikjlvoarts.supabase.co/functions/v1/duuk-billing'
 Deno.serve(async req=>{
@@ -66,7 +68,11 @@ Deno.serve(async req=>{
    if(!cron||!constantHashEqual(await sha256(cron),await sha256(secrets?.['duuk.push.cron']||'')))throw new HttpError('Acesso restrito.',403)
    return json(await dispatch(),headers)
   }
-  const user=await member(req,db,'finance');actor=user.id
+  const user=await member(req,db,'billing');actor=user.id
+  if(queryActions.includes(body.action)){
+   await rateLimit(db,actor,'billing-'+body.action,body.action==='simulate'?20:30)
+   return json(await billingQuery(body,{environment,rpc,credentials,call}),headers)
+  }
   const admin=async()=>{const profile=checked(await db.from('duuk_profiles').select('is_super_admin').eq('id',actor!).single());if(!profile?.is_super_admin)throw new HttpError('Somente um super administrador configura o Asaas.',403)}
   if(['status','list','get'].includes(body.action))return json(await rpc(body.action,body.action==='list'?{month:body.month,offset:body.offset||0,status:body.status||'all',search:typeof body.search==='string'?body.search.slice(0,200):''}:body.action==='get'?{id:uuid(body.id)}:{}),headers)
   const configureWebhook=async(cfg:any)=>{
@@ -121,6 +127,25 @@ Deno.serve(async req=>{
    }catch(cause){await rpc('creation_error',{...scope,uncertain:!(cause instanceof BillingError)||cause.uncertain||cause.status!==400,error:cause instanceof Error?cause.message:'A criação precisa ser conferida.'}).catch(()=>{});return json({charge:await rpc('get',{id:input.id})},headers)}
   }
   if(body.action==='sync'){await rateLimit(db,actor,'billing-sync',20);return json({charge:await sync(uuid(body.id))},headers)}
+  if(['edit','restore'].includes(body.action)){
+   const update=body.action==='edit'?editInput(body):null
+   await rateLimit(db,actor,'billing-'+body.action,10,600)
+   const cfg=await credentials(),scope={generation:cfg.generation,id:uuid(body.id)},claim=await rpc('sync_claim',scope),lease={...scope,lease_id:claim.lease_id},charge=claim.charge
+   try{
+    if(!charge.payment_id)throw new HttpError('Conclua a criação antes de alterar esta cobrança.',409)
+    const path='/payments/'+providerId(charge.payment_id)
+    let payment=await call(cfg,'GET',path)
+    canonicalPayment(payment,charge)
+    if(body.action==='edit'){
+     if(payment.deleted||!['PENDING','OVERDUE'].includes(payment.status))throw new HttpError('Somente cobranças abertas podem ser alteradas.',409)
+     payment=await call(cfg,'PUT',path,update)
+    }else{
+     if(charge.status!=='CANCELED')throw new HttpError('Somente cobranças canceladas podem ser restauradas.',409)
+     if(payment.deleted)payment=await call(cfg,'POST',path+'/restore')
+    }
+    return json({charge:await rpc('sync_apply',{...lease,...canonicalPayment(payment,charge)})},headers)
+   }catch(cause){await rpc('sync_error',{...lease,error:cause instanceof Error?cause.message:'Confira a alteração no Asaas.'}).catch(()=>{});throw cause}
+  }
   if(body.action==='cancel'){
    await rateLimit(db,actor,'billing-cancel',10,600)
    const cfg=await credentials(),scope={generation:cfg.generation,id:uuid(body.id)},claim=await rpc('sync_claim',scope),lease={...scope,lease_id:claim.lease_id},charge=claim.charge

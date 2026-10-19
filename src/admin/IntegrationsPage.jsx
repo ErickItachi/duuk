@@ -33,14 +33,14 @@ export default function IntegrationsPage({notify}) {
  useEffect(()=>{const timer=setInterval(()=>{if(document.visibilityState==='visible'&&navigator.onLine)reload()},30000);return()=>clearInterval(timer)},[reload])
  const connection=query.data?.connection,connected=connection&&connection.status!=='disconnected',allowed=auth.hasPermission('agenda')
  const act=async action=>{setBusy(action);try{const result=await request({action});if(action==='start'){const url=new URL(result.url);if(url.origin!=='https://accounts.google.com')throw new Error('O Google não confirmou o endereço de conexão.');window.location.assign(url.href);return}await reload();notify(action==='disconnect'?'Conta desconectada. Sua agenda DUUK foi preservada.':'Sincronização reagendada.')}catch(cause){notify(cause.message,true)}finally{setBusy('')}}
- const ai=auth.hasPermission('ai'),finance=auth.hasPermission('finance'),central=auth.profile?.is_super_admin
+ const ai=auth.hasPermission('ai'),finance=auth.hasPermission('finance'),billing=auth.hasPermission('billing'),spotify=auth.hasPermission('spotify'),central=auth.profile?.is_super_admin
  const status=query.data&&(busy==='callback'?'Concluindo conexão…':!query.data.configured?'Aguardando configuração':connected?(connection.status==='error'?'Conexão precisa de atenção':connection.pending?'Sincronização em andamento':'Conta conectada'):'Nenhuma conta conectada')
  const tone=connected&&connection.status==='connected'?' is-connected':connected&&connection.status==='error'?' is-error':''
  return <>
   <PageTitle title="Integrações" description="Suas ferramentas, conectadas ao dia a dia da DUUK."><RefreshButton onRefresh={reload}/></PageTitle>
   <div className="settings-integrations">
    <IntegrationGroup id="integrations-account" title="Na sua conta" description="Cada pessoa conecta e autoriza a própria conta.">
-    <section className="admin-panel calendar-integration"><div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="spotify"/></span><div><h2>Spotify</h2><p>Sua biblioteca, playlists e música durante o trabalho. Cada membro conecta a própria conta.</p></div></div><div className="calendar-integration__actions"><Link className="admin-button admin-button--secondary" to="/admin/spotify"><Icon name="music"/>Abrir Spotify</Link></div></section>
+    {spotify&&<section className="admin-panel calendar-integration"><div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="spotify"/></span><div><h2>Spotify</h2><p>Sua biblioteca, playlists e música durante o trabalho. Cada membro conecta a própria conta.</p></div></div><div className="calendar-integration__actions"><Link className="admin-button admin-button--secondary" to="/admin/spotify"><Icon name="music"/>Abrir Spotify</Link></div></section>}
     <section className="admin-panel calendar-integration" aria-labelledby="calendar-integration-title" aria-busy={query.loading&&!query.data}>
      <div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="calendar"/></span><div><p className="admin-eyebrow">AGENDA / INTEGRAÇÕES</p><h2 id="calendar-integration-title">Google Calendar</h2><p>Leve os compromissos da equipe para um calendário DUUK na sua conta.</p></div></div>
      {callbackError&&<div className="settings-integration__alert"><ErrorState>{callbackError}</ErrorState></div>}
@@ -62,14 +62,14 @@ export default function IntegrationsPage({notify}) {
      </>}
     </section>
    </IntegrationGroup>
-   {(ai||finance||central)&&<IntegrationGroup id="integrations-central" title="Da DUUK" description="Contas centrais da empresa, configuradas por um super administrador.">
+   {(ai||finance||billing||central)&&<IntegrationGroup id="integrations-central" title="Da DUUK" description="Contas centrais da empresa, configuradas por um super administrador.">
     {ai&&<section className="admin-panel calendar-integration" aria-labelledby="gemini-integration-title">
      <div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="gemini"/></span><div><p className="admin-eyebrow">CRIAÇÃO / INTEGRAÇÕES</p><h2 id="gemini-integration-title">DUUK AI · Google Gemini</h2><p>Roteiros, conceitos, apoio comercial e ajuda para utilizar o painel.</p></div></div>
      <p className="calendar-integration__privacy"><Icon name="shield" size={17}/><span>Um super administrador conecta um projeto Gemini sem faturamento. A chave permanece protegida no servidor.</span></p>
      <div className="calendar-integration__actions"><Link className="admin-button admin-button--secondary" to="/admin/ai"><Icon name="spark"/>Abrir DUUK AI</Link></div>
     </section>}
-    {finance&&<><section className="admin-panel calendar-integration"><div className="calendar-integration__heading"><span className="calendar-integration__icon"><Icon name="wallet" size={30}/></span><div><h2>Asaas · Cobranças</h2><p>Faturas da DUUK com Pix, boleto e cartão. Conta empresarial e confirmação dos pagamentos pelo Asaas.</p></div></div><div className="calendar-integration__actions"><Link className="admin-button admin-button--secondary" to="/admin/cobrancas?configurar=1"><Icon name="link"/>Configurar cobranças</Link></div></section>
-    <PluggyIntegration notify={notify}/></>}
+    {billing&&<section className="admin-panel calendar-integration"><div className="calendar-integration__heading"><span className="calendar-integration__icon"><AppLogo app="asaas" size={36}/></span><div><h2>Asaas · Cobranças</h2><p>Faturas da DUUK com Pix, boleto e cartão. Conta empresarial e confirmação dos pagamentos pelo Asaas.</p></div></div><div className="calendar-integration__actions"><Link className="admin-button admin-button--secondary" to="/admin/cobrancas?configurar=1"><Icon name="link"/>Configurar cobranças</Link></div></section>}
+    {finance&&<PluggyIntegration notify={notify}/>}
     {central&&<DriveIntegration callback={driveCallback} notify={notify}/>}
    </IntegrationGroup>}
   </div>

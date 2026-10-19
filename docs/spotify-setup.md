@@ -51,3 +51,8 @@ Os comandos de pausa/retomada, anterior/próxima, posição e volume usam os mé
 Tocar uma faixa em álbum/playlist conserva o contexto completo e usa offset por URI. Em busca e coleções avulsas, a fila recebe a faixa e os demais itens visíveis seguintes, até o limite de 100 da API. Não crie playlists reais para sustentar essa sequência. Botões de repetição respeitam as permissões do modo solicitado. Ao voltar do app Spotify, a aba Dispositivos atualiza a descoberta.
 
 Os novos testes verificam chamadas SDK de volume/silêncio, pausa/retomada, seek, anterior/próxima, aleatório/repetição, fonte local diante de uma resposta remota atrasada e sequência com mais de uma música. Referência: https://developer.spotify.com/documentation/web-playback-sdk/reference.
+
+
+## Permissão e visão geral · 2.7.0
+
+Spotify pessoal (`spotify`) aparece em Dia a dia, tanto nos grupos quanto nas permissões individuais. Os acessos anteriores foram preservados na instalação. Bloqueio impede menu, integração, rota direta, cartão, inicialização do provider/SDK e novas ações nas Edge Functions e no RPC. A visão geral reutiliza o player pessoal, sem autoplay ou nova sessão SDK; os botões acionam os controles existentes por gesto da pessoa. `duuk-spotify` v8 verifica a permissão além da sessão ativa e AAL2. O consentimento externo permanece do próprio membro.

@@ -5,8 +5,8 @@ import { useSpotify } from './SpotifyContext'
 import { spotifyArtwork, spotifySubtitle } from './model.mjs'
 import SpotifyRange from './SpotifyRange'
 export default function SpotifyDock(){
- const music=useSpotify(),[error,setError]=useState(''),item=music.player?.item
- if(!music.dock)return null
+ const music=useSpotify(),[error,setError]=useState(''),item=music?.player?.item
+ if(!music?.dock)return null
  const act=async body=>{setError('');try{await music.act(body);return true}catch(cause){setError(cause.message);return false}}
  return <aside className="spotify-dock" aria-label="Player pessoal do Spotify">
   <div className="spotify-dock__head"><Link to="/admin/spotify"><img src="/admin-assets/integrations/spotify.png" alt="" width="18" height="18"/>Spotify<span>{music.player?.device?.name||'Minha música'}</span></Link><button type="button" className="admin-icon-button" aria-label="Recolher player" onClick={music.hideDock}><Icon name="close" size={16}/></button></div>

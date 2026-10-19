@@ -60,3 +60,11 @@ test('new grants default to denied and caller-supplied permission-like profile f
   assert.ok(check({ target: member, rolePermissions: [...rolePermissions, { role_id: 'crew', permission: 'future.module', allowed: true }] }))
   assert.ok(check({ actor: null, target: member }))
 })
+
+
+test('new billing and Spotify grants honor independent group access and explicit individual overrides', () => {
+ const grants=[{role_id:'crew',permission:'billing',allowed:true},{role_id:'crew',permission:'spotify',allowed:false},{role_id:'crew',permission:'finance',allowed:false}]
+ const input={profile:member,rolePermissions:grants,userPermissions:[{user_id:member.id,permission:'billing',allowed:false},{user_id:member.id,permission:'spotify',allowed:true}]}
+ assert.deepEqual([...teamPermissions(input.profile,input.rolePermissions,input.userPermissions)],['spotify'])
+ assert.deepEqual([...teamPermissions(input.profile,input.rolePermissions,[])],['billing'])
+})

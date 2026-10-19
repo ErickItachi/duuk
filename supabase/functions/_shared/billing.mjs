@@ -19,7 +19,7 @@ export function chargeInput(body){
 }
 export async function asaasRequest(environment,key,method,path,body,params={},fetcher=fetch){
  billingEnvironment(environment)
- if(!/^\/(?:payments|customers|webhooks)(?:\/[A-Za-z0-9_-]+)?$/.test(path)&&!['/myAccount/status/','/myAccount/commercialInfo/'].includes(path))throw new BillingError('Operação de cobrança inválida.')
+ if(!/^\/(?:payments|customers|webhooks|subscriptions|installments)(?:\/[A-Za-z0-9_-]+)?$/.test(path)&&!/^\/payments\/[A-Za-z0-9_-]+\/(?:pixQrCode|identificationField|restore)$/.test(path)&&!/^\/(?:installments|subscriptions)\/[A-Za-z0-9_-]+\/payments$/.test(path)&&!['/myAccount/status/','/myAccount/commercialInfo/','/myAccount/fees/','/finance/balance','/finance/payment/statistics','/financialTransactions'].includes(path))throw new BillingError('Operação de cobrança inválida.')
  const url=new URL('https://'+(environment==='sandbox'?'api-sandbox.asaas.com':'api.asaas.com')+'/v3'+path)
  for(const [name,value] of Object.entries(params))if(value!==undefined)url.searchParams.set(name,String(value))
  let response
@@ -40,7 +40,7 @@ export function canonicalPayment(payment,charge){
  const statuses=['PENDING','RECEIVED','CONFIRMED','OVERDUE','REFUNDED','RECEIVED_IN_CASH','REFUND_REQUESTED','REFUND_IN_PROGRESS','CHARGEBACK_REQUESTED','CHARGEBACK_DISPUTE','AWAITING_CHARGEBACK_REVERSAL','DUNNING_REQUESTED','DUNNING_RECEIVED','AWAITING_RISK_ANALYSIS']
  if(!statuses.includes(payment.status))throw new BillingError('O Asaas retornou uma situação ainda não reconhecida. Consulte a fatura.',409)
  const net=Number(payment.netValue),paid=payment.paymentDate
- return {payment_id:providerId(payment.id),customer_id:payment.customer,external_reference:payment.externalReference,amount_cents:Number(charge.amount_cents),status:payment.deleted?'CANCELED':payment.status,invoice_url:payment.deleted?null:invoiceUrl(payment.invoiceUrl,charge.environment),net_cents:payment.netValue!==null&&payment.netValue!==undefined&&Number.isFinite(net)&&net>=0?Math.round(net*100):null,paid_date:typeof paid==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(paid)?paid:null,has_refunds:Array.isArray(payment.refunds)&&payment.refunds.length>0}
+ return {due_date:typeof payment.dueDate==='string'?dateOnly(payment.dueDate):null,title:typeof payment.description==='string'?payment.description.trim().slice(0,160)||null:null,payment_id:providerId(payment.id),customer_id:payment.customer,external_reference:payment.externalReference,amount_cents:Number(charge.amount_cents),status:payment.deleted?'CANCELED':payment.status,invoice_url:payment.deleted?null:invoiceUrl(payment.invoiceUrl,charge.environment),net_cents:payment.netValue!==null&&payment.netValue!==undefined&&Number.isFinite(net)&&net>=0?Math.round(net*100):null,paid_date:typeof paid==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(paid)?paid:null,has_refunds:Array.isArray(payment.refunds)&&payment.refunds.length>0}
 }
 export async function payerReference(secret,document){
  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign'])

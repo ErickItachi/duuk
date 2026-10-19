@@ -163,7 +163,7 @@ function AdminWorkspace() {
             <Route index element={<DashboardPage />} />
             <Route path="ai" element={guarded('ai', <Suspense fallback={aiLoading}><AiPage notify={notify} /></Suspense>)} />
             <Route path="social/*" element={guarded('social', <Suspense fallback={<LoadingPanel label="Abrindo Social Media…" />}><SocialPage notify={notify} /></Suspense>)} />
-            <Route path="spotify" element={<Suspense fallback={<LoadingPanel label="Abrindo Spotify…" />}><SpotifyPage notify={notify} /></Suspense>} />
+            <Route path="spotify" element={guarded('spotify', <Suspense fallback={<LoadingPanel label="Abrindo Spotify…" />}><SpotifyPage notify={notify} /></Suspense>)} />
             <Route path="drive" element={guarded('drive', <DrivePage notify={notify} />)} />
             <Route path="portfolio" element={guarded('site', <ProjectList notify={notify} />)} />
             <Route path="inicio" element={guarded('site', <HomeEditor notify={notify} />)} />
@@ -171,7 +171,7 @@ function AdminWorkspace() {
             <Route path="contratos" element={guarded('contracts', <ContractsPage notify={notify} />)} />
             <Route path="contratos/:id" element={guarded('contracts', <ContractEditor notify={notify} />)} />
             <Route path="agenda" element={guarded('agenda', <AgendaPage notify={notify} />)} />
-            <Route path="cobrancas" element={guarded('finance', <Suspense fallback={<LoadingPanel label="Abrindo cobranças…" />}><BillingPage notify={notify} /></Suspense>)} />
+            <Route path="cobrancas" element={guarded('billing', <Suspense fallback={<LoadingPanel label="Abrindo cobranças…" />}><BillingPage notify={notify} /></Suspense>)} />
             <Route path="financeiro" element={guarded('finance', <FinancePage notify={notify} />)} />
             <Route path="despesas" element={guarded('finance', <ExpensesPage notify={notify} />)} />
             <Route path="insights" element={guarded('insights', <InsightsPage />)} />

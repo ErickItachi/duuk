@@ -2,12 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { spotifyRequest } from './api'
 import { useQuery } from '../office/useQuery'
+import { useAuth } from '../content/AuthContext'
 import { SpotifyContext } from './SpotifyContext'
 import { createSpotifyBrowserPlayer, loadSpotifySDK } from './sdk.mjs'
 import { appleMobile, localPlayback, nativeCommand, playbackBody } from './playback.mjs'
 import './spotify.css'
 
-export default function SpotifyProvider({ children }) {
+export default function SpotifyProvider({children}) {
+ const auth=useAuth()
+ return auth.hasPermission('spotify')?<EnabledSpotifyProvider>{children}</EnabledSpotifyProvider>:<>{children}</>
+}
+function EnabledSpotifyProvider({ children }) {
  const { pathname } = useLocation()
  const status = useQuery(useCallback(() => spotifyRequest({ action: 'status' }), []))
  const [player, setPlayer] = useState(null), [playerError, setPlayerError] = useState(''), [busy, setBusy] = useState(false), [dock, setDock] = useState(false)

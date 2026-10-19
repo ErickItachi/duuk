@@ -19,7 +19,7 @@ export const navGroups = [
   { id: 'management', label: 'Gestão', items: [
     { to: '/admin/contratos', label: 'Contratos', icon: 'document', permission: 'contracts', shortcut: 'g k' },
     { to: '/admin/financeiro', label: 'Financeiro', icon: 'wallet', permission: 'finance', shortcut: 'g f' },
-    { to: '/admin/cobrancas', label: 'Cobranças', icon: 'incoming', permission: 'finance' },
+    { to: '/admin/cobrancas', label: 'Cobranças', icon: 'incoming', app: 'asaas', permission: 'billing' },
   ] },
   { id: 'content', label: 'Conteúdo', items: [
     { to: '/admin/social', label: 'Social Media', short: 'Social', icon: 'instagram', permission: 'social', shortcut: 'g s' },
@@ -29,7 +29,7 @@ export const navGroups = [
     { to: '/admin/insights', label: 'Insights do site', short: 'Insights', icon: 'trend', permission: 'insights' },
   ] },
   { id: 'music', label: 'Seu espaço', items: [
-    { to: '/admin/spotify', label: 'Spotify', icon: 'music', app: 'spotify' },
+    { to: '/admin/spotify', label: 'Spotify', icon: 'music', app: 'spotify', permission: 'spotify' },
   ] },
   // Google Drive stays the last item of the main navigation.
   { id: 'files', label: 'Arquivos', items: [
