@@ -17,7 +17,7 @@ const provider=environment=>environment==='sandbox'?'https://sandbox.asaas.com/'
 function Configuration({environment:initial,onClose,onSaved,notify}){
  const auth=useAuth(),[environment,setEnvironment]=useState(initial),[key,setKey]=useState(''),[email,setEmail]=useState(auth.profile?.email||''),[accepted,setAccepted]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),running=useRef(false)
  useUnsavedChanges(Boolean(key))
- return <Modal title="Conectar Asaas da DUUK" subtitle="Conta empresarial com CNPJ. Somente administradores configuram a integração." onClose={()=>{if(!busy){setKey('');onClose()}}}><form className="billing-form" onSubmit={async event=>{event.preventDefault();if(running.current)return;running.current=true;setBusy(true);setError('');try{await billingRequest({action:'configure',environment,api_key:key,contact_email:email,fees_accepted:accepted});setKey('');await onSaved(environment);notify('Asaas conectado. As cobranças usam somente este ambiente.');onClose()}catch(cause){setError(cause.message);await onSaved(environment)}finally{running.current=false;setBusy(false)}}}>
+ return <Modal title="Conectar Asaas da DUUK" subtitle="Conta empresarial com CNPJ. Somente administradores configuram a integração." onClose={()=>{if(!busy){setKey('');onClose()}}}><form className="billing-form" onSubmit={async event=>{event.preventDefault();if(running.current)return;running.current=true;setBusy(true);setError('');try{await billingRequest({action:'configure',environment,api_key:key,contact_email:email,fees_accepted:accepted});setKey('');await onSaved(environment);notify('Asaas conectado. As cobranças usam somente este ambiente.');onClose(environment)}catch(cause){setError(cause.message);await onSaved(environment)}finally{running.current=false;setBusy(false)}}}>
   <div className="admin-modal__body"><div className="billing-onboarding"><p>Primeiro homologue no Sandbox. Depois, conclua o cadastro do CNPJ e a verificação da empresa diretamente no Asaas para receber pagamentos reais.</p><a href={provider(environment)} target="_blank" rel="noreferrer">{environment==='sandbox'?'Criar ou acessar conta Sandbox':'Criar ou acessar conta empresarial'}<Icon name="external" size={14}/></a></div>
    <fieldset disabled={busy}><label className="admin-field"><span>Ambiente da chave</span><select value={environment} onChange={event=>{setEnvironment(event.target.value);setKey('');setAccepted(false)}}><option value="sandbox">Sandbox · testes sem dinheiro real</option><option value="production">Produção · pagamentos reais</option></select></label>
     <label className="admin-field"><span>Chave da API Asaas</span><input type="password" value={key} onChange={event=>setKey(event.target.value)} required autoComplete="off" spellCheck="false" minLength={20} maxLength={1000}/><small>Cole somente aqui. A chave fica criptografada no servidor e não aparece para a equipe.</small></label>
@@ -59,8 +59,8 @@ function Details({record,onClose,onSync,onCancel,onContinue,onClone,notify,owner
   </div><p className="settings-note">Abrir ou copiar a fatura não marca a cobrança como paga. A confirmação vem do Asaas. Notas fiscais e estornos são tratados diretamente no provedor.</p>
  </div></Modal>
 }
-function BillingWorkspace({notify}){
- const auth=useAuth(),[params,setParams]=useSearchParams(),[environment,setEnvironment]=useState(params.get('ambiente')==='production'?'production':'sandbox'),[month,setMonth]=useState(today().slice(0,7)),[search,setSearch]=useState(''),[queryText,setQueryText]=useState(''),[status,setStatus]=useState('all'),[offset,setOffset]=useState(0)
+function BillingWorkspace({notify,initialEnvironment}){
+ const auth=useAuth(),[params,setParams]=useSearchParams(),[environment,setEnvironment]=useState(initialEnvironment),[month,setMonth]=useState(today().slice(0,7)),[search,setSearch]=useState(''),[queryText,setQueryText]=useState(''),[status,setStatus]=useState('all'),[offset,setOffset]=useState(0)
  const [configuring,setConfiguring]=useState(params.get('configurar')==='1'),[editing,setEditing]=useState(null),[details,setDetails]=useState(null),[canceling,setCanceling]=useState(null),[busy,setBusy]=useState(''),[disconnecting,setDisconnecting]=useState(false)
  const load=useCallback(async()=>{const [configuration,list]=await Promise.all([billingRequest({action:'status',environment}),billingRequest({action:'list',environment,month,search:queryText,status,offset})]);return {configuration,...list}},[environment,month,queryText,status,offset])
  const query=useQuery(load),reload=query.reload,data=query.data,configuration=data?.configuration,items=data?.items||[],stats=data?.stats,central=auth.profile?.is_super_admin,ready=configuration?.connected&&configuration?.account_status==='APPROVED'
@@ -83,10 +83,20 @@ function BillingWorkspace({notify}){
   </section>
   <p className="billing-privacy"><Icon name="shield" size={16}/><span>Faturas privadas para a equipe com acesso ao Financeiro. Cartão e documento do cliente não são armazenados na DUUK. Compartilhe os links manualmente. Os lançamentos em Contas continuam sob revisão da equipe.</span></p>
   {disconnecting&&<ConfirmModal title="Desconectar Asaas?" message="A chave será removida da DUUK. As faturas e o histórico permanecem no Asaas e aqui; a atualização automática para até reconectar a mesma conta. Esta ação não cancela faturas nem estorna pagamentos." action="Desconectar Asaas" onClose={()=>setDisconnecting(false)} onConfirm={async()=>{await settingAction('disconnect');setDisconnecting(false)}}/>}
-  {configuring&&central&&<Configuration environment={environment} notify={notify} onClose={()=>{setConfiguring(false);setParams({ambiente:environment},{replace:true})}} onSaved={async value=>{if(value!==environment)switchEnvironment(value);else await reload()}}/>}
+  {configuring&&central&&<Configuration environment={environment} notify={notify} onClose={selected=>{setConfiguring(false);setParams({ambiente:selected||environment},{replace:true})}} onSaved={async value=>{if(value!==environment)switchEnvironment(value);else await reload()}}/>}
   {editing&&<ChargeEditor environment={environment} initial={editing} onClose={()=>setEditing(null)} onCreated={created}/>}
   {details&&<Details record={details} owner={details.created_by===auth.profile?.id} notify={notify} onClose={()=>setDetails(null)} onSync={sync} onCancel={record=>{setDetails(null);setCanceling(record)}} onContinue={record=>{setDetails(null);setEditing(record)}} onClone={record=>{setDetails(null);setEditing({...record,status:'FAILED'})}}/>}
   {canceling&&<ConfirmModal title="Cancelar cobrança?" message={<span>{canceling.client_name}: <Money cents={canceling.amount_cents}/>. O link deixará de aceitar pagamento. Esta ação não faz estornos.</span>} action="Cancelar cobrança" onClose={()=>setCanceling(null)} onConfirm={async()=>{const result=await billingRequest({action:'cancel',environment,id:canceling.id});setDetails(result.charge);await reload();notify('Cobrança cancelada no Asaas.')}}/>}
  </div>
 }
-export default function BillingPage({notify=()=>{}}){return <FinancePrivacy><BillingWorkspace notify={notify}/></FinancePrivacy>}
+export default function BillingPage({notify=()=>{}}){
+ const [params]=useSearchParams()
+ const [requested]=useState(()=>['production','sandbox'].includes(params.get('ambiente'))?params.get('ambiente'):null)
+ const resolve=useCallback(async()=>{
+  if(requested)return {environment:requested}
+  const production=await billingRequest({action:'status',environment:'production'})
+  return {environment:production.configured?'production':'sandbox'}
+ },[requested])
+ const query=useQuery(resolve)
+ return <FinancePrivacy>{query.data?<BillingWorkspace notify={notify} initialEnvironment={query.data.environment}/>:query.error?<ErrorState onRetry={query.reload}>{query.error}</ErrorState>:<LoadingPanel label="Conferindo a conta de cobranças da DUUK…"/>}</FinancePrivacy>
+}

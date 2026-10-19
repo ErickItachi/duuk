@@ -53,4 +53,28 @@ try{
    console.log(`billing ${width} ${theme} passed`)
   }catch(error){console.error({width,theme,errors,body:(await page.locator('body').innerText()).slice(0,2200)});throw error}finally{await context.close()}
  }
+
+ // Existing company connection is shared; a new member never configures a personal account.
+ const environments={sandbox:false,production:false},centralCalls=[]
+ const centralHandler=async body=>{centralCalls.push(body)
+  if(body.action==='status')return {configured:environments[body.environment],connected:environments[body.environment],account_name:'DUUK central fictícia',account_status:'APPROVED'}
+  if(body.action==='list')return {items:[],total_count:0,stats:{open_cents:0,confirmed_cents:0,received_cents:0}}
+  if(body.action==='configure'){assert.equal(body.environment,'production');assert.equal(body.fees_accepted,true);environments.production=true;return {configured:true,connected:true}}
+  throw Error('Unexpected central billing action '+body.action)
+ }
+ const centralOptions={user:fixtures.user,profile:fixtures.profile,permissions:fixtures.permissions,tables:fixtures.tables(),rpc:fixtures.rpc,functions:{...fixtures.functions,'duuk-billing':centralHandler}}
+ const adminContext=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'}),adminPage=await adminContext.newPage();await installSupabaseMock(adminPage,centralOptions)
+ try{
+  await adminPage.goto(origin+'/admin/cobrancas?ambiente=sandbox');await adminPage.getByRole('button',{name:'Configurar Asaas',exact:true}).click();const dialog=adminPage.getByRole('dialog',{name:'Conectar Asaas da DUUK'})
+  await dialog.getByLabel('Ambiente da chave').selectOption('production');await dialog.getByLabel('Chave da API Asaas').fill('fixture-private-key-1234567890');await dialog.getByRole('checkbox').check();await dialog.getByRole('button',{name:'Conectar Asaas',exact:true}).click();await dialog.waitFor({state:'detached'})
+  await adminPage.waitForURL('**/admin/cobrancas?ambiente=production');assert.equal(await adminPage.locator('.billing-toolbar select').inputValue(),'production');await adminPage.reload();await adminPage.locator('.billing-connection').waitFor();assert.equal(await adminPage.locator('.billing-toolbar select').inputValue(),'production')
+ }finally{await adminContext.close()}
+ const memberContext=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'}),memberPage=await memberContext.newPage()
+ await installSupabaseMock(memberPage,{...centralOptions,profile:{...fixtures.profile,is_super_admin:false}})
+ try{
+  await memberPage.goto(origin+'/admin/cobrancas');await memberPage.locator('.billing-connection').waitFor();assert.equal(await memberPage.locator('.billing-toolbar select').inputValue(),'production');assert.equal(await memberPage.getByRole('button',{name:'Configurar Asaas',exact:true}).count(),0);assert(!(await memberPage.getByRole('button',{name:'Nova cobrança',exact:true}).isDisabled()))
+  await memberPage.goto(origin+'/admin/cobrancas?ambiente=sandbox');await memberPage.getByRole('heading',{name:'Conecte a conta empresarial da DUUK'}).waitFor();assert.equal(await memberPage.locator('.billing-toolbar select').inputValue(),'sandbox')
+ }finally{await memberContext.close()}
+ assert.equal(centralCalls.filter(x=>x.action==='configure').length,1);assert(!centralCalls.some(x=>['create','cancel'].includes(x.action)))
+ console.log('billing central production default, explicit Sandbox, configuration URL and shared member access passed')
 }finally{await browser.close();await server.httpServer.close()}

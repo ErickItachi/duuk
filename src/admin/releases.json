@@ -1,5 +1,14 @@
 [
   {
+    "version": "2.6.1",
+    "date": "2026-10-19",
+    "title": "Asaas central da DUUK",
+    "improved": [
+      "Cobranças abre a conta empresarial de Produção compartilhada pela equipe autorizada.",
+      "Ambiente escolhido na configuração permanece correto ao fechar e reabrir o painel."
+    ]
+  },
+  {
     "version": "2.6.0",
     "date": "2026-10-17",
     "title": "Cobranças da DUUK",

@@ -1,6 +1,6 @@
 # Cobranças DUUK · Asaas
 
-Módulo 2.6.0, solicitado pelo proprietário para cobrar clientes por Pix, boleto e cartão e receber na conta empresarial da DUUK, com CNPJ. A implementação usa a API oficial do Asaas. A empresa ainda não tem conta conectada; não confundir instalação do módulo com habilitação dos recebimentos. Nenhuma cobrança real foi emitida para testar.
+Módulo 2.6.0, solicitado pelo proprietário para cobrar clientes por Pix, boleto e cartão e receber na conta empresarial da DUUK, com CNPJ. A implementação usa a API oficial do Asaas. A conta empresarial de Produção foi conectada em 19/10/2026, com cadastro APPROVED e webhook ativo. Nenhuma cobrança real foi emitida para testar.
 
 ## Ativação pelo proprietário
 
@@ -43,3 +43,16 @@ Desconectar tenta remover apenas o webhook DUUK e sempre apaga credenciais locai
 Referências oficiais consultadas em 17/10/2026: https://docs.asaas.com/reference/criar-nova-cobranca, https://docs.asaas.com/reference/criar-novo-cliente, https://docs.asaas.com/reference/consultar-situacao-cadastral-da-conta, https://docs.asaas.com/reference/recuperar-dados-comerciais, https://docs.asaas.com/reference/criar-novo-webhook, https://docs.asaas.com/docs/about-webhooks, https://docs.asaas.com/docs/eventos-para-cobrancas, https://docs.asaas.com/docs/sandbox. O Checkout separado não oferece boleto; por isso foi escolhida a fatura de `/payments`.
 
 Validação de entrega em 17/10/2026: 234 testes Node, 233 aprovados e um opt-in anterior ignorado; lint com os três avisos anteriores, Deno aprovado e build de fontes isoladas `42ca8e7c9c5688f1e491`. Browser: oito combinações 320/390/768/1440 px e claro/escuro, incluindo cancelamento e desconexão; regressão MFA completa em 320/1440 px e entradas privadas alternativas aprovada. Fixture SQL passou com rollback. Endpoints publicados recusaram ausência de Auth (401), origem externa (403), Cron forjado (403) e webhook sem segredo (401). Banco confirmou zero configurações/cobranças/tarefas, sem RPC executável por navegador. Edge Function duuk-billing v2 ativa. Homologação com uma conta Asaas real permanece pendente do cadastro/chave da empresa.
+
+
+## Conexão real e abertura compartilhada · 2.6.1 · 19/10/2026
+
+O proprietário concluiu a autorização SMS diretamente no Asaas. Foi criada uma única chave exclusiva **DUUK PAINEL ADMINISTRATIVO**, com operações de saque desativadas (Pix/TED/Pague Contas/recarga) e validade até **19/10/2027 às 23:59**, conforme a interface do provedor. Renovar antes do vencimento pelo formulário seguro. O valor foi transferido somente por memória para o formulário autenticado e salvo no Vault; não entrou em repositório, arquivo, clipboard, log ou chat. A exibição única foi fechada e a página navegada após confirmar o armazenamento.
+
+A API confirmou conta JURIDICA, cadastro geral APPROVED e conexão de Produção. O webhook oficial **DUUK Cobranças production** apareceu Ativado no Asaas. O banco confirmou uma única configuração de Produção, segredos no Vault e zero cobranças reais. Os dois membros ativos com Financeiro obtêm o mesmo status central; o terceiro membro mantém as permissões anteriores. Não foram criadas contas Asaas individuais, alterados acessos ou emitidas cobranças, transferências ou mensagens a clientes.
+
+Sem ambiente explícito no endereço, Cobranças consulta o status central e abre Produção quando ela está configurada; caso contrário, abre Sandbox. `?ambiente=sandbox` continua sendo uma escolha explícita de testes. Fechar a configuração após trocar de Sandbox para Produção conserva o ambiente no endereço e após recarregar. Isso corrige o callback antigo que conservava a seleção na tela, mas recolocava Sandbox na URL.
+
+Validação real da criação/liquidação/cancelamento com conta Sandbox ainda está pendente de cadastro/chave desse ambiente. Os testes automatizados de emissão permanecem isolados. Não use uma cobrança real para homologar. A conexão de Produção foi validada sem modificar clientes ou recebimentos.
+
+Validação 2.6.1: 234 testes Node, 233 aprovados e o opt-in anterior ignorado; lint mantém somente três avisos anteriores. Build de fontes isoladas `fb37eeda502776f5dc32` e oito combinações de UI 320–1440 px/claro–escuro aprovados. A regressão reproduziu a configuração de Produção partindo do Sandbox, conferiu URL/reload e abriu a mesma conta com outro perfil autorizado sem oferecer uma conexão pessoal. O Sandbox explícito continuou funcionando. As leituras reais de Produção confirmaram APPROVED, webhook Ativado, um único status compartilhado pelos dois membros autorizados e zero cobranças emitidas.

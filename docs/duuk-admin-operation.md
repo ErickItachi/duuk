@@ -239,6 +239,9 @@ Migrações: `20261014060244_duuk_bank_import_removal.sql` e `20261014062607_duu
 
 ## Cobranças Asaas · 2.6.0
 
-Menu Gestão > Cobranças, protegido por Financeiro e MFA, com Pix/boleto/cartão por fatura externa. Conta recebedora empresarial da DUUK. Instalação da integração não significa conta aprovada: cadastro/KYC do CNPJ, chave do Sandbox e homologação real ainda dependem do proprietário. Nenhum recebimento, cobrança real ou serviço adicional pago foi realizado. Guia completo: `docs/asaas-billing-setup.md`.
+Menu Gestão > Cobranças, protegido por Financeiro e MFA, com Pix/boleto/cartão por fatura externa. Conta recebedora empresarial da DUUK. Produção conectada em 19/10/2026 após SMS do proprietário: CNPJ empresarial, cadastro APPROVED, chave no Vault sem operações de saque e webhook Ativado. A chave do Sandbox e a homologação de emissão/liquidação/cancelamento nesse ambiente continuam pendentes. Nenhum recebimento, cobrança real ou serviço adicional pago foi realizado. Guia completo: `docs/asaas-billing-setup.md`.
 
 Credenciais no Vault, tabelas privadas com RLS, RPC exclusiva do servidor, webhook autenticado/deduplicado e consulta canônica antes de atualizar. Timeout não repete criação automaticamente. CONFIRMED difere de RECEIVED. Não grava CPF/CNPJ/cartão nem cria receitas/despesas automaticamente. Produção exige revisão e aceite das tarifas do Asaas; links são compartilhados manualmente. A conexão pode ser removida preservando faturas/histórico, e a conta original é exigida para reconectar. Cron por minuto reutiliza a infraestrutura gratuita existente.
+
+
+Na 2.6.1, entrar em Cobranças sem ambiente explícito abre a conta central de Produção configurada, para qualquer membro autorizado com Financeiro. A conexão é única por ambiente, não por pessoa. Hoje há dois membros ativos com Financeiro e três ativos no total; os acessos foram preservados. Sandbox permanece acessível pela seleção explícita. A chave exclusiva vence em 19/10/2027 às 23:59 segundo a interface Asaas, e precisa de renovação antes dessa data. Nenhuma cobrança real foi emitida para validar a conexão.
