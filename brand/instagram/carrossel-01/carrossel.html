@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>DUUK — Carrossel 01</title>
+<style>
+/* Fontes e logo vêm do próprio site, sem cópias. */
+@font-face { font-family: 'Inter'; font-weight: 600; src: url(../../../public/fonts/inter-latin.woff2) format('woff2'); }
+@font-face { font-family: 'Inter Tight'; font-weight: 900; src: url(../../../public/fonts/inter-tight-latin.woff2) format('woff2'); }
+
+:root {
+  /* Paleta de src/index.css */
+  --coral: #eb4b3f;
+  --coral-mid: #ed6f4d;
+  --orange: #f0945b;
+  --black: #080808;
+  --ground: #050505;   /* com o grão, a média fica no preto do site */
+  --white: #ffffff;
+  --gradient: linear-gradient(90deg, #eb4b3f 0%, #ed6f4d 50%, #f0945b 100%);
+
+  --w: 1080px;
+  --h: 1350px;
+  --m: 80px;           /* margem editorial */
+  --axis: 905px;       /* altura do traço que atravessa os slides 02–05 */
+  --stroke: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { background: #1a1a1a; }
+body {
+  display: flex;
+  min-width: calc(var(--w) * 5);
+  font-family: Inter, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+body.is-single { min-width: 0; }
+body.is-single .slide:not(.is-active) { display: none; }
+
+.slide {
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  flex: none;
+  overflow: hidden;
+  color: var(--white);
+  background: var(--ground);
+}
+
+/* Grão de película: a marca física que a luz deixa no filme. */
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.055;
+  mix-blend-mode: screen;
+}
+.slide--plane .grain { mix-blend-mode: overlay; opacity: 0.22; }
+
+.label {
+  position: absolute;
+  font-family: Inter, sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.display {
+  position: absolute;
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 900;
+  line-height: 0.84;
+  letter-spacing: calc(var(--track) * 1em);
+  word-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  --track: -0.03;
+}
+#cover { --track: -0.025; }
+.display > span { display: block; }
+
+.dot { color: var(--coral); font-style: normal; }
+
+.axis {
+  position: absolute;
+  left: 0;
+  top: calc(var(--axis) - var(--stroke) / 2);
+  height: var(--stroke);
+}
+
+/* ——— 02 · LINHA ——— */
+.s2 .ticks {
+  position: absolute;
+  left: 0;
+  top: calc(var(--axis) - 14px);
+  height: 28px;
+  background-image:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 34%) 0 2px, transparent 2px 24px);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 55%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 55%);
+}
+.s2 .axis { background: var(--coral); }
+.s2 .timecode { color: rgb(255 255 255 / 70%); }
+
+/* ——— 03 · PLANO ——— */
+.slide--plane { background: var(--gradient); color: var(--black); }
+
+/* ——— 04 · IDENTIDADE ——— */
+.s4 .axis { width: 100%; background: var(--orange); }
+.s4 .credits { left: var(--m); bottom: var(--m); }
+.s4 .role { margin-right: 1.1em; color: rgb(255 255 255 / 50%); }
+
+/* ——— 05 · ASSINATURA ——— */
+.s5 .axis { background: var(--orange); }
+.s5 .logo { position: absolute; overflow: hidden; }
+.s5 .logo img { display: block; }
+.s5 .closing { left: var(--m); bottom: var(--m); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="grain-filter" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="2" seed="7" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+</svg>
+
+<!-- 01 · PONTO — o instante -->
+<section class="slide s1" data-slide="1">
+  <p class="label" style="left:var(--m); top:var(--m)">DUUK® / São Paulo</p>
+  <h1 class="display" id="cover">
+    <span>O real</span>
+    <span>merece</span>
+    <span>deixar</span>
+    <span>marca<em class="dot">.</em></span>
+  </h1>
+</section>
+
+<!-- 02 · LINHA — o instante atravessa o tempo -->
+<section class="slide s2" data-slide="2">
+  <div class="ticks"></div>
+  <div class="axis"></div>
+  <p class="label timecode">00:00:00:01</p>
+  <span class="display dot instant">.</span>
+  <h2 class="display" id="once">
+    <span>Acontece</span>
+    <span>uma vez.</span>
+  </h2>
+</section>
+
+<!-- 03 · PLANO — e fica -->
+<section class="slide s3 slide--plane" data-slide="3">
+  <h2 class="display" id="stays"><span>E fica.</span></h2>
+</section>
+
+<!-- 04 · IDENTIDADE -->
+<section class="slide s4" data-slide="4">
+  <p class="label" style="left:var(--m); top:var(--m)">DUUK® / São Paulo</p>
+  <h2 class="display" id="film"><span>A gente filma</span></h2>
+  <div class="axis"></div>
+  <h2 class="display" id="stay"><span>pra ficar.</span></h2>
+  <p class="label credits"><span class="role">Direção</span>Erick Borborema & Douglas Felix</p>
+</section>
+
+<!-- 05 · ASSINATURA -->
+<section class="slide s5" data-slide="5">
+  <div class="logo"><img src="../../../public/media/duuk-logo-white.png" alt="DUUK" width="718" height="886"></div>
+  <div class="axis"></div>
+  <p class="label closing">O real merece deixar marca<em class="dot">.</em></p>
+</section>
+
+<script>
+const W = 1080, H = 1350, M = 80
+const root = getComputedStyle(document.documentElement)
+const AXIS = parseFloat(root.getPropertyValue('--axis'))
+const STROKE = parseFloat(root.getPropertyValue('--stroke'))
+const FACE = '"Inter Tight"'
+const LEADING = 0.84
+
+// Mede a tinta das letras (não a caixa tipográfica) para alinhar texto
+// grande opticamente à margem e assentá-lo numa linha de base exata.
+const ctx = document.createElement('canvas').getContext('2d')
+function ink(text, size, track) {
+  ctx.font = `900 ${size}px ${FACE}`
+  ctx.letterSpacing = `${track * size}px`
+  ctx.wordSpacing = `${0.12 * size}px`
+  const m = ctx.measureText(text.toUpperCase())
+  return {
+    left: -m.actualBoundingBoxLeft,
+    width: m.actualBoundingBoxLeft + m.actualBoundingBoxRight,
+    ascent: m.actualBoundingBoxAscent,
+    descent: m.actualBoundingBoxDescent,
+    // distância do topo de uma linha (line-height 0.84) até a linha de base
+    baseline: (size * LEADING - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2
+      + m.fontBoundingBoxAscent,
+  }
+}
+
+// Dimensiona o bloco para que a linha mais larga tenha `width` de tinta
+// e encosta a tinta da primeira linha em `left`.
+function block(el, { width, size, left = M }) {
+  const track = parseFloat(getComputedStyle(el).getPropertyValue('--track'))
+  const lines = [...el.querySelectorAll(':scope > span')].map((s) => s.textContent)
+  if (!size) {
+    const widest = Math.max(...lines.map((l) => ink(l, 100, track).width))
+    size = (width / widest) * 100
+  }
+  el.style.fontSize = `${size}px`
+  el.style.left = `${left - ink(lines[0], size, track).left}px`
+  const h = ink('H', size, track)
+  return {
+    // Posiciona pela linha de base da última linha.
+    baseline(y) { el.style.top = `${y - h.baseline - size * LEADING * (lines.length - 1)}px` },
+    // Posiciona pelo topo das maiúsculas da primeira linha.
+    capTop(y) { el.style.top = `${y + h.ascent - h.baseline}px` },
+    size,
+  }
+}
+
+function layout() {
+  // 01 · quatro linhas de seis caracteres, assentadas na margem inferior.
+  const cover = block(document.getElementById('cover'), { width: W - M * 2 })
+  cover.baseline(H - M)
+
+  // 02 · a linha do tempo; o ponto da capa reaparece como o instante.
+  const once = block(document.getElementById('once'), { width: 520 })
+  once.capTop(AXIS + 64)
+  const instantX = 742
+  const dot = document.querySelector('.s2 .instant')
+  const d = ink('.', cover.size, -0.025)
+  dot.style.fontSize = `${cover.size}px`
+  dot.style.left = `${instantX - d.left}px`
+  dot.style.top = `${AXIS - d.baseline + (d.ascent - d.descent) / 2}px`
+  const dotCenter = instantX + d.width / 2
+  document.querySelector('.s2 .ticks').style.width = `${instantX - 18}px`
+  Object.assign(document.querySelector('.s2 .axis').style, {
+    left: `${dotCenter}px`, width: `${W - dotCenter}px`,
+  })
+  Object.assign(document.querySelector('.s2 .timecode').style, {
+    left: `${instantX}px`, top: `${AXIS - 14 - 44 - 24}px`,
+  })
+
+  // 03 · o traço vira plano e ocupa o quadro.
+  const stays = block(document.getElementById('stays'), { width: W - M * 2 })
+  stays.capTop(M + 72)
+
+  // 04 · o traço passa no meio da frase: filmar de um lado, ficar do outro.
+  const film = block(document.getElementById('film'), { width: W - M * 2 })
+  film.baseline(AXIS - 40)
+  const stay = block(document.getElementById('stay'), { size: film.size })
+  stay.capTop(AXIS + 40)
+
+  // 05 · logo sobre o fim do traço, como na abertura do site.
+  const LOGO_W = 330                       // largura visível
+  const SRC = { w: 718, h: 886, pad: 12 }  // PNG original com 12 px transparentes
+  const scale = LOGO_W / (SRC.w - SRC.pad * 2)
+  const visibleH = (SRC.h - SRC.pad * 2) * scale
+  const gap = Math.round(LOGO_W * 30 / 136) // proporção logo/linha da abertura
+  const logoLeft = (W - LOGO_W) / 2
+  const logo = document.querySelector('.s5 .logo')
+  Object.assign(logo.style, {
+    left: `${logoLeft}px`, top: `${AXIS - STROKE / 2 - gap - visibleH}px`,
+    width: `${LOGO_W}px`, height: `${visibleH}px`,
+  })
+  Object.assign(logo.querySelector('img').style, {
+    width: `${SRC.w * scale}px`, height: `${SRC.h * scale}px`,
+    marginLeft: `${-SRC.pad * scale}px`, marginTop: `${-SRC.pad * scale}px`,
+  })
+  document.querySelector('.s5 .axis').style.width = `${logoLeft + LOGO_W}px`
+
+  document.querySelectorAll('.slide').forEach((slide) => {
+    slide.insertAdjacentHTML('beforeend',
+      `<svg class="grain" width="${W}" height="${H}" aria-hidden="true"><rect width="100%" height="100%" filter="url(#grain-filter)"/></svg>`)
+  })
+}
+
+const only = new URLSearchParams(location.search).get('slide')
+if (only) {
+  document.body.classList.add('is-single')
+  document.querySelector(`[data-slide="${only}"]`).classList.add('is-active')
+}
+
+Promise.all([
+  document.fonts.load(`900 100px ${FACE}`),
+  document.fonts.load('600 22px Inter'),
+  ...[...document.images].map((i) => i.decode()),
+]).then(() => {
+  layout()
+  document.documentElement.dataset.ready = 'true'
+})
+</script>
+</body>
+</html>
