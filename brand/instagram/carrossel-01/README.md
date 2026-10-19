@@ -11,7 +11,7 @@ A frase não é explicada, é encenada. O laranja aparece só no que fica: a mar
 | 01 | **Ponto.** O ponto final de "MARCA." é o único elemento coral: o instante. | O REAL / MERECE / DEIXAR / MARCA. |
 | 02 | **Linha.** Uma régua de quadros (24 por segundo) corre no escuro até o mesmo ponto, agora no tempo `00:00:00:01`. Dali nasce o traço. | ACONTECE UMA VEZ. |
 | 03 | **Plano.** O traço ocupa o quadro inteiro, com o degradê do site. | E FICA. |
-| 04 | **Identidade.** O traço passa no meio da frase: filmar de um lado, ficar do outro. Créditos dos diretores, como num cartaz. | A GENTE FILMA / PRA FICAR. |
+| 04 | **Identidade.** O traço passa no meio da frase: filmar de um lado, ficar do outro. | A GENTE FILMA / PRA FICAR. |
 | 05 | **Assinatura.** O traço termina sob o logo, na mesma proporção da abertura do site. | O REAL MERECE DEIXAR MARCA. |
 
 O traço fica na mesma altura (905 px) do slide 02 ao 05 e atravessa as emendas. Ao deslizar, o carrossel lê como uma única linha.
@@ -38,5 +38,5 @@ O logo original tem 718 × 886 px. Até 2x ele é usado na resolução nativa; p
 1. Fundo preto com "O real merece deixar marca." em letras brancas grandes; o ponto final é coral.
 2. Uma régua de quadros corre no escuro até um ponto coral marcado 00:00:00:01, de onde sai um traço. Abaixo: "Acontece uma vez."
 3. Quadro inteiro em degradê coral e laranja com "E fica." em preto.
-4. Um traço laranja divide a frase "A gente filma / pra ficar." Créditos: direção Erick Borborema e Douglas Felix.
+4. Um traço laranja divide a frase "A gente filma / pra ficar."
 5. Logo da DUUK em branco sobre o fim do traço laranja. Abaixo: "O real merece deixar marca."
