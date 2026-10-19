@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>DUUK — Capa WhatsApp Business</title>
+<style>
+/* Mesmo sistema do carrossel 01: fontes e paleta do site. */
+@font-face { font-family: 'Inter'; font-weight: 600; src: url(../../public/fonts/inter-latin.woff2) format('woff2'); }
+@font-face { font-family: 'Inter Tight'; font-weight: 900; src: url(../../public/fonts/inter-tight-latin.woff2) format('woff2'); }
+
+:root {
+  --coral: #eb4b3f;
+  --orange: #f0945b;
+  --ground: #050505;
+  --white: #ffffff;
+  --gradient: linear-gradient(90deg, #eb4b3f 0%, #ed6f4d 50%, #f0945b 100%);
+
+  --w: 1920px;
+  --h: 1080px;
+  --m: 120px;
+  --stroke: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #1a1a1a; }
+body { -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; }
+
+.cover {
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  overflow: hidden;
+  color: var(--white);
+  background: var(--ground);
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.055;
+  mix-blend-mode: screen;
+}
+
+.label {
+  position: absolute;
+  top: var(--m);
+  font-family: Inter, sans-serif;
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.display {
+  position: absolute;
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 900;
+  line-height: 0.84;
+  letter-spacing: -0.025em;
+  word-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.display > span { display: block; }
+.dot { color: var(--coral); font-style: normal; }
+
+/* O ponto final vira o traço que sai do quadro. */
+.trail {
+  position: absolute;
+  right: 0;
+  height: var(--stroke);
+  background: var(--gradient);
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="grain-filter" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="2" seed="7" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+</svg>
+
+<section class="cover" data-export="duuk-whatsapp-capa">
+  <p class="label" style="left:var(--m)">DUUK® / São Paulo</p>
+  <p class="label" style="right:var(--m)">Produtora audiovisual</p>
+  <h1 class="display" id="phrase">
+    <span>O real merece</span>
+    <span>deixar marca<em class="dot">.</em></span>
+  </h1>
+  <div class="trail"></div>
+  <svg class="grain" width="1920" height="1080" aria-hidden="true"><rect width="100%" height="100%" filter="url(#grain-filter)"/></svg>
+</section>
+
+<script>
+const M = 120
+const FACE = '"Inter Tight"'
+const LEADING = 0.84
+const TRACK = -0.025
+const STROKE = 10
+
+const ctx = document.createElement('canvas').getContext('2d')
+function ink(text, size) {
+  ctx.font = `900 ${size}px ${FACE}`
+  ctx.letterSpacing = `${TRACK * size}px`
+  ctx.wordSpacing = `${0.12 * size}px`
+  const m = ctx.measureText(text.toUpperCase())
+  return {
+    left: -m.actualBoundingBoxLeft,
+    right: m.actualBoundingBoxRight,
+    width: m.actualBoundingBoxLeft + m.actualBoundingBoxRight,
+    ascent: m.actualBoundingBoxAscent,
+    descent: m.actualBoundingBoxDescent,
+    baseline: (size * LEADING - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2
+      + m.fontBoundingBoxAscent,
+  }
+}
+
+function layout() {
+  const el = document.getElementById('phrase')
+  const lines = ['O real merece', 'deixar marca.']
+  const widest = Math.max(...lines.map((l) => ink(l, 100).width))
+  const size = (1160 / widest) * 100
+  const left = M - ink(lines[0], size).left
+  el.style.fontSize = `${size}px`
+  el.style.left = `${left}px`
+
+  // Bloco acima do centro: a faixa inferior fica livre para a foto de perfil.
+  const h = ink('H', size)
+  const blockTop = 360
+  el.style.top = `${blockTop + h.ascent - h.baseline}px`
+  const lastBaseline = blockTop + h.ascent + size * LEADING
+
+  // O traço sai do centro do ponto final e atravessa até a borda.
+  const last = ink(lines[1], size)
+  const dot = ink('.', size)
+  const dotCenterX = left + last.right - dot.width / 2
+  const dotCenterY = lastBaseline - (dot.ascent - dot.descent) / 2
+  Object.assign(document.querySelector('.trail').style, {
+    left: `${dotCenterX}px`,
+    top: `${dotCenterY - STROKE / 2}px`,
+  })
+}
+
+Promise.all([
+  document.fonts.load(`900 100px ${FACE}`),
+  document.fonts.load('600 30px Inter'),
+]).then(() => {
+  layout()
+  document.documentElement.dataset.ready = 'true'
+})
+</script>
+</body>
+</html>
