@@ -1,5 +1,12 @@
 # Fluxo de trabalho da DUUK
 
+## Leitura de e-mails e avisos por módulo — 2.9.1
+
+- Em 21/10/2026, o usuário pediu a diagramação real dos e-mails recebidos e bolinhas para identificar o módulo de origem das pendências. O leitor não deve voltar a forçar largura total ou layout fixo em todas as tabelas. Sanitizador de recebimento separado preserva CSS seguro de diagramação; o editor/envio continua restrito. Tabelas fixas viram máximos preferidos para caber no leitor. Tema adapta neutros/RGBA; Visual original conserva as cores originais; Ampliar mensagem usa toda a largura do workspace no desktop.
+- Preserve o iframe opaco, CSP sem recursos externos/scripts, links com noopener/noreferrer e imagens bloqueadas. Não habilite scripts, same-origin ou CSS com URLs para reproduzir o Titan. Nenhuma caixa, identidade ou credencial de e-mail mudou nesta tarefa. `duuk-mail` v20 ACTIVE mantém `verify_jwt:false` e toda a autorização anterior.
+- `duuk_notification_summary` calcula notificações não lidas por módulo sem o limite das cem exibidas e inclui a existência de mensagens novas ainda não vistas na Central, por pessoa. Histórico importado, reações, sistema e conteúdo apagado não acendem o indicador. Marcar notificações não envia recibos de WhatsApp. Preserve MFA/sessão e bloqueios individuais/grupos em cada consulta. Bolinhas aparecem nos ícones, no menu recolhido, nos grupos fechados e no celular.
+- Migração `20261021232233_duuk_notification_module_summary.sql` aplicada. Fixture real com rollback passou; evidências e limites em `docs/admin-2.9.1-validation.md`. Não envie mensagens reais para testar. A ativação da Meta continua pendente. As alterações anteriores de contratos continuam excluídas.
+
 ## Cadastro, foto de perfil e identidade do e-mail — 2.9.0
 
 - Em 21/10/2026 o usuário pediu um botão para copiar a solicitação de dados do cliente, enquadrar fotos de perfil e aceitar imagens maiores. Cadastro novo/edição e ficha do cliente oferecem a mensagem pronta com primeiro nome, prévia e alternativa manual quando a área de transferência falha. Copiar nunca salva cliente, registra contato ou envia mensagem.

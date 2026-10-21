@@ -1,5 +1,4 @@
 import {
-  createContext,
   useCallback,
   useContext,
   useEffect,
@@ -28,8 +27,8 @@ import PushDevice from "./PushDevice";
 import { fmtTime } from "../crm/model";
 import { useUnsavedChanges } from "./unsavedChanges";
 import { useNotificationSound } from "./useNotificationSound";
+import { NotificationContext } from './notificationContext.mjs';
 
-const NotificationContext = createContext(null);
 const categories = [
   ["agenda", "Agenda", "calendar"],
   ["projects", "Projetos", "film"],
@@ -54,7 +53,7 @@ export function NotificationProvider({ children }) {
   const query = useQuery(
     useCallback(
       async () => {
-        const [items, count] = await Promise.all([
+        const [items, summary] = await Promise.all([
           supabase
             .from("duuk_notifications")
             .select(
@@ -63,10 +62,10 @@ export function NotificationProvider({ children }) {
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
             .limit(100),
-          supabase.from("duuk_notifications").select("id", {count: "exact", head: true}).eq("user_id",userId).is("read_at",null),
+          supabase.rpc("duuk_notification_summary"),
         ]);
-        checked(count);
-        return {items:checked(items)||[],unread:count.count||0};
+        const totals = checked(summary);
+        return {items:checked(items)||[],unread:totals?.unread||0,modules:totals?.modules||{}};
       },
       [userId],
     ),
@@ -121,6 +120,7 @@ export function NotificationProvider({ children }) {
         ...query,
         notifications,
         unread: query.data?.unread || 0,
+        modules: query.data?.modules || {},
         mark,
         markAll,
         sound,

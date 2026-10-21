@@ -4,9 +4,14 @@ import { Icon } from '../components'
 import AppLogo from '../AppLogo'
 import { currentRelease } from '../pwaState'
 import { commandKey } from './hooks'
+import { useModuleNotifications } from '../notificationContext.mjs'
 
 export function NavIcon({ item, size = 18 }) {
-  return item.app ? <AppLogo app={item.app} size={size} /> : <Icon name={item.icon} size={size} />
+  const { modules } = useModuleNotifications()
+  return <i className="ds-module-icon" aria-hidden="true">
+    {item.app ? <AppLogo app={item.app} size={size} /> : <Icon name={item.icon} size={size} />}
+    {modules[item.to] > 0 && <b className="ds-module-dot" />}
+  </i>
 }
 
 export function Brand({ rail = false, onNavigate }) {
@@ -18,6 +23,7 @@ export function Brand({ rail = false, onNavigate }) {
 
 // Groups can be folded in the full menu; the rail always shows every module the account can open.
 export function NavGroups({ groups, rail = false, folded = {}, onToggleGroup, onNavigate }) {
+  const { modules } = useModuleNotifications()
   return groups.map(group => {
     const labelled = group.id !== 'main'
     const open = rail || !labelled || !folded[group.id]
@@ -25,10 +31,10 @@ export function NavGroups({ groups, rail = false, folded = {}, onToggleGroup, on
     return <div className="ds-nav__group" key={group.id}>
       {labelled && (rail
         ? <hr className="ds-nav__rule" />
-        : <button type="button" className="ds-nav__label" aria-expanded={open} aria-controls={listId} onClick={() => onToggleGroup?.(group.id)}><span>{group.label}</span><Icon name="down" size={14} /></button>)}
+        : <button type="button" className="ds-nav__label" aria-expanded={open} aria-controls={listId} onClick={() => onToggleGroup?.(group.id)}><span>{group.label}</span>{!open && group.items.some(item => modules[item.to] > 0) && <i className="ds-group-dot" aria-label="Há notificações não lidas neste grupo" />}<Icon name="down" size={14} /></button>)}
       <ul className="ds-nav__items" id={listId} hidden={!open}>
         {group.items.map(item => <li key={item.to}>
-          <NavLink to={item.to} end={item.end} className="ds-nav__item" onClick={onNavigate} aria-label={rail ? item.label : undefined} data-ds-tooltip={rail ? item.label : undefined}>
+          <NavLink to={item.to} end={item.end} className="ds-nav__item" onClick={onNavigate} aria-label={`${item.label}${modules[item.to] > 0 ? ', há notificações não lidas' : ''}`} data-ds-tooltip={rail ? `${item.label}${modules[item.to] > 0 ? ' · Não lidas' : ''}` : undefined}>
             <NavIcon item={item} /><span>{item.label}</span>
           </NavLink>
         </li>)}
@@ -66,6 +72,7 @@ function useRailTooltip(enabled) {
 
 export default function Sidebar({ groups, rail, canCollapse, onToggleCollapse, folded, onToggleGroup, onSearch, onNavigate }) {
   const { pathname } = useLocation()
+  const { modules } = useModuleNotifications()
   const settings = pathname.startsWith('/admin/configuracoes')
   const [aside, tip] = useRailTooltip(rail)
   return <aside ref={aside} className={`ds-sidebar${rail ? ' is-rail' : ''}`} aria-label="Menu do DUUK PAINEL ADMINISTRATIVO">
@@ -80,7 +87,7 @@ export default function Sidebar({ groups, rail, canCollapse, onToggleCollapse, f
     </button>
     <nav className="ds-nav" aria-label="Módulos"><NavGroups groups={groups} rail={rail} folded={folded} onToggleGroup={onToggleGroup} onNavigate={onNavigate} /></nav>
     <div className="ds-sidebar__foot">
-      <NavLink to="/admin/configuracoes/perfil" className={`ds-nav__item${settings ? ' active' : ''}`} aria-current={settings ? 'page' : undefined} onClick={onNavigate} aria-label={rail ? 'Configurações' : undefined} data-ds-tooltip={rail ? 'Configurações' : undefined}><Icon name="settings" /><span>Configurações</span></NavLink>
+      <NavLink to="/admin/configuracoes/perfil" className={`ds-nav__item${settings ? ' active' : ''}`} aria-current={settings ? 'page' : undefined} onClick={onNavigate} aria-label={`Configurações${modules['/admin/configuracoes'] > 0 ? ', há notificações não lidas' : ''}`} data-ds-tooltip={rail ? 'Configurações' : undefined}><NavIcon item={{ to: '/admin/configuracoes', icon: 'settings' }} /><span>Configurações</span></NavLink>
       <Link className="ds-sidebar__version" to="/admin/configuracoes/sobre" onClick={onNavigate} title="Sobre o DUUK PAINEL ADMINISTRATIVO">v{currentRelease.version}</Link>
     </div>
   </aside>

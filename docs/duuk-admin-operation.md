@@ -1,5 +1,9 @@
 # Operação do DUUK PAINEL ADMINISTRATIVO
 
+## Leitor de e-mails e indicadores por módulo — 2.9.1
+
+E-mails preserva a diagramação segura do remetente, segue o tema e oferece **Visual original** e **Ampliar mensagem** no desktop. Imagens externas continuam bloqueadas. As bolinhas nos ícones identificam os módulos com notificações não lidas, inclusive no menu recolhido e no celular. A Central também indica mensagens novas não vistas pela própria pessoa, sem contar histórico importado. Abrir um módulo não marca todas as notificações como lidas. Detalhes e verificação: [admin-2.9.1-validation.md](admin-2.9.1-validation.md).
+
 ## Solicitação de dados e enquadramento de foto — 2.9.0
 
 Clientes e leads > Novo lead/Editar ou a ficha do cliente oferecem **Copiar pedido de dados**. A mensagem pede os campos do cadastro e dados do projeto; a prévia permite copiar manualmente se o navegador bloquear a área de transferência. Não envia mensagens nem registra contato realizado.

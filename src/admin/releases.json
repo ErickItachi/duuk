@@ -1,5 +1,18 @@
 [
   {
+    "version": "2.9.1",
+    "date": "2026-10-21",
+    "title": "Leitura de e-mails e avisos por módulo",
+    "added": [
+      "Indicadores de notificações não lidas nos módulos, no menu recolhido e no celular.",
+      "Opções para ampliar a mensagem e visualizar sua aparência original."
+    ],
+    "improved": [
+      "Diagramação dos e-mails recebidos com tabelas, espaçamentos e tipografia preservados.",
+      "Leitura de mensagens com adaptação ao tema do painel e isolamento de segurança."
+    ]
+  },
+  {
     "version": "2.9.0",
     "date": "2026-10-21",
     "title": "Cadastro de clientes e fotos de perfil",

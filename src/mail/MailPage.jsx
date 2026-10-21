@@ -180,6 +180,7 @@ function MessageView({
     heading = useRef(null),
     section = useRef(null),
     wideOnOpen = useRef(wide);
+  const [expanded, setExpanded] = useState(false);
   const query = useQuery(
       useCallback(
         () => onRead({ uid: message.uid, folder: message.folder }),
@@ -249,7 +250,7 @@ function MessageView({
   return (
     <section
       ref={section}
-      className="mail-reader"
+      className={`mail-reader${expanded ? ' is-expanded' : ''}`}
       aria-labelledby={`${uid}-title`}
     >
       <div className="mail-reader__bar">
@@ -262,6 +263,9 @@ function MessageView({
           Voltar
         </button>
         <div className="mail-reader__tools">
+          {wide && <button type="button" className="admin-button admin-button--ghost admin-button--sm" aria-pressed={expanded} onClick={() => setExpanded(value => !value)}>
+            <Icon name="panel" />{expanded ? 'Mostrar lista' : 'Ampliar mensagem'}
+          </button>}
           <button
             type="button"
             className="admin-icon-button"

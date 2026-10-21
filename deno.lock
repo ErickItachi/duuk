@@ -2,6 +2,7 @@
   "version": "5",
   "specifiers": {
     "npm:@supabase/supabase-js@2.117.2": "2.117.2",
+    "npm:@types/node@*": "24.2.0",
     "npm:imapflow@2.2.6": "2.2.6",
     "npm:mailparser@3.9.36": "3.9.36",
     "npm:nodemailer@10.0.15": "10.0.15",
@@ -63,6 +64,12 @@
         "@supabase/postgrest-js",
         "@supabase/realtime-js",
         "@supabase/storage-js"
+      ]
+    },
+    "@types/node@24.2.0": {
+      "integrity": "sha512-3xyG3pMCq3oYCNg7/ZP+E1ooTaGB4cG8JWRsqqOYQdbWNY4zbaV0Ennrd7stjiJEFZCaybcIgpTjJWHRfBSIDw==",
+      "dependencies": [
+        "undici-types"
       ]
     },
     "@zone-eu/mailsplit@5.4.20": {
@@ -464,6 +471,9 @@
     },
     "uc.micro@2.1.0": {
       "integrity": "sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A=="
+    },
+    "undici-types@7.10.0": {
+      "integrity": "sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag=="
     },
     "web-push@3.6.7": {
       "integrity": "sha512-OpiIUe8cuGjrj3mMBFWY+e4MMIkW3SVT+7vEIjvD9kejGUypv8GPDf84JdPWskK8zMRIJ6xYGm+Kxr8YkPyA0A==",

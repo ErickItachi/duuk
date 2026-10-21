@@ -125,6 +125,11 @@ export function tables() {
 }
 
 export const rpc = {
+  duuk_notification_summary: (_body, { store, user }) => {
+    const unread=(store.duuk_notifications||[]).filter(n=>n.user_id===user.id&&!n.read_at), modules={}
+    for(const n of unread){const path=n.link.split(/[?#]/)[0],route=path.startsWith('/admin/comercial/')?path.split('/').slice(0,4).join('/'):path.split('/').slice(0,3).join('/');modules[route]=(modules[route]||0)+1}
+    return {unread:unread.length,modules}
+  },
   duuk_record_contact: body => ({ id: 'activity-new', ...body }),
   duuk_complete_followup: () => null,
   duuk_move_pipeline: () => null,

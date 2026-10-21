@@ -18,13 +18,13 @@ import {
   verifyMailbox,
 } from "../_shared/mail.ts";
 import {
-  cleanMailHtml,
   hasAttachments,
   outgoingMail,
   rawMail,
   sentFolder,
   archiveSentMessage,
 } from "../_shared/mail-content.ts";
+import { cleanReceivedMailHtml } from "../_shared/mail-received.ts";
 handler(async (req, headers) => {
   const db = database(),
     body = await readJson(req, 8000000);
@@ -439,7 +439,7 @@ handler(async (req, headers) => {
             subject: parsed.subject || "",
             text: parsed.text || "",
             html: parsed.html
-              ? cleanMailHtml(String(parsed.html).slice(0, 500000))
+              ? cleanReceivedMailHtml(String(parsed.html).slice(0, 500000))
               : "",
             remote_images_blocked:
               !!parsed.html &&

@@ -92,6 +92,12 @@
 .ds-nav__item:hover > svg { color: var(--ds-text-2); }
 .ds-nav__item.active { background: var(--ds-accent-soft); color: var(--ds-text); }
 .ds-nav__item.active > svg { color: var(--ds-accent-text); }
+.ds-module-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--ds-text-3); font-style: normal; }
+.ds-nav__item.active .ds-module-icon { color: var(--ds-accent-text); }
+.ds-module-dot, .ds-group-dot { display: block; flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--ds-accent); }
+.ds-module-dot { position: absolute; top: -3px; right: -4px; box-shadow: 0 0 0 2px var(--ds-surface); }
+.ds-group-dot { margin-left: auto; }
+.ds-bottom-nav__icon { position: relative; }
 /* The accent marks only where you are. */
 .ds-nav__item.active::before { content: ''; position: absolute; top: 8px; bottom: 8px; left: -8px; width: 2px; border-radius: 0 2px 2px 0; background: var(--ds-accent); }
 .ds-nav__item:active { background: var(--ds-active); }
