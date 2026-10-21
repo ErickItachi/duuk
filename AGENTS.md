@@ -1,5 +1,16 @@
 # Fluxo de trabalho da DUUK
 
+## Central de atendimento WhatsApp — 2.8.0
+
+- Em 20/10/2026 o usuário autorizou ampliar o WhatsApp por API oficial gratuita e pediu uma central de atendimento em toda a área útil, sem moldura externa. Esse pedido amplia o antigo escopo exclusivo de links wa.me, que continua preservado no CRM. Nunca use sessões não oficiais, intermediários pagos, campanhas ou modelos tarifados.
+- `/admin/whatsapp`, Comercial > Central de atendimento, usa a permissão independente `whatsapp` em grupos e exceções individuais; somente superadministradores têm acesso implícito. AAL2, sessão atual e autorização são verificadas novamente no servidor. Contatos, histórico, fotos e credenciais permanecem privados; tabelas sem policies de navegador são intencionais.
+- Uma conta comercial é compartilhada pela equipe autorizada. O telefone informado está salvo somente no banco privado. A conexão real continua pendente: Meta exige habilitação como Provedor de Tecnologia/Parceiro, análise e coexistência oficial. Não registre, migre ou exclua o número, não desative o Business do celular, não envie o app para análise nem mude pessoas/permissões Meta sem aprovação específica. Não afirme que está conectado enquanto faltar a autorização e a validação real.
+- API aceita respostas somente após mensagem real do cliente, com encerramento preventivo antes das 24 horas gratuitas. Histórico importado não abre janela nem gera novas mensagens não lidas. Todos os envios usam UUID, hash e lease persistidos; resultado ambíguo nunca é repetido automaticamente. Testes não enviam mensagens ou push reais.
+- Fila SQL privada processa sincronização inicial de contatos/histórico, até 90 dias/10.000 mensagens/2.000 contatos, com capacidade gratuita limitada por bytes. Cron `duuk-whatsapp-sync` por minuto; limpeza diária preservada. Tombstones impedem reaparecimento de mensagens removidas, inclusive com eventos fora de ordem. Recibos de leitura são explícitos; indicador de digitação exige opção e texto real.
+- Microfone permitido somente à própria origem administrativa, inclusive PWA; demais capacidades restritas e site público preservados. Mídia privada fica apenas na memória, sem Cache Storage/localStorage. Fonte de operação, limitações e ativação: `docs/whatsapp-cloud-setup.md`.
+- Preserve as alterações locais anteriores em `src/office/ContractsPage.jsx` e `tests/e2e/contracts.mjs`: exclua-as do commit e do artefato publicado.
+- Em 21/10 o usuário pediu balões redondos e composição mais simples. Preserve o campo compacto, envio circular, ícones de ferramentas e avisos fora do compositor. `20261020235953_duuk_bank_rpc_session_gate.sql` fecha também o bypass de MFA das três RPCs antigas OFX, usando a checagem central; fixture `bank-rpc-session-gate.sql` com rollback.
+
 ## Segurança e identificação — 2.4.0
 
 - Em 16/10/2026 o usuário pediu auditoria/correção sem custos, o nome **DUUK PAINEL ADMINISTRATIVO** e confirmou **TOTP obrigatório para toda a equipe**. Preserve a logo original; não adicione referências ao painel nas páginas públicas. Nome curto da PWA: DUUK PAINEL. Não restaure histórico ou janelas de novidades.

@@ -688,7 +688,7 @@ function RoleEditor({ role, onClose, onSaved }) {
 // Modules are grouped like the menu. Keys the server adds later still appear, under "Outros módulos".
 const permissionSections = [
   ["Dia a dia", ["agenda", "ai", "spotify"]],
-  ["Comercial", ["crm", "crm.dashboard", "crm.clients", "crm.pipeline", "crm.activities", "crm.followups", "crm.reports", "mail"]],
+  ["Comercial", ["crm", "crm.dashboard", "crm.clients", "crm.pipeline", "crm.activities", "crm.followups", "crm.reports", "mail", "whatsapp"]],
   ["Gestão", ["contracts", "finance", "billing"]],
   ["Conteúdo", ["social", "site", "insights"]],
   ["Arquivos", ["drive"]],
@@ -707,6 +707,7 @@ const permissionIcons = {
   mail: "mail",
   contracts: "document",
   finance: "wallet",
+  whatsapp: "message",
   billing: "incoming",
   spotify: "music",
   social: "instagram",
@@ -828,7 +829,7 @@ export function PermissionsPage({ notify, mode = "roles" }) {
             item ? "Ajuste individual" : "",
             dependent ? "Depende de Comercial" : "",
           ];
-    const scope = key.key === "billing" ? "Conta Asaas da DUUK, cobranças, taxas e consultas; sem saques" : key.key === "spotify" ? "Conexão e player da própria conta Spotify" : "";
+    const scope = key.key === "whatsapp" ? "Caixa e contatos compartilhados da DUUK; conexão somente pelo super administrador" : key.key === "billing" ? "Conta Asaas da DUUK, cobranças, taxas e consultas; sem saques" : key.key === "spotify" ? "Conexão e player da própria conta Spotify" : "";
     const text = [...meta, scope].filter(Boolean).join(" · ");
     return (
       <li

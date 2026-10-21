@@ -1,5 +1,19 @@
 [
   {
+    "version": "2.8.0",
+    "date": "2026-10-21",
+    "title": "Central de atendimento da DUUK",
+    "added": [
+      "Central WhatsApp em toda a área do painel, com conversas, contatos e atendimento em equipe.",
+      "Áudio, arquivos, figurinhas, reações, mensagens marcadas, cartões de contato e localização.",
+      "Permissão WhatsApp independente por grupo e pessoa, com conexão oficial por coexistência."
+    ],
+    "improved": [
+      "Balões redondos e escrita simplificada, com ferramentas compactas e envio circular.",
+      "Respostas pagas bloqueadas, arquivos privados e proteção contra mensagens duplicadas."
+    ]
+  },
+  {
     "version": "2.7.0",
     "date": "2026-10-19",
     "title": "Asaas completo no dia a dia",

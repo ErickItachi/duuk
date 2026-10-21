@@ -12,6 +12,7 @@ export const navGroups = [
     { to: '/admin/comercial/pipeline', label: 'Pipeline', icon: 'pipeline', permission: 'crm.pipeline' },
     { to: '/admin/comercial/contatos', label: 'Contatos e atividades', short: 'Contatos', icon: 'activity', permission: 'crm.activities' },
     { to: '/admin/comercial/follow-ups', label: 'Follow-ups', icon: 'clock', permission: 'crm.followups' },
+    { to: '/admin/whatsapp', label: 'Central de atendimento', short: 'Atendimento', icon: 'message', app: 'whatsapp', permission: 'whatsapp' },
     { to: '/admin/comercial/emails', label: 'E-mails', icon: 'mail', permission: 'mail', shortcut: 'g e' },
     { to: '/admin/comercial/modelos', label: 'Modelos de mensagens', short: 'Modelos', icon: 'message', permission: 'crm.activities' },
     { to: '/admin/comercial/relatorios', label: 'Relatórios', icon: 'report', permission: 'crm.reports' },

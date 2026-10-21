@@ -9,7 +9,8 @@ export function usePdf(url) {
     let disposed=false,task
     if(!url)return
     const controller=new AbortController()
-    fetch(url,{signal:controller.signal,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'}).then(response=>{if(!response.ok)throw new Error();return response.arrayBuffer()}).then(buffer=>{
+    const load=url instanceof Blob?url.arrayBuffer():fetch(url,{signal:controller.signal,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'}).then(response=>{if(!response.ok)throw new Error();return response.arrayBuffer()})
+    load.then(buffer=>{
       if(disposed)return
       task=pdfjs.getDocument({data:new Uint8Array(buffer),isEvalSupported:false,useSystemFonts:true,useWasm:false})
       return task.promise

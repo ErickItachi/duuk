@@ -1,0 +1,46 @@
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { ConfirmModal, Icon, Modal } from '../admin/components'
+import { ErrorState, Field } from '../admin/forms'
+import { useUnsavedChanges } from '../admin/unsavedChanges'
+import { whatsappRequest } from './api'
+import './rich-message.css'
+const blank={name:'',phone:'',email:'',company:'',latitude:'',longitude:'',address:'',body:'',header:'',footer:'',button:'Ver opções',options:''}
+function RichEditor({kind,onClose,onPrepare}){
+ const [form,setForm]=useState(blank),[search,setSearch]=useState(''),[found,setFound]=useState([]),[error,setError]=useState(''),[loading,setLoading]=useState(false),[dirty,setDirty]=useState(false),[discard,setDiscard]=useState(false),[interactiveKind,setInteractiveKind]=useState('buttons')
+ useUnsavedChanges(dirty)
+ const close=()=>dirty?setDiscard(true):onClose()
+ useEffect(()=>{let disposed=false;const timer=setTimeout(()=>{if(kind!=='contacts'||!search.trim()){setFound([]);return}setLoading(true);whatsappRequest({action:'contacts',search:search.trim(),offset:0}).then(data=>{if(!disposed)setFound(data.items||[])}).catch(e=>{if(!disposed)setError(e.message)}).finally(()=>{if(!disposed)setLoading(false)})},300);return()=>{disposed=true;clearTimeout(timer)}},[search,kind])
+ const field=(key,label,props={})=><Field label={label} value={form[key]} onChange={value=>{setForm(f=>({...f,[key]:value}));setDirty(true)}} {...props}/>
+ const prepare=e=>{
+  e.preventDefault();e.stopPropagation();setError('')
+  let value
+  if(kind==='contacts'){
+   const phone=form.phone.replace(/[\s()-]/g,'')
+   if(!/^\+?[1-9]\d{7,14}$/.test(phone)){setError('Informe o telefone com código do país e DDD.');return}
+   value={type:'contacts',details:{contacts:[{name:form.name.trim(),phones:[{phone:'+'+phone.replace(/^\+/,''),type:'WORK'}],...(form.email.trim()?{emails:[{email:form.email.trim(),type:'WORK'}]}:{}),...(form.company.trim()?{org:form.company.trim()}:{})}]}}
+  }else if(kind==='interactive'){
+   const options=form.options.split('\n').map(s=>s.trim()).filter(Boolean).map((line,index)=>{const [title,...description]=line.split('|');return {id:'option_'+index+'_'+crypto.randomUUID(),title:title.trim(),...(interactiveKind==='list'&&description.join('|').trim()?{description:description.join('|').trim()}:{} )}})
+   const limit=interactiveKind==='buttons'?3:10,maxTitle=interactiveKind==='buttons'?20:24
+   if(!options.length||options.length>limit||options.some(o=>!o.title||o.title.length>maxTitle||o.description?.length>72)||new Set(options.map(o=>o.title.toLocaleLowerCase('pt-BR'))).size!==options.length){setError(`Use até ${limit} opções diferentes, com títulos de até ${maxTitle} caracteres${interactiveKind==='list'?' e descrições de até 72 caracteres':''}.`);return}
+   value={type:'interactive',details:{kind:interactiveKind,body:form.body.trim(),...(form.header.trim()?{header:form.header.trim()}:{}),...(form.footer.trim()?{footer:form.footer.trim()}:{}),...(interactiveKind==='list'?{button:form.button.trim()}:{}),options}}
+  }else{
+   const latitude=Number(form.latitude.replace(',','.')),longitude=Number(form.longitude.replace(',','.'))
+   if(!form.latitude.trim()||!form.longitude.trim()||!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180){setError('Confira a latitude (−90 a 90) e a longitude (−180 a 180).');return}
+   value={type:'location',details:{latitude,longitude,name:form.name.trim(),address:form.address.trim()}}
+  }
+  onPrepare(value);onClose()
+ }
+ return <><Modal title={kind==='contacts'?'Compartilhar contato':kind==='location'?'Compartilhar localização':'Opções de atendimento'} subtitle="Revise os dados. O envio só acontece ao tocar em Enviar na conversa." onClose={close}><form onSubmit={prepare}><div className="admin-modal__body wa-form">
+  {kind==='contacts'?<><Field label="Buscar contato cadastrado na DUUK" value={search} maxLength={160} onChange={setSearch}/>{loading&&<small role="status">Buscando contatos…</small>}{!!found.length&&<div className="wa-rich-results" aria-label="Contatos encontrados">{found.map(c=><button type="button" key={c.id} onClick={()=>{setForm(f=>({...f,name:c.name,phone:'+'+c.wa_id,email:c.email||'',company:c.company||''}));setDirty(true);setSearch('');setFound([])}}><span>{c.name}</span><small>+{c.wa_id}</small></button>)}</div>}{field('name','Nome do contato',{required:true,maxLength:160})}{field('phone','Telefone com país e DDD',{required:true,type:'tel',maxLength:25})}{field('email','E-mail do contato',{type:'email',maxLength:254})}{field('company','Empresa do contato',{maxLength:160})}<p className="wa-note">Será enviado um cartão de contato. O cadastro da DUUK permanece separado da agenda pessoal do celular.</p></>:kind==='interactive'?<><Field label="Formato das opções"><select value={interactiveKind} onChange={e=>{setInteractiveKind(e.target.value);setDirty(true)}}><option value="buttons">Botões · até 3 opções</option><option value="list">Lista · até 10 opções</option></select></Field><Field label="Texto da mensagem"><textarea value={form.body} required rows={4} maxLength={interactiveKind==='buttons'?1024:4096} onChange={e=>{setForm(f=>({...f,body:e.target.value}));setDirty(true)}}/></Field>{field('header','Título (opcional)',{maxLength:60})}<Field label="Opções (uma por linha)"><textarea value={form.options} required rows={5} maxLength={1200} placeholder={interactiveKind==='buttons'?'Orçamento\nAgendamento\nFalar com a equipe':'Orçamento | Solicitar uma proposta\nAgendamento | Consultar datas'} onChange={e=>{setForm(f=>({...f,options:e.target.value}));setDirty(true)}}/></Field><small>{interactiveKind==='buttons'?'Até 3 botões, com títulos de até 20 caracteres.':'Até 10 opções: título de até 24 caracteres e, após |, descrição opcional de até 72 caracteres.'}</small>{interactiveKind==='list'&&field('button','Texto do botão da lista',{required:true,maxLength:20})}{field('footer','Rodapé (opcional)',{maxLength:60})}<p className="wa-note">O cliente poderá tocar em uma opção; a resposta aparecerá nesta conversa. Disponível durante o atendimento gratuito.</p></>:<>{field('name','Nome do local',{required:true,maxLength:160})}{field('address','Endereço',{maxLength:400})}<div className="wa-rich-coordinates">{field('latitude','Latitude',{required:true,inputMode:'decimal',placeholder:'Ex.: -23.5505',maxLength:20})}{field('longitude','Longitude',{required:true,inputMode:'decimal',placeholder:'Ex.: -46.6333',maxLength:20})}</div><p className="wa-note">Copie as coordenadas do local que deseja compartilhar. A central não acessa o GPS do seu aparelho.</p></>}{error&&<ErrorState>{error}</ErrorState>}
+ </div><div className="admin-modal__foot"><button type="button" className="admin-button admin-button--secondary" onClick={close}>Cancelar</button><button className="admin-button">Preparar {kind==='contacts'?'contato':kind==='location'?'localização':'opções'}</button></div></form></Modal>{discard&&<ConfirmModal title="Descartar dados desta mensagem?" message="Os dados preparados ainda não foram enviados." action="Descartar alterações" onClose={()=>setDiscard(false)} onConfirm={onClose}/>}</>
+}
+export function RichMessageTools({disabled,onPrepare}){
+ const [kind,setKind]=useState(null)
+ return <><button type="button" className="admin-icon-button" aria-label="Compartilhar contato" title="Compartilhar contato" disabled={disabled} onClick={()=>setKind('contacts')}><Icon name="userPlus"/></button><button type="button" className="admin-icon-button" aria-label="Compartilhar localização" title="Compartilhar localização" disabled={disabled} onClick={()=>setKind('location')}><Icon name="pin"/></button><button type="button" className="admin-icon-button" aria-label="Preparar opções de atendimento" title="Opções de atendimento" disabled={disabled} onClick={()=>setKind('interactive')}><Icon name="list"/></button>{kind&&createPortal(<RichEditor key={kind} kind={kind} onPrepare={onPrepare} onClose={()=>setKind(null)}/>,document.body)}</>
+}
+export function RichMessagePreview({value,onRemove,disabled}){
+ if(value.type==='interactive')return <div className="wa-rich-preview"><span className="wa-rich-preview__icon"><Icon name="list"/></span><div><strong>{value.details.header||'Opções de atendimento'}</strong><span>{value.details.body}</span><small>{value.details.options.length} {value.details.kind==='buttons'?'botões':'opções em lista'} prontos para enviar</small></div><button type="button" className="admin-icon-button" disabled={disabled} onClick={onRemove} aria-label="Remover mensagem preparada"><Icon name="close"/></button></div>
+ const contact=value.type==='contacts'?value.details.contacts[0]:null,details=value.details
+ return <div className="wa-rich-preview"><span className="wa-rich-preview__icon"><Icon name={contact?'user':'pin'}/></span><div><strong>{contact?contact.name:details.name||'Localização'}</strong><span>{contact?contact.phones[0]?.phone:details.address||`${details.latitude}, ${details.longitude}`}</span><small>{contact?'Cartão de contato':'Localização'} pronta para enviar</small></div><button type="button" className="admin-icon-button" disabled={disabled} onClick={onRemove} aria-label="Remover mensagem preparada"><Icon name="close"/></button></div>
+}

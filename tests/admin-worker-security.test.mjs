@@ -27,6 +27,8 @@ test('cached PWA document retains deployed CSP and private document protections'
   assert.equal(shell.headers.get('Referrer-Policy'), 'no-referrer')
   assert.equal(shell.headers.get('Cache-Control'), 'no-store')
   assert.match(shell.headers.get('Permissions-Policy'), /camera=\(\)/)
+  assert.match(shell.headers.get('Permissions-Policy'), /microphone=\(self\)/)
+  assert.match(configuration.headers.find(rule=>rule.source==='/(.*)').headers.find(header=>header.key==='Permissions-Policy').value, /microphone=\(\)/)
   assert.equal(shell.headers.get('X-Robots-Tag'), 'noindex, nofollow')
   assert.deepEqual(assets, ['/assets/fixture.js'])
   let navigated

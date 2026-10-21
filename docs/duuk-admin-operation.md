@@ -1,5 +1,11 @@
 # Operação do DUUK PAINEL ADMINISTRATIVO
 
+## Central de atendimento — 2.8.0
+
+Comercial > Central de atendimento ocupa toda a área útil e reúne conversas, responsáveis, contatos, busca, marcações e métricas. Respostas incluem texto, áudio, imagens, vídeo, PDF/documentos, figurinhas, reações, cartões de contato, localização e opções interativas. A permissão `whatsapp` é configurável por grupo e por pessoa; uma única conta comercial é compartilhada pela equipe autorizada. Nenhuma mensagem de teste real foi enviada.
+
+O módulo está preparado para a API oficial, mas a conexão do número continua pendente da habilitação/revisão de Provedor de Tecnologia e da coexistência Meta. O aplicativo WhatsApp Business atual foi preservado. Não confunda o módulo publicado com a conexão já ativa. Respostas fora da janela gratuita, modelos pagos e campanhas são bloqueados; a importação inicial é limitada à retenção/capacidade gratuita. Ativação, custos, testes e limitações: [whatsapp-cloud-setup.md](whatsapp-cloud-setup.md).
+
 ## Cobranças, consultas e permissões — 2.7.0
 
 Asaas central: simulador oficial, taxas vigentes, saldo/estatísticas, extrato CSV e consultas de clientes, cobranças, parcelamentos e assinaturas. Edição de descrição/vencimento, restauração e Pix/boleto preservam a conferência canônica. Saques continuam bloqueados. Dashboard inclui Asaas e Spotify pessoal. `billing` e `spotify` agora são independentes, configuráveis em Grupos de acesso e Permissões individuais, com acessos anteriores preservados. Deploy backend: duuk-billing v3 e duuk-spotify v8. Escopo, validação e limitações em [asaas-billing-setup.md](asaas-billing-setup.md#expansão-de-cobranças-e-consultas--270--19102026).
