@@ -3,7 +3,7 @@
 .mail-page { display: flex; flex-direction: column; gap: var(--ds-space-5); min-width: 0; }
 .mail-page > .admin-page-title { margin-bottom: var(--ds-space-1); }
 .mail-avatar { display: inline-grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border: 1px solid var(--ds-border); border-radius: 50%; background: var(--ds-surface-3); color: var(--ds-text-2); font-size: var(--ds-text-sm); font-weight: var(--ds-weight-semibold); line-height: 1; }
-.mail-avatar.mail-avatar--duuk { border: 0; background: #111; }
+.mail-avatar.mail-avatar--duuk { border: 0; background: linear-gradient(120deg,#ed422e,#f59b59); }
 .mail-avatar--duuk img { display: block; width: 16px; height: auto; max-height: 24px; object-fit: contain; }
 .mail-compose__sender .mail-avatar { align-self: center; width: 28px; height: 28px; }
 .mail-compose__sender .mail-avatar img { width: 14px; }

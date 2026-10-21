@@ -1,5 +1,11 @@
 # Operação do DUUK PAINEL ADMINISTRATIVO
 
+## Solicitação de dados e enquadramento de foto — 2.9.0
+
+Clientes e leads > Novo lead/Editar ou a ficha do cliente oferecem **Copiar pedido de dados**. A mensagem pede os campos do cadastro e dados do projeto; a prévia permite copiar manualmente se o navegador bloquear a área de transferência. Não envia mensagens nem registra contato realizado.
+
+Meu perfil > Trocar foto abre o enquadramento por arraste, setas do teclado e zoom. A origem pode ter até 20 MB; a imagem é convertida localmente para JPEG de 512 × 512, sem metadados, e só é enviada ao salvar o perfil. A autorização e o limite privado de 2 MB do servidor foram preservados. O avatar do e-mail comercial usa a marca branca sobre laranja. Evidências e limites: [admin-2.9-validation.md](admin-2.9-validation.md).
+
 ## Central de atendimento — 2.8.0
 
 Comercial > Central de atendimento ocupa toda a área útil e reúne conversas, responsáveis, contatos, busca, marcações e métricas. Respostas incluem texto, áudio, imagens, vídeo, PDF/documentos, figurinhas, reações, cartões de contato, localização e opções interativas. A permissão `whatsapp` é configurável por grupo e por pessoa; uma única conta comercial é compartilhada pela equipe autorizada. Nenhuma mensagem de teste real foi enviada.

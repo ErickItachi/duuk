@@ -43,6 +43,7 @@ import PipelineBoard, { StageIcon } from "./PipelineBoard";
 import { WhatsAppComposer } from "./WhatsAppMessages";
 import { whatsappPhone } from "./whatsapp";
 import { focusFirstError, formErrors, hasErrors } from "./formErrors";
+import ClientDataRequest from "./ClientDataRequest";
 
 import { ClientProposals, ClientDocuments } from "../office/DriveDocuments";
 
@@ -240,6 +241,7 @@ function ClientEditor({ record, people, onClose, onSaved }) {
     >
       <form onSubmit={submit} noValidate>
         <div className="admin-modal__body crm-form">
+          <ClientDataRequest client={form} disabled={busy} />
           <fieldset className="crm-form__section" disabled={busy}>
             <legend>Contato</legend>
             <div className="admin-form-grid">
@@ -825,6 +827,7 @@ function ClientDetail({
             ]}
           />
         </section>
+        <ClientDataRequest client={client} />
         <section className="crm-detail__section">
           <h3>Projeto e origem</h3>
           <DetailList

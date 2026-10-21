@@ -18,6 +18,8 @@ import {
   SearchField,
 } from "./forms";
 import { matchesQuery, usePagination } from "./ds/list";
+import AvatarCropper from "./AvatarCropper";
+import { AVATAR_SOURCE_LIMIT } from "./avatarCrop.mjs";
 
 const zone = "America/Sao_Paulo";
 const date = (value) =>
@@ -1146,6 +1148,7 @@ export function ProfilePage({ notify }) {
     [errors, setErrors] = useState({}),
     [securityErrors, setSecurityErrors] = useState({}),
     [photoError, setPhotoError] = useState(""),
+    [cropFile, setCropFile] = useState(null),
     [removing, setRemoving] = useState(false);
   const fileInput = useRef(null),
     photoId = useId();
@@ -1176,14 +1179,13 @@ export function ProfilePage({ notify }) {
     if (!selected) return;
     if (
       !["image/jpeg", "image/png", "image/webp"].includes(selected.type) ||
-      selected.size > 2097152
+      !selected.size || selected.size > AVATAR_SOURCE_LIMIT
     ) {
-      setPhotoError("Use JPG, PNG ou WebP de até 2 MB.");
+      setPhotoError("Use JPG, PNG ou WebP de até 20 MB.");
       return;
     }
     setPhotoError("");
-    setFile(selected);
-    setPreview(URL.createObjectURL(selected));
+    setCropFile(selected);
   };
   const save = async (e) => {
     e.preventDefault();
@@ -1321,7 +1323,7 @@ export function ProfilePage({ notify }) {
                 <small id={`${photoId}-hint`}>
                   {file
                     ? `${file.name} · enviada ao salvar o perfil`
-                    : "JPG, PNG ou WebP · até 2 MB"}
+                    : "JPG, PNG ou WebP · até 20 MB · otimização automática"}
                 </small>
                 <FieldError id={`${photoId}-error`}>{photoError}</FieldError>
               </div>
@@ -1433,6 +1435,7 @@ export function ProfilePage({ notify }) {
           </form>
         </div>
       </div>
+      {cropFile && <AvatarCropper file={cropFile} onClose={() => setCropFile(null)} onApply={cropped => { setFile(cropped); setPreview(URL.createObjectURL(cropped)); setCropFile(null); }} />}
       {removing && (
         <ConfirmModal
           title="Remover foto?"

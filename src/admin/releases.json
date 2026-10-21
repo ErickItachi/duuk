@@ -1,5 +1,18 @@
 [
   {
+    "version": "2.9.0",
+    "date": "2026-10-21",
+    "title": "Cadastro de clientes e fotos de perfil",
+    "added": [
+      "Mensagem pronta para copiar e solicitar os dados do cliente no cadastro e na ficha.",
+      "Enquadramento de foto de perfil com arraste, teclado e zoom; imagens de origem de até 20 MB."
+    ],
+    "improved": [
+      "Fotos otimizadas antes do envio, mantendo o armazenamento gratuito.",
+      "Identidade do e-mail comercial com a logo branca sobre fundo laranja."
+    ]
+  },
+  {
     "version": "2.8.0",
     "date": "2026-10-21",
     "title": "Central de atendimento da DUUK",

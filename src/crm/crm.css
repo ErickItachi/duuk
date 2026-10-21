@@ -213,6 +213,18 @@
 .crm-detail__quick { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); min-width: 0; }
 .crm-short { display: none; }
 
+.crm-data-request { padding: 15px 16px; border-radius: var(--ds-radius-lg); background: var(--ds-bg-subtle); min-width: 0; }
+.crm-data-request__heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.crm-data-request__heading > div { flex: 1 1 180px; }
+.crm-data-request strong { font-size: var(--ds-text-md); font-weight: var(--ds-weight-medium); }
+.crm-data-request p { margin: 4px 0 0; color: var(--ds-text-3); font-size: var(--ds-text-sm); line-height: 1.6; }
+.crm-data-request .admin-button { white-space: normal; }
+.crm-data-request details { margin-top: 9px; color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+.crm-data-request summary { width: fit-content; padding: 5px 0; cursor: pointer; }
+.crm-data-request textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 8px; padding: 12px; border: 0; border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text); font: inherit; font-size: 16px; line-height: 1.65; resize: vertical; }
+.crm-data-request .crm-data-request__error { color: var(--ds-danger); }
+.crm-data-request__status:empty { display: none; }
+
 /* ---------- Loading ---------- */
 .crm-skeleton--list > div { display: flex; align-items: center; gap: var(--ds-space-3); padding: var(--ds-space-4) var(--ds-space-5); border-bottom: 1px solid var(--ds-border-subtle); }
 .crm-skeleton--list > div:last-child { border-bottom: 0; }

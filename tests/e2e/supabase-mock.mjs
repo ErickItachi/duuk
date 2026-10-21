@@ -75,7 +75,7 @@ export function createSupabaseMock({ user, profile, permissions, tables = {}, rp
     try { body = request.postDataJSON() } catch { body = request.postData() }
     if(request.headers()['content-type']?.startsWith('multipart/form-data')){
       const form=await new Request('https://fixture.invalid/',{method:'POST',headers:{'content-type':request.headers()['content-type']},body:request.postDataBuffer()}).formData()
-      body=JSON.parse(form.get('payload'));const file=form.get('file');if(file)body.__file={name:file.name,type:file.type,size:file.size,base64:Buffer.from(await file.arrayBuffer()).toString('base64')}
+      const payload=form.get('payload');body=typeof payload==='string'?JSON.parse(payload):{};const file=form.get('file');if(file)body.__file={name:file.name,type:file.type,size:file.size,base64:Buffer.from(await file.arrayBuffer()).toString('base64')}
     }
     calls.push({ method, path, search: url.search, body })
     if (method === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } })

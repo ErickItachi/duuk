@@ -1,5 +1,13 @@
 # Fluxo de trabalho da DUUK
 
+## Cadastro, foto de perfil e identidade do e-mail — 2.9.0
+
+- Em 21/10/2026 o usuário pediu um botão para copiar a solicitação de dados do cliente, enquadrar fotos de perfil e aceitar imagens maiores. Cadastro novo/edição e ficha do cliente oferecem a mensagem pronta com primeiro nome, prévia e alternativa manual quando a área de transferência falha. Copiar nunca salva cliente, registra contato ou envia mensagem.
+- Fotos de origem JPG/PNG/WebP podem ter até 20 MB e 80 megapixels. O recorte aceita arraste, teclado e zoom; gera JPEG quadrado de 512 px no aparelho, removendo metadados. Cancelar mantém a foto anterior. Só Salvar perfil envia o resultado. Limite privado do backend continua 2 MB, sem ampliar armazenamento, plano ou cobrança. Preserve autorização por usuário e descarte de URLs temporárias.
+- A correção pedida para o e-mail é **logo branca sobre fundo laranja**, preservando a logo original. No painel, mude somente o fundo do avatar comercial. No Titan, a foto de `contato@duukfilms.com` foi salva pelo editor oficial com `public/admin-assets/icon-512.png`. A conta pessoal `filmzerick@gmail.com` não foi alterada.
+- O usuário autorizou criar uma identidade Google para o endereço comercial se necessário e depois informou a conta existente `duukfilms@gmail.com`. A foto dessa conta existente também foi salva no editor oficial com o mesmo ícone. Preserve endereço principal, senha, sessões e todas as integrações Google Calendar/Drive. Não revogue tokens para trocar imagem. Verificações de senha/código continuam na página oficial, sem valores no chat ou repositório. Exibição e propagação da foto dependem do provedor; não prometa avatar universal em todos os destinatários.
+- Alterações locais anteriores em `src/office/ContractsPage.jsx` e `tests/e2e/contracts.mjs` continuam fora do commit e do artefato publicado.
+
 ## Central de atendimento WhatsApp — 2.8.0
 
 - Em 20/10/2026 o usuário autorizou ampliar o WhatsApp por API oficial gratuita e pediu uma central de atendimento em toda a área útil, sem moldura externa. Esse pedido amplia o antigo escopo exclusivo de links wa.me, que continua preservado no CRM. Nunca use sessões não oficiais, intermediários pagos, campanhas ou modelos tarifados.
