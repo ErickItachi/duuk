@@ -4,14 +4,45 @@ export const privacyPolicy = {
     en: 'How DUUK handles data from people who visit the site and get in touch.',
   },
   updated: {
-    pt: 'Atualizada em 7 de outubro de 2026.',
-    en: 'Updated on October 7, 2026.',
+    pt: 'Atualizada em 26 de outubro de 2026.',
+    en: 'Updated on October 26, 2026.',
   },
   lead: {
     pt: 'Esta página explica como a DUUK trata dados pessoais de quem visita este site e de quem fala com o estúdio.',
     en: 'This page explains how DUUK handles personal data from people who visit this site and people who talk to the studio.',
   },
   sections: [
+    {
+      title: { pt: 'Atendimento pelo WhatsApp', en: 'WhatsApp customer service' },
+      paragraphs: [
+        {
+          pt: 'Quando a conexão oficial com o WhatsApp Business estiver ativa, a DUUK poderá receber e responder conversas em uma caixa compartilhada pela equipe autorizada. Tratamos o número, o nome de contato, as mensagens e os arquivos compartilhados para atender pedidos e acompanhar os trabalhos. Responsáveis, etiquetas e observações são usados somente na organização interna do atendimento.',
+          en: 'When the official WhatsApp Business connection is active, DUUK can receive and reply to conversations in an inbox shared by authorized team members. We process phone numbers, contact names, messages and shared files to answer requests and manage work. Assignees, tags and notes are used only to organize customer service internally.',
+        },
+        {
+          pt: 'A conexão utiliza a API oficial da Meta. A Meta processa as conversas segundo suas próprias políticas; o Supabase mantém os registros privados da DUUK, com acesso restrito à equipe autorizada. As credenciais da integração ficam criptografadas no servidor. Não vendemos essas conversas nem as usamos para anúncios.',
+          en: 'The connection uses Meta’s official API. Meta processes conversations under its own policies; Supabase stores DUUK’s private records, accessible only to authorized team members. Integration credentials are encrypted on the server. We do not sell these conversations or use them for advertising.',
+        },
+        {
+          pt: 'O histórico da central é conservado por até 90 dias, sujeito aos limites de armazenamento. Uma importação inicial de contatos e histórico depende da autorização do responsável pelo WhatsApp Business. Desconectar a integração remove suas credenciais e interrompe o acesso pela API; isso não apaga automaticamente os registros já recebidos nem as cópias mantidas no celular ou pela Meta.',
+          en: 'The inbox retains conversation history for up to 90 days, subject to storage limits. An initial import of contacts and history requires authorization from the WhatsApp Business account owner. Disconnecting removes integration credentials and stops API access; it does not automatically delete existing records or copies retained on the phone or by Meta.',
+        },
+      ],
+    },
+    {
+      id: 'exclusao-de-dados',
+      title: { pt: 'Exclusão de dados das integrações Meta', en: 'Deleting data from Meta integrations' },
+      paragraphs: [
+        {
+          pt: 'Para solicitar acesso, correção ou exclusão de dados recebidos pelas integrações com WhatsApp ou Instagram, escreva para contato@duukfilms.com com o assunto “Dados Meta — DUUK”. Informe qual integração e o número de telefone ou perfil relacionado ao pedido. Não envie senha, token ou código de autenticação. Poderemos confirmar sua relação com a conta antes de atender à solicitação.',
+          en: 'To request access, correction or deletion of data received through WhatsApp or Instagram integrations, email contato@duukfilms.com with the subject “Meta data — DUUK”. Identify the integration and the phone number or profile related to your request. Do not send passwords, tokens or authentication codes. We may confirm your relationship to the account before fulfilling the request.',
+        },
+        {
+          pt: 'Após a confirmação, trataremos os registros sob controle da DUUK e informaremos o resultado pelo e-mail de contato. Dados cuja conservação seja necessária por obrigação legal ou para exercício de direitos poderão ser preservados conforme a LGPD. Para excluir dados mantidos pela própria Meta ou no aplicativo do celular, use também as opções de privacidade desses serviços.',
+          en: 'After confirmation, we will handle records controlled by DUUK and report the outcome by email. Data required for legal obligations or the exercise of rights may be retained under Brazilian data protection law. To delete data held by Meta itself or in the mobile application, also use those services’ privacy settings.',
+        },
+      ],
+    },
     {
       title: { pt: 'Conexão opcional com Google Calendar', en: 'Optional Google Calendar connection' },
       paragraphs: [
@@ -29,8 +60,8 @@ export const privacyPolicy = {
       title: { pt: 'Quem é a DUUK', en: 'Who DUUK is' },
       paragraphs: [
         {
-          pt: 'A DUUK é uma produtora audiovisual em São Paulo, CNPJ 45.462.401/0001-00. Fazemos vídeos para marcas, projetos e momentos. Para falar sobre esta política ou sobre os seus dados, escreva para contato@duukfilms.com.',
-          en: 'DUUK is an audiovisual studio in São Paulo, CNPJ 45.462.401/0001-00. We make films for brands, projects and moments. To talk about this policy or about your data, write to contato@duukfilms.com.',
+          pt: 'A DUUK é uma produtora audiovisual em São Paulo, CNPJ 69.288.683/0001-20. Fazemos vídeos para marcas, projetos e momentos. Para falar sobre esta política ou sobre os seus dados, escreva para contato@duukfilms.com.',
+          en: 'DUUK is an audiovisual studio in São Paulo, CNPJ 69.288.683/0001-20. We make films for brands, projects and moments. To talk about this policy or about your data, write to contato@duukfilms.com.',
         },
       ],
     },

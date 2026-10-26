@@ -13,7 +13,7 @@ export const studio = {
   instagram: 'https://www.instagram.com/duukfilms/',
   whatsapp: 'https://wa.me/5511967009307',
   city: 'SÃO PAULO / SP',
-  cnpj: '45.462.401/0001-00',
+  cnpj: '69.288.683/0001-20',
 }
 
 export const projects = [

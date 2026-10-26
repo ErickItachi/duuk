@@ -314,7 +314,7 @@ export function PrivacyPage() {
           <div className="legal-page__body">
             <p>{localize(privacyPolicy.lead, language)}</p>
             {privacyPolicy.sections.map((section) => (
-              <section key={section.title.pt}>
+              <section key={section.title.pt} id={section.id}>
                 <h2>{localize(section.title, language)}</h2>
                 {section.paragraphs.map((paragraph) => (
                   <p key={paragraph.pt}>{localize(paragraph, language)}</p>
