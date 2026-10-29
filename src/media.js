@@ -7,24 +7,24 @@ export function getImageSources(src) {
   return image ? { src: image.src, srcSet: image.srcSet } : { src }
 }
 
+// Always the high-quality file: phones, previews and slow connections get the same 1080p video.
+const HIGH_QUALITY = { mobile: 'desktop', preview: 'desktop', lightweight: 'ambient' }
+
 export function getVideoSource(src, variant = 'desktop') {
   const video = media.videos[mediaKey(src)]
-  return video?.[variant] || video?.ambient || src
+  const key = HIGH_QUALITY[variant] || variant
+  return video?.[key] || video?.desktop || video?.ambient || src
 }
 
-export function getAdaptiveVideoSource(src) {
-  return media.videos[mediaKey(src)]?.adaptive
+export function getAdaptiveVideoSource() {
+  // adaptive streaming would step down to lower renditions; keep the full-quality file instead
+  return undefined
 }
 
 export function getAmbientFallback(src) {
-  const video = media.videos[mediaKey(src)]
-  const connection = navigator.connection
-  return connection?.saveData || (connection?.downlink > 0 && connection.downlink < 4)
-    ? video?.lightweight || getVideoSource(src, 'ambient')
-    : getVideoSource(src, 'ambient')
+  return getVideoSource(src, 'ambient')
 }
 
 export function preferMobileVideo() {
-  return window.matchMedia('(max-width: 800px), (pointer: coarse)').matches ||
-    navigator.connection?.saveData === true
+  return false
 }
